@@ -1,26 +1,356 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* =============================================================================
+   ALMA TEJIDA · DESIGN TOKENS
+
+   Ningun componente escribe un color literal. Todos usan un rol semantico.
+   Cambiar la identidad entera de la marca es editar este archivo.
+
+   Paleta extraida de las piezas y del sello: algodon crudo, madera clara,
+   rosa terracota del isologo y un verde salvia muy apagado.
+   ========================================================================== */
+
+@theme {
+  /* --- Escala linen: la base neutra calida ------------------------------- */
+  --color-linen-50: #fbf8f4;
+  --color-linen-100: #f4ede4;
+  --color-linen-200: #e8ddd0;
+  --color-linen-300: #d6c7b6;
+  --color-linen-400: #b8a491;
+  --color-linen-500: #97806b;
+  --color-linen-600: #7a6555;
+  --color-linen-700: #5e4d41;
+  --color-linen-800: #453831;
+  --color-linen-900: #2e2521;
+
+  /* --- Escala clay: la identidad ----------------------------------------- */
+  --color-clay-50: #fbf3ef;
+  --color-clay-100: #f5e4dc;
+  --color-clay-200: #eaccbf;
+  --color-clay-300: #dcae9b;
+  --color-clay-400: #c9907a;
+  --color-clay-500: #b67760;
+  --color-clay-600: #9c6350;
+  --color-clay-700: #7e5142;
+  --color-clay-800: #634037;
+  --color-clay-900: #4a302a;
+
+  /* --- Acentos ----------------------------------------------------------- */
+  --color-wood-300: #e6cda9;
+  --color-wood-400: #d8ae7c;
+  --color-wood-500: #c3945e;
+  --color-sage-100: #e6ebe3;
+  --color-sage-500: #6f8268;
+  --color-sage-600: #5b6c55;
+  --color-amber-alma: #c08a3e;
+  --color-sale-500: #b5533f;
+  --color-sale-100: #f7e3de;
+  --color-danger-500: #a33e33;
+
+  /* --- Roles semanticos --------------------------------------------------
+     Esto es lo que usan los componentes. Nunca la escala directa.          */
+  --color-background: var(--color-linen-50);
+  --color-surface: #ffffff;
+  --color-surface-muted: var(--color-linen-100);
+  --color-border-soft: var(--color-linen-200);
+  --color-border-strong: var(--color-linen-300);
+  --color-ink: var(--color-linen-800);
+  --color-ink-muted: var(--color-linen-600);
+  --color-ink-subtle: var(--color-linen-500);
+  --color-primary: var(--color-clay-500);
+  --color-primary-hover: var(--color-clay-600);
+  --color-primary-soft: var(--color-clay-100);
+  --color-on-primary: #ffffff;
+  --color-accent: var(--color-wood-500);
+  --color-success: var(--color-sage-500);
+  --color-warning: var(--color-amber-alma);
+  --color-sale: var(--color-sale-500);
+  --color-danger: var(--color-danger-500);
+
+  /* --- Tipografia --------------------------------------------------------
+     Fraunces (serif calida y contemporanea) para titulos.
+     Inter para interfaz: maxima legibilidad en celular y cifras tabulares
+     para que los precios no bailen al cambiar de variante.                 */
+  --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+
+  /* Escala fluida: el mismo token sirve en celular y en desktop */
+  --text-display-xl: clamp(2.5rem, 1.6rem + 4.2vw, 4.25rem);
+  --text-display-xl--line-height: 1.02;
+  --text-display-xl--letter-spacing: -0.025em;
+  --text-display-lg: clamp(2rem, 1.4rem + 2.6vw, 3rem);
+  --text-display-lg--line-height: 1.08;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-md: clamp(1.625rem, 1.3rem + 1.4vw, 2.25rem);
+  --text-display-md--line-height: 1.15;
+  --text-display-md--letter-spacing: -0.015em;
+  --text-title: clamp(1.125rem, 1rem + 0.5vw, 1.5rem);
+  --text-title--line-height: 1.25;
+
+  /* --- Radios: bordes organicos muy sutiles ------------------------------ */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  /* Leve asimetria. Se usa SOLO en imagenes de categoria y en el marco del
+     hero: aplicado en todo se volveria un tic; en dos lugares, se siente
+     hecho a mano. */
+  --radius-organic: 22px 18px 22px 18px;
+
+  /* --- Sombras: calidas, nunca negras ------------------------------------
+     Una sombra negra sobre lino se ve sucia. Todas usan el marron del texto
+     con opacidad muy baja: el resultado parece luz de tarde.               */
+  --shadow-soft: 0 1px 2px rgb(69 56 49 / 0.05);
+  --shadow-card:
+    0 2px 4px rgb(69 56 49 / 0.04), 0 8px 24px -12px rgb(69 56 49 / 0.12);
+  --shadow-lifted:
+    0 4px 8px rgb(69 56 49 / 0.04), 0 16px 40px -16px rgb(69 56 49 / 0.16);
+  --shadow-overlay: 0 24px 60px -24px rgb(46 37 33 / 0.32);
+
+  /* --- Movimiento --------------------------------------------------------
+     La animacion transmite CALIDAD, nunca LENTITUD. Si la persona espera a
+     que algo termine de animarse, la animacion esta mal hecha.             */
+  --at-dur-instant: 120ms;
+  --at-dur-fast: 180ms;
+  --at-dur-base: 240ms;
+  --at-dur-slow: 360ms;
+  --at-dur-hero: 600ms;
+  --ease-out-alma: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out-alma: cubic-bezier(0.65, 0.05, 0.36, 1);
+  --ease-soft-alma: cubic-bezier(0.34, 1.26, 0.64, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* =============================================================================
+   BASE
+   ========================================================================== */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--color-border-soft);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    /* Nunca menos de 16px de base en movil */
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    color: var(--color-linen-900);
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Los precios no bailan al cambiar de variante */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* --- Puntada de foco ---------------------------------------------------
+     El anillo de foco no es un rectangulo generico: es un trazo redondeado
+     con el halo calido de la marca. Accesible y con personalidad.         */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Nunca se elimina el foco; se rediseña. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: var(--color-clay-100);
+    color: var(--color-clay-800);
+  }
+
+  /* Barra de scroll discreta, en tonos de la marca */
+  @supports (scrollbar-color: auto) {
+    html {
+      scrollbar-color: var(--color-linen-300) transparent;
+      scrollbar-width: thin;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* =============================================================================
+   TEXTURA · presente, casi invisible
+   Cinco apariciones, todas bajo el 4% de opacidad o como trazo fino.
+   ========================================================================== */
+
+@layer components {
+  /* 1. Trama base: dos gradientes cruzados a 45°. A un metro no se ve;
+        se SIENTE que el fondo no es plano. */
+  .at-weave {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .at-weave::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image:
+      repeating-linear-gradient(
+        45deg,
+        rgb(122 101 85 / 0.025) 0px,
+        rgb(122 101 85 / 0.025) 1px,
+        transparent 1px,
+        transparent 7px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        rgb(122 101 85 / 0.025) 0px,
+        rgb(122 101 85 / 0.025) 1px,
+        transparent 1px,
+        transparent 7px
+      );
+  }
+
+  /* 2. Forma organica, solo para imagenes de categoria y el marco del hero */
+  .at-organic {
+    border-radius: var(--radius-organic);
+  }
+
+  /* 3. Hilo que se dibuja bajo el nombre al pasar el mouse por una tarjeta */
+  .at-thread-underline {
+    background-image: linear-gradient(var(--color-clay-400), var(--color-clay-400));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1px;
+    transition: background-size var(--at-dur-base) var(--ease-out-alma);
+  }
+
+  .group:hover .at-thread-underline,
+  .at-thread-underline:hover {
+    background-size: 100% 1px;
+  }
+
+  /* 4. Ancho de contenido, con canaleta de 16px en celular */
+  .at-container {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: 1rem;
+    max-width: 80rem;
+  }
+
+  @media (min-width: 768px) {
+    .at-container {
+      padding-inline: 2rem;
+    }
+  }
+
+  /* 5. Marca de agua del isologo: pie y estado vacio del carrito */
+  .at-watermark {
+    opacity: 0.03;
+  }
+}
+
+/* =============================================================================
+   ANIMACIONES
+   Solo transform y opacity: cero animaciones de width/height/top/box-shadow,
+   que obligan a recalcular layout y tiran los 60 fps.
+   ========================================================================== */
+
+@keyframes at-stitch {
+  0% {
+    stroke-dashoffset: 120;
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -120;
+    opacity: 0.35;
+  }
+}
+
+@keyframes at-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes at-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes at-shimmer {
+  from {
+    transform: translate3d(-100%, 0, 0);
+  }
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+.at-rise {
+  animation: at-rise var(--at-dur-base) var(--ease-out-alma) both;
+}
+
+.at-fade {
+  animation: at-fade var(--at-dur-base) var(--ease-out-alma) both;
+}
+
+/* =============================================================================
+   MOVIMIENTO REDUCIDO
+   No es un `transition: none` global. El movimiento se va; la informacion y
+   la jerarquia se quedan intactas.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Desplazar + fundir pasa a ser solo fundir */
+  .at-rise {
+    animation: at-fade var(--at-dur-instant) linear both;
+  }
+
+  /* El loader de hilo pasa a ser un punto que pulsa suavemente */
+  .at-loader-thread {
+    animation: none !important;
+  }
 }

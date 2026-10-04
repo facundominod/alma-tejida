@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ...pero el ejemplo SI se versiona: es la documentacion de que hace falta.
+!.env.example
+
+# respaldos locales: nunca se versionan
+respaldos/
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/.playwright/
