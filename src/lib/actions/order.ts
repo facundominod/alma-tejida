@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { COPY } from '@/lib/labels'
 import { createClient, getCurrentProfile } from '@/lib/supabase/server'
 import type { CreateOrderResult } from '@/types/database'
 
@@ -191,8 +192,7 @@ function translateOrderError(message: string): PlaceOrderResult {
     const variantId = message.split('OUT_OF_STOCK:')[1]?.split(/\s/)[0]
     return {
       ok: false,
-      error:
-        'Se agotó mientras completabas el pedido. Lo sacamos del carrito y podés seguir con el resto.',
+      error: COPY.outOfStockDuringCheckout,
       unavailableVariantId: variantId,
     }
   }
@@ -201,23 +201,20 @@ function translateOrderError(message: string): PlaceOrderResult {
     const variantId = message.split('PRODUCT_UNAVAILABLE:')[1]?.split(/\s/)[0]
     return {
       ok: false,
-      error: 'Una de las piezas dejó de estar disponible. La sacamos del carrito.',
+      error: COPY.productUnavailable,
       unavailableVariantId: variantId,
     }
   }
 
   if (message.includes('CART_EMPTY')) {
-    return { ok: false, error: 'Tu carrito está vacío.' }
+    return { ok: false, error: COPY.cartEmptyAtCheckout }
   }
 
   if (message.includes('FORBIDDEN')) {
-    return { ok: false, error: 'No pudimos validar tu carrito. Recargá la página.' }
+    return { ok: false, error: COPY.cartNotYours }
   }
 
-  return {
-    ok: false,
-    error: 'No pudimos crear el pedido. Probá de nuevo en un momento.',
-  }
+  return { ok: false, error: COPY.orderFailed }
 }
 
 /* =============================================================================

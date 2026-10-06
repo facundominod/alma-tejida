@@ -105,12 +105,12 @@ export default async function TiendaPage({ searchParams }: PageProps<'/tienda'>)
                   ? COPY.emptySearch(search)
                   : hasFilters
                     ? COPY.emptyCatalog
-                    : 'Todavía no hay piezas publicadas'
+                    : COPY.catalogComingSoon
               }
               description={
                 search || hasFilters
-                  ? 'Probá con otras palabras o mirá todo el catálogo.'
-                  : 'En cuanto se carguen las primeras, van a aparecer acá.'
+                  ? COPY.emptyCatalogHint
+                  : COPY.catalogComingSoonHint
               }
               action={
                 search || hasFilters ? (

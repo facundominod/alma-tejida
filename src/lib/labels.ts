@@ -133,7 +133,7 @@ export function availabilityView(params: {
   if (mode === 'unique_piece') {
     return available > 0
       ? { label: 'Pieza única', tone: 'success', canBuy: true }
-      : { label: 'Esta pieza ya encontro su casa', tone: 'neutral', canBuy: false }
+      : { label: 'Esta pieza ya encontró su casa', tone: 'neutral', canBuy: false }
   }
 
   if (available <= 0) {
@@ -167,25 +167,80 @@ export function availabilityView(params: {
 }
 
 /* =============================================================================
-   MICROCOPY
-   Calido, simple, profesional. Sin cursileria.
+   MICROCOPY — LA VOZ DE LA CASA
+
+   Una sola regla: la METÁFORA va en el título, la INSTRUCCIÓN va debajo.
+   Nunca dos imágenes seguidas, y nunca una imagen sola cuando la persona
+   necesita saber qué hacer. "Se cortó el hilo" es lindo; "revisá tu conexión"
+   es lo que resuelve el problema. Van juntas o no van.
+
+   El vocabulario sale del oficio —telar, hilo, madeja, trama, bastidor— y no
+   de un diccionario de sinónimos. Si una frase no la diría alguien que teje,
+   no entra.
+
+   Todo el texto vive acá para que cambiar el tono de la tienda sea editar un
+   archivo, y no buscar cadenas sueltas por veinte componentes.
    ========================================================================== */
 
 export const COPY = {
-  emptyCart: 'Tu carrito todavía está vacío.',
-  emptyCartAction: 'Ver productos',
-  emptyCatalog: 'No encontramos piezas con ese filtro.',
+  /* --- Carrito ----------------------------------------------------------- */
+  emptyCart: 'Tu carrito todavía no tiene ni un hilo.',
+  emptyCartHint: 'Cuando encuentres una pieza que te guste, va a aparecer acá.',
+  emptyCartAction: 'Ver las piezas',
+
+  /* --- Catálogo: no hay resultados PARA LO QUE PIDIÓ --------------------- */
+  emptyCatalog: 'Ningún hilo coincide con esa búsqueda.',
+  emptyCatalogHint: 'Probá sacando algún filtro, o mirá el catálogo entero.',
   emptyCatalogAction: 'Limpiar filtros',
-  emptySearch: (q: string) => `No encontramos nada para "${q}".`,
-  emptyOrders: 'Todavía no hiciste ningun pedido.',
-  emptyQuestions: 'Todavía no hay preguntas sobre esta pieza.',
-  emptyReviews: 'Esta pieza todavía no tiene reseñas.',
+  emptySearch: (q: string) => `Buscamos en toda la madeja y no apareció «${q}».`,
+
+  /* --- Catálogo: todavía no hay NADA cargado ---------------------------- */
+  catalogComingSoon: 'Las primeras piezas todavía están en el telar.',
+  catalogComingSoonHint: 'En cuanto estén listas, van a aparecer acá.',
+  emptyCategory: 'Esta categoría todavía está en el bastidor.',
+  emptyCategoryHint: 'Acá no hay piezas por ahora. Mirá el resto del catálogo.',
+  emptyOffers: 'Por ahora el telar está a precio de siempre.',
+  emptyOffersHint: 'Cuando haya una promoción, va a aparecer acá.',
+
+  /* --- Cuenta ------------------------------------------------------------ */
+  emptyOrders: 'Tu primera pieza todavía no salió del taller.',
+  emptyOrdersHint: 'Cuando hagas un pedido, vas a poder seguirlo desde acá.',
+
+  /* --- Ficha de producto ------------------------------------------------- */
+  emptyQuestions: 'Nadie tiró del hilo todavía.',
+  emptyQuestionsHint: 'Si hay algo que no queda claro, preguntá: te contestamos nosotros.',
+  emptyReviews: 'Todavía nadie contó cómo le quedó en casa.',
+  emptyReviewsHint: 'Las reseñas las escriben quienes ya recibieron su pedido.',
+
+  /* --- Cuando algo sale mal ---------------------------------------------- */
   notFound: 'Esta página se soltó del telar.',
+  notFoundHint: 'Puede que la pieza ya no esté publicada, o que el enlace tenga algo raro.',
   notFoundAction: 'Volver al inicio',
-  networkError: 'No pudimos conectar. Revisá tu conexión e intentá de nuevo.',
+
+  networkError: 'Se cortó el hilo.',
+  networkErrorHint: 'Revisá tu conexión e intentá de nuevo.',
+
+  genericError: 'Se nos enredó la madeja.',
+  genericErrorHint: 'Probá de nuevo en un momento.',
+
+  serverError: 'Se nos trabó el telar.',
+  serverErrorHint: 'El problema es nuestro, no tuyo. Dale un minuto y volvé a intentar.',
+  serverErrorAction: 'Reintentar',
+
+  /* --- Pedido ------------------------------------------------------------
+     Estos cinco los devuelve `translateOrderError` en src/lib/actions/order.ts
+     al traducir los códigos que lanza create_order(). Viven acá como todo el
+     resto: el servidor decide QUÉ pasó, este archivo decide CÓMO se cuenta.
+     -------------------------------------------------------------------- */
   outOfStockDuringCheckout:
-    'Se agoto mientras completabas el pedido. Lo sacamos del carrito.',
-  genericError: 'Algo no salio bien. Probá de nuevo en un momento.',
+    'Alguien se la llevó mientras completabas el pedido. La sacamos del carrito y podés seguir con el resto.',
+  productUnavailable: 'Una de las piezas dejó de estar disponible. La sacamos del carrito.',
+  cartEmptyAtCheckout: 'Tu carrito quedó sin nada que pedir.',
+  cartNotYours: 'No pudimos validar tu carrito. Recargá la página y probá otra vez.',
+  orderFailed: 'No pudimos cerrar el pedido. Probá de nuevo en un momento.',
   orderCreated: (n: string) => `Listo. Tu pedido es el ${n}.`,
   askAboutRestock: 'Consultar si vuelve',
+
+  /* --- Espera ------------------------------------------------------------ */
+  loading: 'Pasando la trama…',
 } as const

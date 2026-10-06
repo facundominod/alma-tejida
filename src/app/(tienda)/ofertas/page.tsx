@@ -5,6 +5,7 @@ import { ProductGrid } from '@/components/tienda/product-card'
 import { PromoCarousel } from '@/components/tienda/promo-carousel'
 import { Button } from '@/components/ui/button'
 import { EmptyState, Overline } from '@/components/ui/primitives'
+import { COPY } from '@/lib/labels'
 import { getOnSaleProducts } from '@/lib/queries/catalog'
 import { getActivePromotions } from '@/lib/queries/store'
 
@@ -46,8 +47,8 @@ export default async function OfertasPage() {
         ) : (
           <EmptyState
             icon={<Tag className="size-10" strokeWidth={1.3} />}
-            title="Por ahora no hay ofertas activas"
-            description="Cuando haya una promoción, va a aparecer acá."
+            title={COPY.emptyOffers}
+            description={COPY.emptyOffersHint}
             action={
               <Button asChild variant="secondary">
                 <Link href="/tienda">Ver toda la tienda</Link>

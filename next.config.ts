@@ -44,6 +44,20 @@ const csp = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
+  /**
+   * Cuatro procesos para prerenderizar, no uno por núcleo.
+   *
+   * Por defecto Next abre un worker por núcleo (quince en esta máquina). Cada
+   * uno es un proceso de Node con su propio heap, y al terminar su trabajo
+   * alguno moría sin memoria: el build quedaba COMPLETO y correcto, pero
+   * devolvía código 134. En un pipeline eso es un deploy fallido por nada.
+   *
+   * Con cuatro, el build tarda unos segundos más y termina limpio.
+   */
+  experimental: {
+    cpus: 4,
+  },
+
   images: {
     // Formatos modernos primero. next/image negocia con el navegador.
     formats: ['image/avif', 'image/webp'],

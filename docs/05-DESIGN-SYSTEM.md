@@ -374,8 +374,41 @@ no en la cantidad de metáforas textiles.
 | LCP | < 2,0 s en 4G | Imagen del hero con `priority`, HTML cacheado en el edge |
 | CLS | < 0,05 | `width`/`height` en toda imagen, fuentes con `size-adjust`, sin banners que empujen |
 | INP | < 150 ms | Poco JS en la tienda, animaciones en el compositor |
-| JS de la home | **< 110 KB** comprimido | Server Components, Motion sólo donde hace falta, Recharts sólo en admin |
+| JS de la home | **≤ 225 KB** comprimido | Server Components, Recharts sólo en admin, Motion sólo en la galería |
 | Fuentes | 2 familias variables, subset latino | ~38 KB en total |
+
+### Por qué 225 y no 110
+
+Este documento decía **110 KB** hasta que se midió. La primera medición real dio **416**.
+
+El número de 110 estaba escrito sin medir, y era imposible: el piso del stack elegido,
+antes de una sola línea propia, ya son ~151 KB comprimidos.
+
+| Pieza | Comprimido | ¿Se puede sacar? |
+|---|---|---|
+| React DOM | 70 KB | No, sin cambiar de framework |
+| Router de Next | 43 KB | No |
+| Runtime de Server Actions | 39 KB | No, y es lo que hace que los formularios no necesiten API propia |
+| Código de Alma Tejida | ~60 KB | Sí, y de ahí salieron los 205 KB que faltaban |
+
+De 416 a 211 se bajó sacando tres cosas del bundle inicial, todas medidas:
+
+1. **Zod fuera del cliente** (−13 KB) — `src/lib/env.ts` lo importaba y ese módulo lo lee
+   todo el mundo, así que el validador de esquemas viajaba a cada visita para comprobar
+   dos variables de entorno. Ahora son veinte líneas sin dependencias.
+2. **Cliente de Supabase con `import()` diferido** (−66 KB) — la tienda pública sólo lo
+   necesita para saber si el icono dice "Ingresar" o "Mi cuenta". Eso puede llegar tarde;
+   la primera pintura, no.
+3. **Motion reemplazado por CSS en el header, el menú y el carrito** (−50 KB) — son
+   componentes del layout, o sea que estaban en TODAS las páginas. Las tres animaciones
+   que hacían (desplazar, fundir, escalar) las hace CSS en el compositor, igual de suave.
+   `AnimatePresence` se reemplazó por `usePresence` (`src/lib/ui/use-presence.ts`), 50
+   líneas. Motion sigue en la galería de la ficha de producto: ahí su valor es alto y el
+   costo queda en una sola ruta.
+
+El tope de 225 es la medición (211) más ~5%. `npm run measure` lo verifica contra el
+servidor de producción y falla si se pasa; sirve para detectar la próxima dependencia que
+se cuele en el cliente, que es lo único que queda bajo nuestro control.
 
 No se persigue el 100/100 sacrificando funcionalidad (punto 205). Se corrigen problemas
 reales, medidos con Lighthouse móvil en cada release.

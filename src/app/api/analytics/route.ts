@@ -26,7 +26,7 @@ const schema = z.object({
     'order_paid',
     'whatsapp_click',
   ]),
-  sessión: z.string().min(8).max(64),
+  session: z.string().min(8).max(64),
   productId: z.string().uuid().nullish(),
   variantId: z.string().uuid().nullish(),
   categoryId: z.string().uuid().nullish(),
@@ -45,13 +45,13 @@ export async function POST(request: Request) {
       return new NextResponse(null, { status: 204 })
     }
 
-    const { event, sessión, productId, variantId, categoryId, mediaId, metadata } =
+    const { event, session, productId, variantId, categoryId, mediaId, metadata } =
       parsed.data
 
     const supabase = createPublicClient()
     await supabase.rpc('track_event', {
       p_event_type: event,
-      p_session_id: sessión,
+      p_session_id: session,
       p_product_id: productId ?? null,
       p_variant_id: variantId ?? null,
       p_category_id: categoryId ?? null,

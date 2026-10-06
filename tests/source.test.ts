@@ -28,6 +28,24 @@ function leer(file: string) {
   return readFileSync(join(process.cwd(), file), 'utf8')
 }
 
+/**
+ * Quita comentarios antes de buscar identificadores.
+ *
+ * La regla es "los identificadores van en ASCII", no "el código no tiene
+ * acentos": los comentarios están en español y tienen que poder escribirse
+ * bien. Sin esto, una palabra en mayúsculas dentro de una explicación
+ * —DINÁMICO, INSTRUCCIÓN— se parece a una constante y la prueba fallaba por
+ * prosa correcta.
+ *
+ * El `//` sólo cuenta como comentario si no viene pegado a `:`, para no
+ * cortar una línea en `https://` y esconder lo que venga después.
+ */
+function sinComentarios(contenido: string) {
+  return contenido
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:\w])\/\/.*$/gm, '$1')
+}
+
 describe('higiene del código fuente', () => {
   const archivos = archivosFuente()
 
@@ -41,7 +59,7 @@ describe('higiene del código fuente', () => {
     const danados: string[] = []
 
     for (const file of archivos) {
-      const contenido = leer(file)
+      const contenido = sinComentarios(leer(file))
       for (const [match] of contenido.matchAll(token)) {
         if (!ACENTOS.test(match)) continue
         const esIdentificador = match.includes('_') || /[A-Z]/.test(match.slice(1))

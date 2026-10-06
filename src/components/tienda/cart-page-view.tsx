@@ -33,7 +33,7 @@ export function CartPageView({ whatsappNumber }: { whatsappNumber: string | null
         <EmptyState
           icon={<ShoppingBag className="size-10" strokeWidth={1.3} />}
           title={COPY.emptyCart}
-          description="Cuando encuentres una pieza que te guste, va a aparecer acá."
+          description={COPY.emptyCartHint}
           action={
             <Button asChild size="lg">
               <Link href="/tienda">{COPY.emptyCartAction}</Link>

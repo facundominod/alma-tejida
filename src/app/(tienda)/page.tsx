@@ -11,6 +11,7 @@ import {
   ThreadDivider,
 } from '@/components/ui/primitives'
 import { IMAGE_SIZES, storageUrl } from '@/lib/images'
+import { COPY } from '@/lib/labels'
 import {
   getFeaturedProducts,
   getLastUnitsProducts,
@@ -204,7 +205,7 @@ export default async function HomePage() {
       {novedades.length > 0 && (
         <section className="at-container pt-16 md:pt-24">
           <SectionHeading
-            overline="Recien salidas del telar"
+            overline="Recién salidas del telar"
             title="Novedades"
             action={
               <Button asChild variant="link" size="sm">
@@ -222,8 +223,8 @@ export default async function HomePage() {
       {!hasCatalog && (
         <section className="at-container pt-16">
           <EmptyState
-            title="Todavía no hay piezas publicadas"
-            description="En cuanto se carguen los primeros productos, van a aparecer acá."
+            title={COPY.catalogComingSoon}
+            description={COPY.catalogComingSoonHint}
             action={
               <Button asChild variant="secondary">
                 <Link href="/contacto">Escribinos</Link>

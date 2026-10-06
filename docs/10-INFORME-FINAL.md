@@ -228,6 +228,45 @@ una sola consulta a Supabase**, no mil. Es lo que hace viable el plan gratuito.
 Al publicar un producto, la Server Action invalida las rutas y la tienda se actualiza al
 instante, sin esperar el TTL y sin volver a desplegar.
 
+### El JavaScript que de verdad se descarga
+
+`npm run measure` pide cada página al servidor de producción, junta sus `<script>` y suma
+el tamaño **comprimido**. Medido el 2026-10-06:
+
+| Ruta | JS comprimido | Tope |
+|---|---|---|
+| `/` | 213,3 KB | 225 |
+| `/tienda` | 205,6 KB | 220 |
+| `/contacto` | 204,4 KB | 215 |
+| `/carrito` | 206,6 KB | 220 |
+
+**El diseño decía 110 KB. La primera medición dio 416.** El número estaba escrito sin
+medir y era inalcanzable: React DOM (70) + el router de Next (43) + el runtime de Server
+Actions (39) ya son ~151 KB antes de una sola línea propia.
+
+De 416 a 211 se bajó sacando tres cosas del paquete inicial:
+
+1. **Zod fuera del cliente** (−13 KB). `src/lib/env.ts` lo importaba, y ese módulo lo lee
+   todo el mundo: el validador viajaba a cada visita para comprobar dos variables.
+2. **Cliente de Supabase diferido con `import()`** (−66 KB). La tienda pública sólo lo
+   necesita para decidir si el icono dice "Ingresar" o "Mi cuenta". Eso puede llegar tarde.
+3. **Motion reemplazado por CSS en header, menú y carrito** (−50 KB). Vivían en el layout,
+   o sea en TODAS las páginas. `AnimatePresence` se reemplazó por `usePresence`, 50
+   líneas. Motion sigue sólo en la galería de la ficha, donde su costo queda en una ruta.
+
+El tope de ahora es la medición más ~5%, y el script falla si se pasa: sirve para detectar
+la próxima dependencia que se cuele en el cliente. Detalle completo en
+[`05-DESIGN-SYSTEM.md`](./05-DESIGN-SYSTEM.md#10-presupuesto-de-rendimiento-puntos-122-205).
+
+### Cuando la base no responde
+
+Toda consulta pública pasa por `safeQuery` (`src/lib/queries/safe.ts`), que corta a los
+2,5 s y devuelve vacío en lugar de propagar el error. Sin eso, con Supabase caído la
+tienda tardaba 14 s en contestar y `/pedido/[numero]` devolvía 500 en vez de 404.
+
+El catálogo además tiene `loading.tsx`: el header, el pie y el hilo que se dibuja aparecen
+de inmediato mientras la consulta viaja, en vez de dejar la página anterior congelada.
+
 ## 17. Móvil y escritorio
 
 Diseñado móvil primero. Hero de **62 vh, no pantalla completa**: el botón entra sin

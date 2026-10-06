@@ -138,7 +138,7 @@ export function ProductReviews({
           <EmptyState
             icon={<Star className="size-8" strokeWidth={1.3} />}
             title={COPY.emptyReviews}
-            description="Las reseñas las escriben quienes ya recibieron su pedido."
+            description={COPY.emptyReviewsHint}
             className="py-10"
           />
         )

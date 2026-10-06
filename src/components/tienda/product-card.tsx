@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'motion/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ImageOff } from 'lucide-react'
@@ -171,19 +170,16 @@ export function ProductGrid({
       )}
     >
       {products.map((product, index) => (
-        <motion.div
+        <div
           key={product.id}
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{
-            duration: 0.24,
-            ease: [0.22, 0.61, 0.36, 1],
-            delay: Math.min(index, 5) * 0.035,
-          }}
+          // El escalonado es `animation-delay`, sin JavaScript ni observador.
+          // Tope de 6: la séptima tarjeta entra junto con la sexta, así que
+          // con 40 productos nadie espera 40 x 35 ms.
+          className="at-rise"
+          style={{ animationDelay: `${Math.min(index, 5) * 35}ms` }}
         >
           <ProductCard product={product} priority={index < priorityCount} />
-        </motion.div>
+        </div>
       ))}
     </div>
   )

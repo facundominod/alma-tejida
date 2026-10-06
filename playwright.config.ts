@@ -53,7 +53,10 @@ export default defineConfig({
    * persona va a recibir de verdad.
    */
   webServer: {
-    command: 'npm run build && npm run start',
+    // Sólo `start`: el build lo hace el hook `pretest:e2e` de npm. Lanzarlo
+    // desde acá hacía que Playwright y el compilador compitieran por la
+    // memoria del proceso y el build moría a mitad de camino.
+    command: 'npm run start',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 300_000,

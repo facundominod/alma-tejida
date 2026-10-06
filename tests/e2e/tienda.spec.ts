@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { COPY } from '../../src/lib/labels'
 
 /**
  * La tienda, en un navegador de verdad.
@@ -6,6 +7,12 @@ import { test, expect, type Page } from '@playwright/test'
  * Estas pruebas NO necesitan base de datos: verifican la cáscara, la
  * navegación, los estados vacíos, el carrito y la accesibilidad. Corren en los
  * seis tamaños del punto 204.
+ *
+ * Los textos se importan de `COPY` en lugar de copiarse. Cuando se reescribió
+ * el tono de la tienda, estas pruebas seguían buscando las frases viejas: no
+ * fallaban por un error real, fallaban por estar desactualizadas, que es la
+ * peor clase de prueba. Ahora verifican que el mensaje que envía la aplicación
+ * es el que la persona ve, sin importar cómo esté redactado.
  */
 
 const esMovil = (page: Page) => (page.viewportSize()?.width ?? 0) < 768
@@ -50,14 +57,14 @@ test.describe('la tienda carga y se navega', () => {
   test('el catálogo vacío lo dice con claridad, sin hablar de filtros', async ({ page }) => {
     await page.goto('/tienda')
 
-    const vacio = page.getByText(/todavía no hay piezas publicadas/i)
+    const vacio = page.getByText(COPY.catalogComingSoon)
     const conProductos = page.locator('article').first()
 
     // Una de las dos: o hay piezas, o el mensaje correcto
     if ((await conProductos.count()) === 0) {
       await expect(vacio).toBeVisible()
       // El error que teníamos: hablar de un filtro que nadie aplicó
-      await expect(page.getByText(/con ese filtro/i)).toHaveCount(0)
+      await expect(page.getByText(COPY.emptyCatalog)).toHaveCount(0)
     }
   })
 
@@ -65,8 +72,8 @@ test.describe('la tienda carga y se navega', () => {
     const respuesta = await page.goto('/una-ruta-que-no-existe')
 
     expect(respuesta?.status()).toBe(404)
-    await expect(page.getByText(/se soltó del telar/i)).toBeVisible()
-    await expect(page.getByRole('link', { name: /volver al inicio/i })).toBeVisible()
+    await expect(page.getByText(COPY.notFound)).toBeVisible()
+    await expect(page.getByRole('link', { name: COPY.notFoundAction })).toBeVisible()
   })
 
   test('el pie muestra la marca y los enlaces de la tienda', async ({ page }) => {
@@ -123,8 +130,8 @@ test.describe('navegación según el tamaño', () => {
 test.describe('el carrito', () => {
   test('arranca vacío y lo dice sin frialdad', async ({ page }) => {
     await page.goto('/carrito')
-    await expect(page.getByText(/tu carrito todavía está vacío/i)).toBeVisible()
-    await expect(page.getByRole('link', { name: /ver productos/i })).toBeVisible()
+    await expect(page.getByText(COPY.emptyCart)).toBeVisible()
+    await expect(page.getByRole('link', { name: COPY.emptyCartAction })).toBeVisible()
   })
 
   test('SOBREVIVE A CERRAR EL NAVEGADOR (punto 72)', async ({ page, context }) => {
@@ -172,7 +179,7 @@ test.describe('el carrito', () => {
 
     await page.goto('/carrito')
     // Degrada a carrito vacío, no a pantalla de error
-    await expect(page.getByText(/tu carrito todavía está vacío/i)).toBeVisible()
+    await expect(page.getByText(COPY.emptyCart)).toBeVisible()
   })
 })
 

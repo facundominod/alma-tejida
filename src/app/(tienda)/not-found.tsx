@@ -25,7 +25,7 @@ export default async function TiendaNotFound() {
         <Overline>Error 404</Overline>
         <h1 className="text-display-lg">{COPY.notFound}</h1>
         <p className="text-ink-muted">
-          Puede que esa pieza ya no este publicada. Estas nos parecen lindas.
+          Puede que esa pieza ya no esté publicada. Estas nos parecen lindas.
         </p>
         <div className="flex flex-wrap justify-center gap-3 pt-1">
           <Button asChild>

@@ -4,6 +4,7 @@ import { Sparkles } from 'lucide-react'
 import { ProductGrid } from '@/components/tienda/product-card'
 import { Button } from '@/components/ui/button'
 import { EmptyState, Overline } from '@/components/ui/primitives'
+import { COPY } from '@/lib/labels'
 import { getNewProducts } from '@/lib/queries/catalog'
 
 export const metadata: Metadata = {
@@ -30,7 +31,8 @@ export default async function NovedadesPage() {
       ) : (
         <EmptyState
           icon={<Sparkles className="size-10" strokeWidth={1.3} />}
-          title="Todavía no hay piezas publicadas"
+          title={COPY.catalogComingSoon}
+          description={COPY.catalogComingSoonHint}
           action={
             <Button asChild variant="secondary">
               <Link href="/">Volver al inicio</Link>

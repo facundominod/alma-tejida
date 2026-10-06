@@ -66,9 +66,18 @@ npm run db:push
 Eso crea las 27 tablas, los índices, las políticas de RLS, las funciones y los tres
 buckets de Storage, en orden.
 
-**Si preferís no usar el CLI:** abrá el SQL Editor del panel de Supabase y pegá los
-archivos de `supabase/migrations/` **en orden numérico**, de `0001` a `0014`, ejecutando
-uno por uno.
+**Si preferís no usar el CLI** —no hace falta instalar nada, es un solo pegado—:
+
+```bash
+npm run sql:armar
+```
+
+Eso genera `supabase/migraciones-todo-junto.sql` con las 14 migraciones en orden. Abrí
+el **SQL Editor** del panel de Supabase (→ *New query*), pegá el archivo entero y dale
+**Run**. Tarda unos segundos y deja la base completa.
+
+Ese archivo se regenera, no se edita: cualquier cambio va en la migración que corresponda
+y después se vuelve a correr `npm run sql:armar`.
 
 ### Comprobar que salió bien
 
@@ -76,7 +85,7 @@ uno por uno.
 npm run test
 ```
 
-Las 64 pruebas levantan un PostgreSQL en memoria, aplican las mismas migraciones y
+Las 73 pruebas levantan un PostgreSQL en memoria, aplican las mismas migraciones y
 verifican RLS, precios, stock, pedidos y el editor de productos. Si pasan, el esquema
 está bien.
 

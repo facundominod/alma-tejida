@@ -29,9 +29,7 @@ export default function NotFound() {
 
         <div className="space-y-2">
           <p className="font-display text-3xl text-linen-900">{COPY.notFound}</p>
-          <p className="text-ink-muted">
-            Puede que la pieza ya no este publicada, o que el enlace tenga algo raro.
-          </p>
+          <p className="text-ink-muted">{COPY.notFoundHint}</p>
         </div>
 
         <div className="flex flex-wrap justify-center gap-3 pt-1">

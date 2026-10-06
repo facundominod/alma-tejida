@@ -1,6 +1,5 @@
 'use client'
 
-import { AnimatePresence, motion } from 'motion/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import * as React from 'react'
@@ -9,9 +8,10 @@ import { BrandWatermark } from '@/components/tienda/brand-mark'
 import { Button } from '@/components/ui/button'
 import { Price } from '@/components/ui/primitives'
 import { useCart } from '@/lib/cart/cart-store'
+import { usePresence } from '@/lib/ui/use-presence'
 import { IMAGE_SIZES } from '@/lib/images'
 import { COPY } from '@/lib/labels'
-import { formatPrice } from '@/lib/utils'
+import { cn, formatPrice } from '@/lib/utils'
 
 /**
  * Carrito lateral.
@@ -22,6 +22,7 @@ import { formatPrice } from '@/lib/utils'
  */
 export function CartSheet() {
   const cart = useCart()
+  const { montado, visible } = usePresence(cart.isOpen, 360)
 
   React.useEffect(() => {
     if (!cart.isOpen) return
@@ -36,16 +37,16 @@ export function CartSheet() {
     }
   }, [cart])
 
+  if (!montado) return null
+
   return (
-    <AnimatePresence>
-      {cart.isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50"
-        >
+    <div className="fixed inset-0 z-50">
+      <div
+        className={cn(
+          'absolute inset-0 transition-opacity duration-[var(--at-dur-base)]',
+          visible ? 'opacity-100' : 'opacity-0',
+        )}
+      >
           <button
             type="button"
             className="absolute inset-0 bg-linen-900/30 backdrop-blur-[2px]"
@@ -54,12 +55,15 @@ export function CartSheet() {
             tabIndex={-1}
           />
 
-          <motion.aside
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ duration: 0.36, ease: [0.34, 1.26, 0.64, 1] }}
-            className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-background shadow-overlay"
+          <aside
+            className={cn(
+              'absolute inset-y-0 right-0 flex w-full max-w-md flex-col',
+              'bg-background shadow-overlay',
+              // 360ms con rebote minimo, igual que antes, pero en CSS
+              'transition-transform duration-[360ms] ease-[var(--ease-soft-alma)]',
+              'motion-reduce:transition-none',
+              visible ? 'translate-x-0' : 'translate-x-full',
+            )}
             role="dialog"
             aria-modal="true"
             aria-label="Carrito de compras"
@@ -185,10 +189,9 @@ export function CartSheet() {
                 </footer>
               </>
             )}
-          </motion.aside>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </aside>
+      </div>
+    </div>
   )
 }
 
@@ -199,9 +202,7 @@ function EmptyCart({ onClose }: { onClose: () => void }) {
       <ShoppingBag className="size-10 text-linen-300" strokeWidth={1.3} />
       <div className="space-y-1">
         <p className="font-display text-xl">{COPY.emptyCart}</p>
-        <p className="text-sm text-ink-muted">
-          Cuando encuentres una pieza que te guste, va a aparecer acá.
-        </p>
+        <p className="text-sm text-ink-muted">{COPY.emptyCartHint}</p>
       </div>
       <Button asChild variant="secondary">
         <Link href="/tienda" onClick={onClose}>

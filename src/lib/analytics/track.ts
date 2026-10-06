@@ -50,15 +50,15 @@ export async function trackEvent(
 ): Promise<void> {
   if (typeof window === 'undefined') return
 
-  const sessión = sessionId()
-  if (!sessión) return
+  const session = sessionId()
+  if (!session) return
 
   // Misma clave en la misma vista: no hace falta molestar al servidor
   const key = [event, payload.productId, payload.variantId, payload.mediaId].join(':')
   if (sentThisPage.has(key)) return
   sentThisPage.add(key)
 
-  const body = JSON.stringify({ event, sessión, ...payload })
+  const body = JSON.stringify({ event, session, ...payload })
 
   try {
     // sendBeacon sobrevive a que la persona se vaya de la página y no

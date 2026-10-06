@@ -21,7 +21,10 @@
     "backup:media": "node scripts/backup-media.mjs",
     "test:concurrency": "vitest run tests/db/concurrency.test.ts",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "measure": "node scripts/medir-bundle.mjs",
+    "pretest:e2e": "next build",
+    "sql:armar": "node scripts/armar-sql.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

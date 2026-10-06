@@ -7,6 +7,7 @@ import { ProductGrid } from '@/components/tienda/product-card'
 import { Button } from '@/components/ui/button'
 import { EmptyState, Overline } from '@/components/ui/primitives'
 import { IMAGE_SIZES, storageUrl } from '@/lib/images'
+import { COPY } from '@/lib/labels'
 import { getCatalog } from '@/lib/queries/catalog'
 import { getCategories, getCategoryBySlug } from '@/lib/queries/store'
 
@@ -86,8 +87,8 @@ export default async function CategoriaPage({ params }: PageProps<'/categoria/[s
       ) : (
         <EmptyState
           icon={<PackageSearch className="size-10" strokeWidth={1.3} />}
-          title="Todavía no hay piezas en esta categoría"
-          description="Estamos tejiendo. Mientras tanto, mirá el resto del catálogo."
+          title={COPY.emptyCategory}
+          description={COPY.emptyCategoryHint}
           action={
             <Button asChild variant="secondary">
               <Link href="/tienda">Ver toda la tienda</Link>

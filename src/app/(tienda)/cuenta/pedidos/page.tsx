@@ -18,7 +18,7 @@ export default async function MisPedidosPage() {
       <EmptyState
         icon={<Package className="size-10" strokeWidth={1.3} />}
         title={COPY.emptyOrders}
-        description="Cuando hagas uno, va a aparecer acá con su estado al día."
+        description={COPY.emptyOrdersHint}
         action={
           <Button asChild>
             <Link href="/tienda">Ver la tienda</Link>

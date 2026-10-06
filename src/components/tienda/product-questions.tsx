@@ -139,7 +139,7 @@ export function ProductQuestions({
           <EmptyState
             icon={<MessageCircleQuestion className="size-8" strokeWidth={1.3} />}
             title={COPY.emptyQuestions}
-            description="Si tenés una duda, preguntanos: nos ayuda a describir mejor las piezas."
+            description={COPY.emptyQuestionsHint}
             className="py-10"
           />
         )
