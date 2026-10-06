@@ -136,7 +136,10 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   const parsed = z
     .object({
       username: usernameSchema,
-      email: emailSchema,
+      // Opcional a pedido de la dueña de la tienda. El costo está escrito
+      // donde corresponde: en el formulario, antes de decidir, y abajo en
+      // CORREO_INVENTADO.
+      email: emailSchema.optional(),
       password: passwordSchema,
       fullName: z.string().trim().min(2, 'Necesitamos tu nombre.').max(120),
       phone: z.string().trim().max(40).optional(),
@@ -144,7 +147,7 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
     })
     .safeParse({
       username: formData.get('username'),
-      email: formData.get('email'),
+      email: formData.get('email') || undefined,
       password: formData.get('password'),
       fullName: formData.get('fullName'),
       phone: formData.get('phone') || undefined,
@@ -164,6 +167,7 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
     p_username: parsed.data.username,
   })
 
+
   if (libre === false) {
     return { ok: false, error: 'Ese nombre de usuario ya está tomado. Probá con otro.' }
   }
@@ -171,7 +175,7 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   const supabase = await createClient()
 
   const { data: allowed } = await supabase.rpc('check_rate_limit', {
-    p_key: `signup:${parsed.data.email}`,
+    p_key: `signup:${parsed.data.email ?? parsed.data.username.toLowerCase()}`,
     p_max: 3,
     p_window_seconds: 3600,
   })
@@ -180,29 +184,74 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
     return { ok: false, error: 'Demasiados intentos. Probá de nuevo en un rato.' }
   }
 
-  const { error } = await supabase.auth.signUp({
-    email: parsed.data.email,
-    password: parsed.data.password,
-    options: {
-      emailRedirectTo: `${siteUrl}/auth/confirmar`,
-      // Estos metadatos los lee handle_new_user() para armar el profile.
-      // El rol NO viaja acá: lo fija la base.
-      data: {
-        full_name: parsed.data.fullName,
-        phone: parsed.data.phone ?? '',
-        username: parsed.data.username,
-      },
-    },
+  // Supabase necesita SIEMPRE un correo: es su identificador interno. Cuando
+  // la persona no da uno, se le inventa uno que no puede existir —`.invalid`
+  // está reservado por el RFC 2606 justamente para esto, ningún servidor del
+  // mundo lo entrega— y la cuenta se crea ya confirmada, porque no hay a
+  // dónde mandar la confirmación.
+  //
+  // Lo que se pierde es recuperar la contraseña sola. Queda el camino de
+  // `npm run clave -- usuario`, que corre quien tiene la base.
+  const correoReal = parsed.data.email
+  const correo = correoReal ?? `${parsed.data.username.toLowerCase()}@sin-correo.invalid`
+
+  const metadatos = {
+    full_name: parsed.data.fullName,
+    phone: parsed.data.phone ?? '',
+    username: parsed.data.username,
+  }
+
+  const yaExiste = () => ({
+    ok: false as const,
+    error: correoReal
+      ? 'Ya existe una cuenta con ese correo. Probá iniciar sesión.'
+      : 'Ese nombre de usuario ya está tomado. Probá con otro.',
   })
 
-  if (error) {
-    if (error.message.toLowerCase().includes('already registered')) {
+  if (correoReal) {
+    const { error } = await supabase.auth.signUp({
+      email: correoReal,
+      password: parsed.data.password,
+      options: {
+        emailRedirectTo: `${siteUrl}/auth/confirmar`,
+        // Estos metadatos los lee handle_new_user() para armar el profile.
+        // El rol NO viaja acá: lo fija la base.
+        data: metadatos,
+      },
+    })
+
+    if (error) {
+      if (error.message.toLowerCase().includes('already registered')) return yaExiste()
+      return { ok: false, error: 'No pudimos crear la cuenta. Intentá de nuevo.' }
+    }
+  } else {
+    // Sin correo no sirve `signUp`: intentaría mandar una confirmación a una
+    // dirección inexistente y la cuenta quedaría sin confirmar para siempre.
+    // Se crea con la clave de servicio, ya confirmada, y se inicia sesión.
+    const admin = createAdminClient()
+    const { error } = await admin.auth.admin.createUser({
+      email: correo,
+      password: parsed.data.password,
+      email_confirm: true,
+      user_metadata: metadatos,
+    })
+
+    if (error) {
+      if (/already|registered|exists/i.test(error.message)) return yaExiste()
+      return { ok: false, error: 'No pudimos crear la cuenta. Intentá de nuevo.' }
+    }
+
+    const { error: errorSesion } = await supabase.auth.signInWithPassword({
+      email: correo,
+      password: parsed.data.password,
+    })
+
+    if (errorSesion) {
       return {
         ok: false,
-        error: 'Ya existe una cuenta con ese correo. Probá iniciar sesión.',
+        error: 'La cuenta se creó, pero no pudimos entrar. Probá desde Ingresar.',
       }
     }
-    return { ok: false, error: 'No pudimos crear la cuenta. Intentá de nuevo.' }
   }
 
   // Si hay consentimiento explicito, se guarda. Por defecto es false.
@@ -221,7 +270,9 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   revalidatePath('/', 'layout')
   return {
     ok: true,
-    message: 'Te mandamos un correo para confirmar tu cuenta.',
+    message: correoReal
+      ? 'Te mandamos un correo para confirmar tu cuenta.'
+      : 'Listo, ya estás adentro.',
   }
 }
 

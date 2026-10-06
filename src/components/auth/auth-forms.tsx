@@ -232,8 +232,7 @@ export function SignUpForm() {
 
         <Field
           label="Correo"
-          required
-          hint="No hace falta para entrar. Es la única forma de recuperar la cuenta si olvidás la contraseña."
+          hint="Opcional. Si no ponés ninguno, nadie va a poder recuperar tu contraseña si la olvidás."
         >
           {(props) => (
             <Input

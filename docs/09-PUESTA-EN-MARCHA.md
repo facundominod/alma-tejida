@@ -206,8 +206,24 @@ apunta a producción (punto 195).
 ### 8.1 Elegir dónde
 
 Leé [`07-LIMITES-PLAN-GRATUITO.md`](./07-LIMITES-PLAN-GRATUITO.md) antes de decidir.
-Resumen: **Vercel Hobby prohíbe el uso comercial**; Netlify Free y Cloudflare Workers Free
-no.
+Resumen: **Vercel Hobby prohíbe el uso comercial** —"advertising the sale of a product or
+service", que es exactamente esto—; Netlify Free y Cloudflare Workers Free no.
+
+El proyecto viene preparado para **Netlify**: `netlify.toml` y las dos funciones
+programadas de `netlify/functions/`.
+
+```bash
+npx netlify login      # abre el navegador, autorizas con tu cuenta
+npx netlify init       # crea el sitio y lo vincula a esta carpeta
+npx netlify deploy --build --prod
+```
+
+El primero abre el navegador para que autorices. Los otros dos no piden nada.
+
+> Después del primer despliegue, volvé a correr `netlify deploy --build --prod` con
+> `NEXT_PUBLIC_SITE_URL` ya apuntando a la dirección real: esa variable se mete en el
+> paquete al compilar, así que un build hecho con `localhost` deja los enlaces de los
+> correos y los metadatos para compartir apuntando a tu máquina.
 
 ### 8.2 Variables en el hosting
 
@@ -228,15 +244,24 @@ Sin esto, los enlaces de confirmación llevan a `localhost`.
 
 ### 8.4 Tareas programadas
 
-`vercel.json` ya declara las dos:
+Dos, y las dos están declaradas para los dos hostings:
 
 | Tarea | Cuándo | Para qué |
 |---|---|---|
 | `/api/cron/limpieza` | 04:00 | Purga analíticas viejas y carritos abandonados |
 | `/api/cron/ping` | 11:00 | Evita que Supabase pause el proyecto por inactividad |
 
-En Netlify o Cloudflare se declaran distinto (funciones programadas). Es un archivo, no
-código.
+- **Vercel** las lee de `vercel.json`.
+- **Netlify** no lee ese archivo: el equivalente son `netlify/functions/cron-ping.mts` y
+  `cron-limpieza.mts`, cada una con su horario adentro. No duplican lógica —llaman a las
+  mismas rutas de Next— porque son despertadores, no tareas.
+
+Las dos rutas exigen `CRON_SECRET` en la cabecera y devuelven 404 sin él: nadie las
+dispara desde internet.
+
+**El ping no es opcional.** Un proyecto gratuito de Supabase se pausa tras varios días
+sin actividad. Si se pausa, la tienda deja de responder hasta que alguien entre al panel
+a despertarla.
 
 ### 8.5 Repetir el paso 4
 

@@ -1,0 +1,48 @@
+# =============================================================================
+# Alma Tejida en Netlify
+#
+# Por qué Netlify y no Vercel, que sería lo natural para Next: el plan Hobby
+# de Vercel prohíbe el uso comercial —"advertising the sale of a product or
+# service"— y esto es una tienda. El plan gratuito de Netlify no tiene esa
+# cláusula. Está documentado en docs/07-LIMITES-PLAN-GRATUITO.md.
+# =============================================================================
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+# El runtime de Next para Netlify: traduce las rutas dinámicas, las Server
+# Actions y la optimización de imágenes a funciones de Netlify.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# -----------------------------------------------------------------------------
+# Tareas programadas
+#
+# `vercel.json` declara dos crons que Netlify NO lee. El equivalente son dos
+# funciones en netlify/functions/, cada una con su horario adentro:
+#
+#   cron-limpieza  borra datos viejos (analíticas, límites de intentos)
+#   cron-ping      una consulta diaria para que el proyecto gratuito de
+#                  Supabase no se pause por inactividad. Si se pausa, la
+#                  tienda se cae.
+#
+# Ninguna de las dos hace el trabajo: llaman a las rutas de Next que lo hacen,
+# con CRON_SECRET en la cabecera. La lógica vive en un solo lugar y las rutas
+# devuelven 404 sin ese secreto, así que nadie las dispara desde internet.
+# -----------------------------------------------------------------------------
+
+# Las zonas privadas no se indexan nunca (punto 206). Los encabezados de
+# seguridad los pone next.config.ts; estos son los que Netlify necesita ver.
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/cuenta/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
