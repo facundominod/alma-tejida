@@ -55,3 +55,6 @@ respaldos/
 # Generado por scripts/armar-sql.mjs. Se arma cuando se necesita; versionarlo
 # sería solo una copia de supabase/migrations/ lista para quedar desfasada.
 supabase/migraciones-todo-junto.sql
+
+# Local Netlify folder
+.netlify

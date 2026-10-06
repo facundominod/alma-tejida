@@ -5,7 +5,7 @@
   "scripts": {
     "admin": "node scripts/designar-admin.mjs",
     "backup:media": "node scripts/backup-media.mjs",
-    "build": "next build",
+    "build": "next build --webpack && node scripts/desenlazar-sharp.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
     "clave": "node scripts/cambiar-clave.mjs",
     "db:aplicar": "node scripts/aplicar-migraciones.mjs",

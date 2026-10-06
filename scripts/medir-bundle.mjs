@@ -21,14 +21,19 @@ import { gzipSync } from 'node:zlib'
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000'
 
-// Tope por página, en KB comprimidos. Medido 2026-10-06 y redondeado hacia
-// arriba con ~5% de margen: lo justo para que un cambio de versión de Next no
-// rompa el build, y poco para que una librería nueva sí lo rompa.
+// Tope por página, en KB comprimidos: la medición más ~5%. Lo justo para que
+// un cambio de versión de Next no rompa el build, y poco para que una
+// librería nueva sí lo rompa.
+//
+// Medido 2026-10-06 sobre el build de WEBPACK, que es el que se despliega
+// (ver netlify.toml). Turbopack daba unos 14 KB menos en algunas páginas,
+// pero ese paquete no llega a nadie: medirlo sería medir algo que no existe
+// en producción.
 const PRESUPUESTO = {
-  '/': 225,        // medido 211,4
-  '/tienda': 220,  // medido 204,4
-  '/contacto': 215, // medido 202,4
-  '/carrito': 220, // medido 204,6
+  '/': 231,         // medido 219,7
+  '/tienda': 209,   // medido 198,8
+  '/contacto': 231, // medido 219,7
+  '/carrito': 236,  // medido 224,0
 }
 
 async function medir(ruta) {

@@ -29,11 +29,41 @@ const esMovil = (page: Page) => (page.viewportSize()?.width ?? 0) < 768
  * Corriendo de a una prueba no se nota; con seis navegadores a la vez contra
  * una base en Brasil, sí. Falló una sola vez, en tablet, y era esto.
  *
- * El indicador de espera es el único `role="status"` de la página.
+ * Se espera al RESULTADO, no a un indicio de él. El primer intento esperaba a
+ * que desapareciera el indicador de carga, y era peor que inútil: si todavía
+ * no empezó a llegar nada, tampoco está el indicador, así que la condición se
+ * cumplía de inmediato y la prueba seguía midiendo una página vacía.
+ *
+ * El buscador sí sirve: vive dentro del contenido de la página y está siempre,
+ * haya piezas o no. Si se ve, llegó todo.
  */
 async function irAlCatalogo(page: Page) {
   await page.goto('/tienda')
-  await expect(page.getByRole('status')).toHaveCount(0, { timeout: 20_000 })
+  await expect(
+    page.getByRole('searchbox', { name: /buscar en la tienda/i }),
+  ).toBeVisible({ timeout: 20_000 })
+
+  return contenidoDe(page)
+}
+
+/**
+ * El contenido de la página, sin lo que Next deja tirado.
+ *
+ * Cuando una ruta llega por streaming, Next arma el contenido en un
+ * `<div hidden>` al final del documento y después lo mueve a su lugar —pero
+ * **no borra el div**. Queda una copia completa, invisible para cualquier
+ * persona y perfectamente visible para `getByText`, que no filtra por
+ * visibilidad. La prueba fallaba con "resolved to 2 elements" y pareció dos
+ * veces una carrera que no era.
+ *
+ * `getByRole` no sufre esto porque el árbol de accesibilidad ignora lo que
+ * está dentro de `[hidden]`; por eso la prueba del h1 nunca falló.
+ *
+ * `#contenido` es el destino del enlace "saltar al contenido": el lugar donde
+ * está lo que la persona lee de verdad.
+ */
+function contenidoDe(page: Page) {
+  return page.locator('#contenido')
 }
 
 test.describe('la tienda carga y se navega', () => {
@@ -74,16 +104,16 @@ test.describe('la tienda carga y se navega', () => {
   })
 
   test('el catálogo vacío lo dice con claridad, sin hablar de filtros', async ({ page }) => {
-    await irAlCatalogo(page)
+    const contenido = await irAlCatalogo(page)
 
-    const vacio = page.getByText(COPY.catalogComingSoon)
-    const conProductos = page.locator('article').first()
+    const vacio = contenido.getByText(COPY.catalogComingSoon)
+    const conProductos = contenido.locator('article').first()
 
     // Una de las dos: o hay piezas, o el mensaje correcto
     if ((await conProductos.count()) === 0) {
       await expect(vacio).toBeVisible()
       // El error que teníamos: hablar de un filtro que nadie aplicó
-      await expect(page.getByText(COPY.emptyCatalog)).toHaveCount(0)
+      await expect(contenido.getByText(COPY.emptyCatalog)).toHaveCount(0)
     }
   })
 

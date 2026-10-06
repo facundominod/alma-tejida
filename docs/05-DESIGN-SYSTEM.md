@@ -374,7 +374,7 @@ no en la cantidad de metáforas textiles.
 | LCP | < 2,0 s en 4G | Imagen del hero con `priority`, HTML cacheado en el edge |
 | CLS | < 0,05 | `width`/`height` en toda imagen, fuentes con `size-adjust`, sin banners que empujen |
 | INP | < 150 ms | Poco JS en la tienda, animaciones en el compositor |
-| JS de la home | **≤ 225 KB** comprimido | Server Components, Recharts sólo en admin, Motion sólo en la galería |
+| JS de la home | **≤ 231 KB** comprimido | Server Components, Recharts sólo en admin, Motion sólo en la galería |
 | Fuentes | 2 familias variables, subset latino | ~38 KB en total |
 
 ### Por qué 225 y no 110
@@ -406,7 +406,20 @@ De 416 a 211 se bajó sacando tres cosas del bundle inicial, todas medidas:
    líneas. Motion sigue en la galería de la ficha de producto: ahí su valor es alto y el
    costo queda en una sola ruta.
 
-El tope de 225 es la medición (211) más ~5%. `npm run measure` lo verifica contra el
+### El empaquetador cambió el número
+
+La primera medición (211 KB en la home) era con **Turbopack**, que es el que Next 16 usa
+por defecto. Pero el despliegue a Netlify **no puede usar Turbopack**: parte el middleware
+en trozos que el empaquetador de funciones de borde no sabe juntar. Con webpack, la misma
+home son **219,7 KB**: unos 14 KB más en algunas páginas, porque divide el código en más
+archivos y con menos filo.
+
+Se compila con webpack **en todos lados**, no sólo al desplegar. Tener dos empaquetadores
+significaría que las 138 pruebas de navegador corren sobre un artefacto distinto del que
+recibe la gente, y que este presupuesto mediría un paquete que no existe en producción.
+Cuesta 22 segundos más por build.
+
+El tope es la medición más ~5%. `npm run measure` lo verifica contra el
 servidor de producción y falla si se pasa; sirve para detectar la próxima dependencia que
 se cuele en el cliente, que es lo único que queda bajo nuestro control.
 

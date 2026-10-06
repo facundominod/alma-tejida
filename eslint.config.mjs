@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Lo que deja el CLI de Netlify al compilar: el paquete de la funcion del
+    // servidor, con Next entero adentro. Son miles de archivos generados; sin
+    // esta linea `npm run lint` tarda un minuto y devuelve mil errores que no
+    // son de nadie.
+    ".netlify/**",
   ]),
 ]);
 

@@ -8,6 +8,15 @@
 # =============================================================================
 
 [build]
+  # `npm run build` compila con webpack a propósito, no con Turbopack.
+  #
+  # Next 16 usa Turbopack por defecto y parte el middleware en trozos que el
+  # empaquetador de funciones de borde de Netlify no sabe juntar: el
+  # despliegue muere con "Cannot find module './chunks/[turbopack]_runtime.js'".
+  #
+  # Se podría compilar con webpack sólo acá y dejar Turbopack para el resto,
+  # pero entonces lo que prueban las 138 pruebas de navegador no sería lo que
+  # sale a producción. Son 22 segundos más por build; el artefacto es uno solo.
   command = "npm run build"
   publish = ".next"
 
