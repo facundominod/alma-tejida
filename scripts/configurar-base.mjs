@@ -205,9 +205,13 @@ for (const camino of CAMINOS) {
       process.exit(1)
     }
 
+    // El orden importa: cuando el pooler no conoce el proyecto contesta
+    // "(ENOTFOUND) tenant/user ...", que lleva adentro la palabra ENOTFOUND
+    // sin ser un problema de DNS. Mirar el nombre del host primero diría "no
+    // existe" sobre un host que existe perfectamente.
     if (/timeout/i.test(motivo)) console.log('·  no responde (sin IPv6, probablemente)')
-    else if (/ENOTFOUND/i.test(motivo)) console.log('·  no existe')
-    else if (/Tenant or user not found/i.test(motivo)) console.log('·  otra región')
+    else if (/tenant/i.test(motivo)) console.log('·  otra región')
+    else if (/ENOTFOUND|EAI_AGAIN/i.test(motivo)) console.log('·  no existe')
     else console.log(`·  ${motivo.split(intento).join('[CONEXION]')}`)
   }
 }
