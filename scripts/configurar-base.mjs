@@ -66,6 +66,27 @@ function leerVariable(contenido, nombre) {
 // Hace falta una terminal de verdad: la contraseña se escribe a mano y el eco
 // se apaga sobre el TTY. Corrido sin terminal —desde una tarea automática, o
 // desde un botón que no abre consola— no hay dónde escribirla.
+/**
+ * Escribe UNA variable en .env.local sin pisar el resto.
+ *
+ * Relee el archivo justo antes de escribir, a propósito. Este script se queda
+ * esperando que alguien pegue algo, y esa espera puede durar minutos: si en el
+ * medio el archivo cambia —otra terminal, un editor abierto, alguien ayudando
+ * desde el otro lado— guardar la copia leída al arrancar borra ese cambio sin
+ * avisar.
+ *
+ * Pasó: mientras este script esperaba una contraseña, se agregó la anon key
+ * desde afuera, y al terminar la dejó en blanco.
+ */
+function guardarVariable(nombre, valor) {
+  const actual = readFileSync(ARCHIVO, 'utf8')
+  const lineas = actual.split('\n')
+  const i = lineas.findIndex((l) => l.startsWith(`${nombre}=`))
+  if (i === -1) lineas.push(`${nombre}=${valor}`)
+  else lineas[i] = `${nombre}=${valor}`
+  writeFileSync(ARCHIVO, lineas.join('\n'), 'utf8')
+}
+
 /** Lo mismo pero mostrando lo que se escribe: un host no es un secreto. */
 function preguntar(texto) {
   return new Promise((resolve) => {
@@ -272,14 +293,7 @@ if (!cadena) {
 }
 
 // Recién ahora se escribe, con la conexión ya comprobada.
-const lineas = env.split('\n')
-const i = lineas.findIndex((l) => l.startsWith('SUPABASE_DB_URL='))
-if (i === -1) {
-  lineas.push(`SUPABASE_DB_URL=${cadena}`)
-} else {
-  lineas[i] = `SUPABASE_DB_URL=${cadena}`
-}
-writeFileSync(ARCHIVO, lineas.join('\n'), 'utf8')
+guardarVariable('SUPABASE_DB_URL', cadena)
 console.log(`  Guardado en ${ARCHIVO}.\n`)
 
 console.log('  Creando la base...\n')

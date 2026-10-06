@@ -128,7 +128,12 @@ if (ref && datos.ref !== ref) {
 
 /* --- Guardar ------------------------------------------------------------ */
 
-const lineas = env.split('\n')
+// Se relee el archivo justo antes de escribir: entre el arranque de este
+// script y este momento hubo una espera humana, y lo que haya cambiado en el
+// medio no se puede pisar con la copia vieja. Ya pasó una vez: borró la anon
+// key que se había agregado mientras esto esperaba.
+const actual = readFileSync(ARCHIVO, 'utf8')
+const lineas = actual.split('\n')
 const i = lineas.findIndex((l) => l.startsWith('SUPABASE_SERVICE_ROLE_KEY='))
 if (i === -1) lineas.push(`SUPABASE_SERVICE_ROLE_KEY=${clave}`)
 else lineas[i] = `SUPABASE_SERVICE_ROLE_KEY=${clave}`
