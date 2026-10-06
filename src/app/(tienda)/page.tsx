@@ -1,17 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Hand, Heart, Package } from 'lucide-react'
+import { FrasesQueGiran } from '@/components/tienda/frases-que-giran'
 import { ProductGrid } from '@/components/tienda/product-card'
 import { PromoCarousel } from '@/components/tienda/promo-carousel'
 import { Button } from '@/components/ui/button'
-import {
-  EmptyState,
-  Overline,
-  SectionHeading,
-  ThreadDivider,
-} from '@/components/ui/primitives'
+import { EmptyState, SectionHeading, ThreadDivider } from '@/components/ui/primitives'
 import { IMAGE_SIZES, storageUrl } from '@/lib/images'
-import { COPY } from '@/lib/labels'
+import { COPY, PORTADA } from '@/lib/labels'
 import {
   getFeaturedProducts,
   getLastUnitsProducts,
@@ -51,21 +47,24 @@ export default async function HomePage() {
             <div className="relative grid min-h-[62vh] md:min-h-[520px] md:grid-cols-2">
               {/* Texto */}
               <div className="relative z-10 flex flex-col justify-center gap-5 px-6 py-12 md:px-12 md:py-16">
-                <Overline className="text-clay-600">{settings.tagline}</Overline>
+                {/* La frase de la tienda primero, después las de la casa. */}
+                <FrasesQueGiran
+                  frases={[settings.tagline, ...PORTADA.frases].filter(Boolean)}
+                  className="text-clay-600"
+                />
 
                 <h1 className="text-display-xl max-w-[16ch] text-clay-900">
-                  {hero.title ?? 'Piezas tejidas a mano, una por una.'}
+                  {hero.title ?? PORTADA.titulo}
                 </h1>
 
                 <p className="max-w-md text-[1.0625rem] leading-relaxed text-clay-800/85">
-                  {hero.subtitle ??
-                    'Mantas, almohadones y decoración que se hacen despacio, con lana de verdad y tiempo de verdad.'}
+                  {hero.subtitle ?? PORTADA.subtitulo}
                 </p>
 
                 <div className="flex flex-wrap gap-3 pt-1">
                   <Button asChild size="lg">
                     <Link href={hero.cta_href ?? '/tienda'}>
-                      {hero.cta_label ?? 'Ver productos'}
+                      {hero.cta_label ?? PORTADA.boton}
                       <ArrowRight />
                     </Link>
                   </Button>

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { COPY } from '../../src/lib/labels'
+import { COPY, PORTADA } from '../../src/lib/labels'
 
 /**
  * La tienda, en un navegador de verdad.
@@ -74,7 +74,7 @@ test.describe('la tienda carga y se navega', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 
     // El CTA tiene que estar, y tiene que llevar a la tienda
-    const cta = page.getByRole('link', { name: /ver productos/i }).first()
+    const cta = page.getByRole('link', { name: PORTADA.boton }).first()
     await expect(cta).toBeVisible()
     await cta.click()
     await expect(page).toHaveURL(/\/tienda/)
@@ -83,7 +83,7 @@ test.describe('la tienda carga y se navega', () => {
   test('EL BOTÓN PRINCIPAL SE VE SIN SCROLLEAR (punto 125)', async ({ page }) => {
     await page.goto('/')
 
-    const cta = page.getByRole('link', { name: /ver productos/i }).first()
+    const cta = page.getByRole('link', { name: PORTADA.boton }).first()
     const caja = await cta.boundingBox()
     const alto = page.viewportSize()?.height ?? 0
 
@@ -115,6 +115,43 @@ test.describe('la tienda carga y se navega', () => {
       // El error que teníamos: hablar de un filtro que nadie aplicó
       await expect(contenido.getByText(COPY.emptyCatalog)).toHaveCount(0)
     }
+  })
+
+  test('las frases de la portada se van turnando', async ({ page }) => {
+    await page.goto('/')
+
+    const activa = page.locator('[data-frase][data-activa="true"]')
+    await expect(activa).toHaveCount(1)
+    const primera = await activa.textContent()
+
+    // Cambian cada 3,8 s. Se espera a que sea OTRA, sin fijar cuánto tarda:
+    // una prueba que diga "a los 4 segundos exactos" falla el día que la
+    // máquina esté ocupada, y eso no es un error de la tienda.
+    await expect
+      .poll(async () => activa.textContent(), { timeout: 15_000 })
+      .not.toBe(primera)
+
+    // Y sigue habiendo UNA sola activa: no se quedan dos encendidas.
+    await expect(activa).toHaveCount(1)
+  })
+
+  test('el título de la portada no se mueve cuando cambia la frase', async ({ page }) => {
+    await page.goto('/')
+
+    const titulo = page.getByRole('heading', { level: 1 })
+    const antes = await titulo.boundingBox()
+
+    const activa = page.locator('[data-frase][data-activa="true"]')
+    const primera = await activa.textContent()
+    await expect
+      .poll(async () => activa.textContent(), { timeout: 15_000 })
+      .not.toBe(primera)
+
+    const despues = await titulo.boundingBox()
+
+    // Las frases van apiladas en la misma celda justamente para esto. Si una
+    // reemplazara a la otra, el título saltaría cada 3,8 segundos.
+    expect(Math.abs((despues?.y ?? 0) - (antes?.y ?? 0))).toBeLessThan(1)
   })
 
   test('la página 404 es de Alma Tejida y ofrece una salida', async ({ page }) => {

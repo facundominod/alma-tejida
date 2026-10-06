@@ -14,7 +14,7 @@ import type { Config } from '@netlify/functions'
  * El secreto viaja en la cabecera: la ruta devuelve 404 sin él, así que nadie
  * puede dispararla desde internet.
  */
-export default async () => {
+const despertarLaBase = async () => {
   const base = process.env.URL
   const secret = process.env.CRON_SECRET
 
@@ -31,6 +31,8 @@ export default async () => {
   console.log(`[cron-ping] ${respuesta.status}`)
   return new Response(null, { status: respuesta.ok ? 200 : 500 })
 }
+
+export default despertarLaBase
 
 export const config: Config = {
   schedule: '0 11 * * *',

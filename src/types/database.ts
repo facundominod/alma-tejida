@@ -478,6 +478,16 @@ export type CatalogProduct = {
   cover_thumb: string | null
   cover_blur: string | null
   cover_alt: string | null
+  /** Las primeras 3 fotos, portada incluida. Nulo si la pieza no tiene ninguna. */
+  gallery: ProductThumb[] | null
+}
+
+/** Una foto de la galeria corta que trae el catalogo (migracion 0016). */
+export type ProductThumb = {
+  path: string | null
+  thumb: string | null
+  blur: string | null
+  alt: string | null
 }
 
 export type VariantView = {

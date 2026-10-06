@@ -1,13 +1,15 @@
 'use client'
 
 import Image from 'next/image'
+import type * as React from 'react'
 import Link from 'next/link'
 import { ImageOff } from 'lucide-react'
 import { Badge, Price, StarRating } from '@/components/ui/primitives'
-import { blurProps, coverUrl, IMAGE_SIZES } from '@/lib/images'
+import { blurProps, IMAGE_SIZES, storageUrl } from '@/lib/images'
 import { availabilityView } from '@/lib/labels'
+import { useRotacion } from '@/lib/ui/use-rotacion'
 import { cn, isNew } from '@/lib/utils'
-import type { CatalogProduct } from '@/types/database'
+import type { CatalogProduct, ProductThumb } from '@/types/database'
 
 /**
  * Tarjeta del catálogo.
@@ -19,15 +21,17 @@ export function ProductCard({
   product,
   priority = false,
   sizes = IMAGE_SIZES.card,
+  /** Desfase del giro de fotos, para que la grilla no cambie toda junta. */
+  turno = 0,
   className,
 }: {
   product: CatalogProduct
   /** true solo en las primeras imágenes visibles sin scrollear */
   priority?: boolean
   sizes?: string
+  turno?: number
   className?: string
 }) {
-  const image = coverUrl(product)
   const availability = availabilityView({
     mode: product.availability_mode,
     display: product.stock_display,
@@ -49,28 +53,13 @@ export function ProductCard({
   return (
     <article className={cn('group', className)}>
       <Link href={`/producto/${product.slug}`} className="block focus:outline-none">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface-muted">
-          {image ? (
-            <Image
-              src={image}
-              alt={product.cover_alt ?? product.name}
-              fill
-              sizes={sizes}
-              priority={priority}
-              loading={priority ? undefined : 'lazy'}
-              {...blurProps(product.cover_blur)}
-              className={cn(
-                'object-cover',
-                'transition-transform duration-[var(--at-dur-fast)] ease-[var(--ease-out-alma)]',
-                'group-hover:scale-[1.04] motion-reduce:group-hover:scale-100',
-                !availability.canBuy && 'opacity-75',
-              )}
-            />
-          ) : (
-            <div className="grid h-full place-items-center text-linen-300">
-              <ImageOff className="size-8" strokeWidth={1.3} />
-            </div>
-          )}
+        <GaleriaDeTarjeta
+          product={product}
+          sizes={sizes}
+          priority={priority}
+          turno={turno}
+          apagada={!availability.canBuy}
+        >
 
           {/* Etiquetas: como mucho dos, arriba a la izquierda */}
           <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1.5">
@@ -96,7 +85,7 @@ export function ProductCard({
               {availability.label}
             </div>
           )}
-        </div>
+        </GaleriaDeTarjeta>
 
         <div className="space-y-1 pt-3">
           {product.category_name && (
@@ -178,9 +167,131 @@ export function ProductGrid({
           className="at-rise"
           style={{ animationDelay: `${Math.min(index, 5) * 35}ms` }}
         >
-          <ProductCard product={product} priority={index < priorityCount} />
+          <ProductCard
+            product={product}
+            priority={index < priorityCount}
+            turno={index}
+          />
         </div>
       ))}
+    </div>
+  )
+}
+
+/**
+ * La caja de la foto, con las fotos de la pieza turnándose.
+ *
+ * Cómo se ve: una pieza tejida se mira girándola —el derecho, el revés, el
+ * detalle del nudo—. Esto hace eso solo, sin que nadie tenga que entrar a la
+ * ficha para enterarse de que hay más de una foto.
+ *
+ * Cómo está hecho: las imágenes se apilan y se cruzan con opacidad. Nada se
+ * mueve de lugar, así que el navegador lo resuelve en el compositor y no
+ * recalcula el layout ni una vez.
+ *
+ * Qué NO hace:
+ *   - No gira si la pieza tiene una sola foto.
+ *   - No gira fuera de pantalla, ni con la pestaña escondida, ni con
+ *     `prefers-reduced-motion` (todo eso vive en `useRotacion`).
+ *   - No carga las fotos de atrás con prioridad: la portada es la que importa
+ *     para el primer dibujado.
+ *
+ * Cada tarjeta arranca desfasada 420 ms por su posición, con tope de ocho: sin
+ * eso, veinte piezas cambian de foto al unísono y el catálogo parpadea.
+ */
+function GaleriaDeTarjeta({
+  product,
+  sizes,
+  priority,
+  turno,
+  apagada,
+  children,
+}: {
+  product: CatalogProduct
+  sizes: string
+  priority: boolean
+  turno: number
+  apagada: boolean
+  children: React.ReactNode
+}) {
+  // La portada siempre primero. Si la galería no vino (catálogos viejos, o una
+  // pieza con una sola foto), se usa sola.
+  const fotos: ProductThumb[] =
+    product.gallery && product.gallery.length > 0
+      ? product.gallery
+      : [
+          {
+            path: product.cover_path,
+            thumb: product.cover_thumb,
+            blur: product.cover_blur,
+            alt: product.cover_alt,
+          },
+        ]
+
+  const urls = fotos
+    .map((f) => ({ src: storageUrl(f.thumb ?? f.path), blur: f.blur, alt: f.alt }))
+    .filter((f): f is { src: string; blur: string | null; alt: string | null } =>
+      Boolean(f.src),
+    )
+
+  const { indice, ref } = useRotacion(urls.length, {
+    intervaloMs: 3600,
+    retrasoMs: Math.min(turno, 8) * 420,
+  })
+
+  return (
+    <div
+      ref={ref}
+      className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface-muted"
+    >
+      {urls.length > 0 ? (
+        urls.map((foto, i) => (
+          <Image
+            key={foto.src}
+            src={foto.src}
+            // Sólo la foto visible lleva el texto alternativo. Si todas lo
+            // llevaran, un lector de pantalla leería la misma pieza tres
+            // veces seguidas.
+            alt={i === indice ? (foto.alt ?? product.cover_alt ?? product.name) : ''}
+            aria-hidden={i !== indice}
+            fill
+            sizes={sizes}
+            priority={priority && i === 0}
+            loading={priority && i === 0 ? undefined : 'lazy'}
+            {...blurProps(foto.blur)}
+            className={cn(
+              'object-cover',
+              'transition-[opacity,transform] duration-[var(--at-dur-slow)] ease-[var(--ease-out-alma)]',
+              'group-hover:scale-[1.04] motion-reduce:group-hover:scale-100',
+              i === indice ? 'opacity-100' : 'opacity-0',
+              apagada && 'opacity-75',
+              apagada && i !== indice && 'opacity-0',
+            )}
+          />
+        ))
+      ) : (
+        <div className="grid h-full place-items-center text-linen-300">
+          <ImageOff className="size-8" strokeWidth={1.3} />
+        </div>
+      )}
+
+      {/* Marcas de cuántas fotos hay y cuál se está viendo. Sólo con dos o
+          más: con una sola sería un punto solitario sin significado. */}
+      {urls.length > 1 && (
+        <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
+          {urls.map((foto, i) => (
+            <span
+              key={foto.src}
+              className={cn(
+                'size-1.5 rounded-full transition-colors duration-[var(--at-dur-base)]',
+                i === indice ? 'bg-white' : 'bg-white/45',
+              )}
+            />
+          ))}
+        </div>
+      )}
+
+      {children}
     </div>
   )
 }

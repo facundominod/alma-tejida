@@ -244,3 +244,33 @@ export const COPY = {
   /* --- Espera ------------------------------------------------------------ */
   loading: 'Pasando la trama…',
 } as const
+
+/* =============================================================================
+   LA PORTADA
+
+   El título y el subtítulo de acá son el RESPALDO: si el administrador cargó
+   los suyos en /admin/configuracion, mandan los suyos. Estos son los que ve
+   una tienda recién instalada, y tienen que estar a la altura igual.
+
+   Las frases de arriba giran. Son cortas a propósito: una línea que cambia
+   sola y que hay que terminar de leer antes de que se vaya es una línea que
+   molesta. Ninguna pasa de cinco palabras.
+   ========================================================================== */
+
+export const PORTADA = {
+  titulo: 'Nada de esto lo hizo una máquina.',
+  subtitulo:
+    'Mantas, almohadones y decoración tejidos de a uno, con lana de verdad y el tiempo que haga falta.',
+  boton: 'Ver las piezas',
+
+  /**
+   * La primera la pone la tienda desde su configuración; éstas siguen.
+   * Se muestran en orden y vuelven a empezar.
+   */
+  frases: [
+    'Una pieza por vez, sin apuro',
+    'Lana de verdad, tiempo de verdad',
+    'Nada sale dos veces igual',
+    'Recién salidas del telar',
+  ],
+} as const
