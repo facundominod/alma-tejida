@@ -156,6 +156,32 @@ Entra, pero sin mucho aire. Mitigaciones ya implementadas:
 Los 300 créditos se reparten entre tráfico, cómputo, peticiones y deploys, así que conviene
 no desplegar veinte veces por día: cada deploy cuesta 15 créditos, un 5 % del mes.
 
+### Un solo contribuyente en repositorios privados
+
+Encontrado al conectar el repositorio, no antes: Netlify **bloquea la compilación** si el
+commit lo firmó alguien que no es miembro verificado del equipo.
+
+```
+Build blocked: Unrecognized Git contributor.
+This plan allows only verified account members to push to private repos.
+```
+
+No hay forma gratuita de agregar un segundo contribuyente: es una restricción de plan, no
+una configuración. Las tres salidas, con su costo:
+
+| Salida | Costo | Qué implica |
+|---|---|---|
+| **Firmar los commits con el correo de la cuenta de Netlify** | gratis | Lo que se hizo. `git config user.email` de este repositorio apunta al correo del dueño de la cuenta. El `--global` quedo intacto. |
+| Hacer público el repositorio | gratis | La restricción sólo aplica a repos privados. Publica el código de la tienda. |
+| Netlify Pro | **USD 19/mes** | Permite varios contribuyentes. |
+
+**Impacto de la elegida:** si algún día trabaja más de una persona en el proyecto, cada una
+va a necesitar su propio correo verificado en Netlify —o sea, el plan pago—. Hasta
+entonces, no cuesta nada.
+
+Esto es exactamente lo que pide el punto 209: una decisión que empujaba hacia un plan pago,
+frenada, con su alternativa gratuita y su impacto escritos.
+
 ---
 
 ## Estimación de consumo real
