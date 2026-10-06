@@ -24,6 +24,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import readline from 'node:readline'
+import dns from 'node:dns/promises'
 import pg from 'pg'
 
 const ARCHIVO = '.env.local'
@@ -65,6 +66,22 @@ function leerVariable(contenido, nombre) {
 // Hace falta una terminal de verdad: la contraseña se escribe a mano y el eco
 // se apaga sobre el TTY. Corrido sin terminal —desde una tarea automática, o
 // desde un botón que no abre consola— no hay dónde escribirla.
+/** Lo mismo pero mostrando lo que se escribe: un host no es un secreto. */
+function preguntar(texto) {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+    let respondido = false
+    const terminar = (valor) => {
+      if (respondido) return
+      respondido = true
+      rl.close()
+      resolve(valor)
+    }
+    rl.question(texto, terminar)
+    rl.on('close', () => terminar(''))
+  })
+}
+
 if (!process.stdin.isTTY) {
   console.error(`
   Esto hay que correrlo en una terminal donde puedas escribir.
@@ -102,12 +119,21 @@ const ref = new URL(urlProyecto).hostname.split('.')[0]
  * El usuario cambia según el camino: `postgres` en la directa,
  * `postgres.<ref>` en el pooler.
  */
+const REGIONES = ['sa-east-1', 'us-east-1', 'us-west-1', 'eu-central-1', 'ap-southeast-1']
+
+// Supabase usa dos prefijos según cuándo se creó el proyecto: los viejos están
+// en `aws-0-`, los nuevos en `aws-1-`. No hay forma de saberlo desde afuera,
+// así que se prueban los dos. Los que no existen se descartan por DNS en un
+// instante, sin esperar a que venza ningún tiempo de espera.
 const CAMINOS = [
   { nombre: 'conexión directa', usuario: 'postgres', host: `db.${ref}.supabase.co` },
-  { nombre: 'pooler us-east-1', usuario: `postgres.${ref}`, host: 'aws-0-us-east-1.pooler.supabase.com' },
-  { nombre: 'pooler sa-east-1', usuario: `postgres.${ref}`, host: 'aws-0-sa-east-1.pooler.supabase.com' },
-  { nombre: 'pooler us-west-1', usuario: `postgres.${ref}`, host: 'aws-0-us-west-1.pooler.supabase.com' },
-  { nombre: 'pooler eu-central-1', usuario: `postgres.${ref}`, host: 'aws-0-eu-central-1.pooler.supabase.com' },
+  ...REGIONES.flatMap((region) =>
+    ['aws-0', 'aws-1'].map((prefijo) => ({
+      nombre: `pooler ${prefijo}-${region}`,
+      usuario: `postgres.${ref}`,
+      host: `${prefijo}-${region}.pooler.supabase.com`,
+    })),
+  ),
 ]
 
 console.log(`
@@ -139,8 +165,17 @@ console.log('')
 let cadena = null
 
 for (const camino of CAMINOS) {
+  // Si el nombre no existe, no vale la pena abrir una conexión y esperar doce
+  // segundos: con once candidatos eso serían más de dos minutos mirando una
+  // pantalla quieta.
+  try {
+    await dns.lookup(camino.host)
+  } catch {
+    continue
+  }
+
   const intento = `postgresql://${camino.usuario}:${claveEscapada}@${camino.host}:5432/postgres`
-  process.stdout.write(`  ${camino.nombre.padEnd(20)} `)
+  process.stdout.write(`  ${camino.nombre.padEnd(22)} `)
 
   const client = new pg.Client({
     connectionString: intento,
@@ -177,17 +212,59 @@ for (const camino of CAMINOS) {
   }
 }
 
+// Ninguno de los candidatos sirvió. En vez de mandar a abrir un archivo, se
+// pregunta el único dato que falta. Supabase lo muestra en:
+// Settings → Database → Connection string → URI → Session pooler
 if (!cadena) {
-  console.error(`
-  No se pudo llegar a la base por ningún camino.
+  console.log(`
+  No adiviné por dónde se entra a tu base.
 
-  Si tu proyecto está en otra región, abrí
-  Settings → Database → Connection string → URI → Session pooler
-  y fijate qué host dice. Pasámelo y lo agrego.
+  Abrí en Supabase:  Settings → Database → Connection string
+  Elegí la pestaña URI y el modo "Session pooler".
 
-  ${ARCHIVO} quedó como estaba.
+  Vas a ver algo así:
+
+    postgresql://postgres.abcd:[YOUR-PASSWORD]@aws-1-sa-east-1.pooler.supabase.com:5432/postgres
+                                              ↑─────── esto ───────↑
 `)
-  process.exit(1)
+
+  const host = (await preguntar('  Pegá ese pedazo: ')).trim()
+
+  if (!host) {
+    console.error(`
+  Sin eso no puedo seguir. ${ARCHIVO} quedó como estaba.
+`)
+    process.exit(1)
+  }
+
+  // Por las dudas peguen la cadena entera: se le saca el host.
+  const limpio = host.includes('@') ? host.split('@').pop().split(':')[0] : host.split(':')[0]
+  // El pooler usa `postgres.<ref>` como usuario; la conexión directa, `postgres`.
+  const usuario = limpio.startsWith('db.') ? 'postgres' : `postgres.${ref}`
+  const intento = `postgresql://${usuario}:${claveEscapada}@${limpio}:5432/postgres`
+
+  process.stdout.write(`
+  ${limpio} ... `)
+  const client = new pg.Client({
+    connectionString: intento,
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 15000,
+  })
+  try {
+    await client.connect()
+    await client.query('select 1')
+    await client.end()
+    console.log('✓ entra.')
+    cadena = intento
+  } catch (error) {
+    console.log('✗ no entra.')
+    console.error(`
+  ${String(error.message).split(intento).join('[CONEXION]')}
+`)
+    console.error(`  ${ARCHIVO} quedó como estaba.
+`)
+    process.exit(1)
+  }
 }
 
 // Recién ahora se escribe, con la conexión ya comprobada.
