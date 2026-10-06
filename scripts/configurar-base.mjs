@@ -84,14 +84,34 @@ if (!urlProyecto) {
   process.exit(1)
 }
 
-// De https://abcdef.supabase.co se saca abcdef, que es el nombre del host de
-// la base: db.abcdef.supabase.co
+// De https://abcdef.supabase.co se saca abcdef, que identifica al proyecto.
 const ref = new URL(urlProyecto).hostname.split('.')[0]
-const host = `db.${ref}.supabase.co`
+
+/**
+ * Por dónde se puede llegar a la base, en orden de preferencia.
+ *
+ * `db.<ref>.supabase.co` es la conexión directa, y en los proyectos nuevos del
+ * plan gratuito **sólo resuelve por IPv6**. Muchas conexiones hogareñas no
+ * tienen IPv6, y ahí no da un error claro: se queda esperando hasta que vence
+ * el tiempo. Por eso no alcanza con elegir un host: hay que probarlos.
+ *
+ * El pooler va por IPv4 y funciona en cualquier lado. Se usa el modo *session*
+ * (5432) y no el *transaction* (6543): el segundo no soporta bien las
+ * sentencias que crean funciones, y buena parte de esta base son funciones.
+ *
+ * El usuario cambia según el camino: `postgres` en la directa,
+ * `postgres.<ref>` en el pooler.
+ */
+const CAMINOS = [
+  { nombre: 'conexión directa', usuario: 'postgres', host: `db.${ref}.supabase.co` },
+  { nombre: 'pooler us-east-1', usuario: `postgres.${ref}`, host: 'aws-0-us-east-1.pooler.supabase.com' },
+  { nombre: 'pooler sa-east-1', usuario: `postgres.${ref}`, host: 'aws-0-sa-east-1.pooler.supabase.com' },
+  { nombre: 'pooler us-west-1', usuario: `postgres.${ref}`, host: 'aws-0-us-west-1.pooler.supabase.com' },
+  { nombre: 'pooler eu-central-1', usuario: `postgres.${ref}`, host: 'aws-0-eu-central-1.pooler.supabase.com' },
+]
 
 console.log(`
   Proyecto   ${ref}
-  Base       ${host}
 
   Es la contraseña que generaste al crear el proyecto (la de "Database
   password"), NO la de tu cuenta de Supabase.
@@ -112,33 +132,61 @@ if (!clave) {
 // genera claves alfanuméricas, pero si la cambiaste por una con @ / : ? #, sin
 // escapar la cadena se parte en el lugar equivocado y el error que da no tiene
 // nada que ver con la causa.
-const cadena = `postgresql://postgres:${encodeURIComponent(clave)}@${host}:5432/postgres`
+const claveEscapada = encodeURIComponent(clave)
 
-process.stdout.write('\n  Probando la conexión... ')
+console.log('')
 
-const client = new pg.Client({
-  connectionString: cadena,
-  ssl: { rejectUnauthorized: false },
-  connectionTimeoutMillis: 15000,
-})
+let cadena = null
 
-try {
-  await client.connect()
-  const { rows } = await client.query('select current_database() as base, version() as v')
-  await client.end()
-  console.log('entra.')
-  console.log(`  ${rows[0].base} · ${rows[0].v.split(' ').slice(0, 2).join(' ')}\n`)
-} catch (error) {
-  const motivo = String(error.message)
-  console.log('no entra.\n')
-  if (/password authentication failed/i.test(motivo)) {
-    console.error('  La contraseña no es la correcta.')
-    console.error('  Probá de nuevo, o generá una nueva en Settings → Database →')
-    console.error('  Reset database password.\n')
-  } else {
-    console.error(`  ${motivo.split(cadena).join('[CONEXION]')}\n`)
+for (const camino of CAMINOS) {
+  const intento = `postgresql://${camino.usuario}:${claveEscapada}@${camino.host}:5432/postgres`
+  process.stdout.write(`  ${camino.nombre.padEnd(20)} `)
+
+  const client = new pg.Client({
+    connectionString: intento,
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 12000,
+  })
+
+  try {
+    await client.connect()
+    const { rows } = await client.query('select version() as v')
+    await client.end()
+    console.log(`✓  ${rows[0].v.split(' ').slice(0, 2).join(' ')}`)
+    cadena = intento
+    break
+  } catch (error) {
+    const motivo = String(error.message)
+
+    // Una contraseña equivocada no se arregla probando otro host: el servidor
+    // contestó, y contestó que no. Se corta acá para no hacerle esperar cuatro
+    // tiempos de espera a alguien que sólo copió mal la clave.
+    if (/password authentication failed/i.test(motivo)) {
+      console.log('✗  la contraseña no es la correcta')
+      console.error('\n  Esa no es la contraseña de la base.')
+      console.error('  Generá una nueva en Settings → Database → Reset database password')
+      console.error('  y volvé a correr esto.\n')
+      console.error(`  ${ARCHIVO} quedó como estaba.\n`)
+      process.exit(1)
+    }
+
+    if (/timeout/i.test(motivo)) console.log('·  no responde (sin IPv6, probablemente)')
+    else if (/ENOTFOUND/i.test(motivo)) console.log('·  no existe')
+    else if (/Tenant or user not found/i.test(motivo)) console.log('·  otra región')
+    else console.log(`·  ${motivo.split(intento).join('[CONEXION]')}`)
   }
-  console.error(`  ${ARCHIVO} quedó como estaba.\n`)
+}
+
+if (!cadena) {
+  console.error(`
+  No se pudo llegar a la base por ningún camino.
+
+  Si tu proyecto está en otra región, abrí
+  Settings → Database → Connection string → URI → Session pooler
+  y fijate qué host dice. Pasámelo y lo agrego.
+
+  ${ARCHIVO} quedó como estaba.
+`)
   process.exit(1)
 }
 
