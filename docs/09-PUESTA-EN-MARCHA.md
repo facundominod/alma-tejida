@@ -49,6 +49,15 @@ Los valores salen de **Project Settings → API** en el panel de Supabase:
 | `SUPABASE_SERVICE_ROLE_KEY` | Project API keys → `service_role` ⚠️ |
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` en local |
 | `CRON_SECRET` | Inventalo: `openssl rand -hex 32` |
+| `SUPABASE_DB_URL` | **Database → Connection string → URI → Session pooler** ⚠️ |
+
+`SUPABASE_DB_URL` lleva la contraseña de la base adentro. **La aplicación no la usa**: la
+usan los dos scripts que crean la base y designan al administrador. Si preferís no
+tenerla guardada, borrala de `.env.local` cuando termines de instalar.
+
+Usá el **Session pooler** (puerto 5432), no el Transaction pooler (6543): el segundo no
+soporta bien las sentencias que crean funciones, y buena parte de la lógica de esta
+tienda son funciones.
 
 > ⚠️ **La `service_role` saltea toda la seguridad de la base.** Va sólo en `.env.local` y
 > en las variables del hosting. Nunca en el código, nunca en Git, nunca en un mensaje.
@@ -58,15 +67,39 @@ Los valores salen de **Project Settings → API** en el panel de Supabase:
 ## 3. Aplicar las migraciones
 
 ```bash
+npm run db:aplicar
+```
+
+Eso crea las tablas, los índices, las políticas de RLS, las funciones y los tres buckets
+de Storage, en orden, y al terminar cuenta qué quedó:
+
+```
+  Tablas            29
+  Con RLS activo    29
+  Políticas         56
+  Buckets           3
+```
+
+**Si alguna tabla queda sin RLS, el script falla a propósito.** Una tabla en `public` sin
+RLS es una tabla que cualquiera con la anon key puede leer entera, y la anon key es
+pública por diseño.
+
+Lleva su propio registro en `public._migraciones`: correrlo dos veces no hace nada la
+segunda vez. Eso permite agregar una migración más adelante y volver a correrlo sin
+pensar, y cada archivo va en su propia transacción —si uno falla queda entero sin
+aplicar, no a medias—.
+
+### Las otras dos formas
+
+Con el CLI de Supabase, si ya lo usás:
+
+```bash
 npx supabase login
 npx supabase link --project-ref TU-REF-DE-PROYECTO
 npm run db:push
 ```
 
-Eso crea las 27 tablas, los índices, las políticas de RLS, las funciones y los tres
-buckets de Storage, en orden.
-
-**Si preferís no usar el CLI** —no hace falta instalar nada, es un solo pegado—:
+Y sin instalar nada ni guardar la contraseña en ningún lado, pegando el SQL a mano:
 
 ```bash
 npm run sql:armar
@@ -97,17 +130,27 @@ está bien.
 obtener desde la aplicación, ni registrándose, ni manipulando el navegador (punto 156).
 
 1. Arrancá la app: `npm run dev`
-2. Entrá a `http://localhost:3000/crear-cuenta` y registrate con tu correo real.
+2. Entrá a `http://localhost:3000/crear-cuenta` y registrate con tu correo real y **una
+   contraseña que elegís vos**. Nadie más la ve, ni queda escrita en ningún lado:
+   Supabase guarda su hash, no la clave.
 3. Confirmá el correo (llega un mail de Supabase).
-4. En el **SQL Editor** de Supabase, ejecutá:
+4. Desde la terminal:
+
+```bash
+npm run admin -- tu@correo.com
+```
+
+5. Recargá la página. `/admin` ya está disponible.
+
+Ese script pide `SUPABASE_DB_URL`, o sea la contraseña de la base. Es justamente lo que
+hace que el paso sea seguro: desde el navegador no hay forma de llegar ahí. Si preferís
+hacerlo a mano, es la misma línea en el SQL Editor:
 
 ```sql
 update public.profiles
    set role = 'admin'
  where id = (select id from auth.users where email = 'tu@correo.com');
 ```
-
-5. Recargá la página. `/admin` ya está disponible.
 
 ---
 
