@@ -58,3 +58,7 @@ supabase/migraciones-todo-junto.sql
 
 # Local Netlify folder
 .netlify
+
+# Lo deja el CLI de Netlify al empaquetar funciones de borde (usan Deno).
+# Es un artefacto local del build, no algo que escribamos nosotros.
+deno.lock
