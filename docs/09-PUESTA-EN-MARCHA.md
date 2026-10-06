@@ -118,7 +118,7 @@ y después se vuelve a correr `npm run sql:armar`.
 npm run test
 ```
 
-Las 73 pruebas levantan un PostgreSQL en memoria, aplican las mismas migraciones y
+Las 86 pruebas levantan un PostgreSQL en memoria, aplican las mismas migraciones y
 verifican RLS, precios, stock, pedidos y el editor de productos. Si pasan, el esquema
 está bien.
 
@@ -130,9 +130,12 @@ está bien.
 obtener desde la aplicación, ni registrándose, ni manipulando el navegador (punto 156).
 
 1. Arrancá la app: `npm run dev`
-2. Entrá a `http://localhost:3000/crear-cuenta` y registrate con tu correo real y **una
-   contraseña que elegís vos**. Nadie más la ve, ni queda escrita en ningún lado:
-   Supabase guarda su hash, no la clave.
+2. Entrá a `http://localhost:3000/crear-cuenta` y registrate con un **nombre de
+   usuario**, tu correo real y **una contraseña que elegís vos**. Nadie más la ve, ni
+   queda escrita en ningún lado: Supabase guarda su hash, no la clave.
+
+   El nombre de usuario es con lo que vas a entrar. El correo no se usa para entrar,
+   pero es la única forma de recuperar la cuenta si olvidás la contraseña.
 3. Confirmá el correo (llega un mail de Supabase).
 4. Desde la terminal:
 

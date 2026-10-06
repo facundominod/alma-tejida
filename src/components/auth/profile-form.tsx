@@ -19,11 +19,13 @@ import { updateProfile, type AuthResult } from '@/lib/actions/auth'
  */
 export function ProfileForm({
   fullName,
+  username,
   email,
   phone,
   acceptsMarketing,
 }: {
   fullName: string
+  username: string
   email: string
   phone: string
   acceptsMarketing: boolean
@@ -44,9 +46,19 @@ export function ProfileForm({
         {(props) => <Input {...props} name="fullName" defaultValue={fullName} />}
       </Field>
 
+      {/* Los dos de abajo se muestran y no se editan. Cambiar cualquiera de
+          los dos cambia la forma de entrar a la cuenta, y eso no puede
+          resolverse con un campo de texto: necesita confirmar que la cuenta
+          nueva sigue siendo la misma persona. */}
+      {username && (
+        <Field label="Usuario" hint="Con esto entrás.">
+          {(props) => <Input {...props} value={username} disabled readOnly />}
+        </Field>
+      )}
+
       <Field
         label="Correo"
-        hint="Para cambiarlo, escribinos: es la forma de entrar a tu cuenta."
+        hint="Para recuperar la cuenta si olvidás la contraseña. Para cambiarlo, escribinos."
       >
         {(props) => <Input {...props} value={email} disabled readOnly />}
       </Field>

@@ -412,3 +412,18 @@ promotions (is_active, starts_at, ends_at)
 Toda fila creada por la seed lleva `metadata->>'demo' = 'true'` o pertenece a un
 `category.slug` prefijado `demo-`. El script `npm run seed:clean` los elimina en bloque y
 purga los eventos de analíticas asociados, para que las métricas reales arranquen limpias.
+
+### Nombre de usuario (migración 0015)
+
+`profiles.username` existe para **entrar**; `profiles.email` sigue siendo la **identidad**
+y la única vía de recuperación. Son dos cosas distintas a propósito: sin correo, quien
+olvida su contraseña no la recupera nadie.
+
+- Índice único sobre `lower(username)`, parcial: dos cuentas sin nombre no chocan.
+- El formato prohibe la arroba. Eso es lo que permite decidir, al entrar, si lo escrito
+  es un nombre o un correo sin preguntarlo.
+- `email_for_username()` traduce uno en otro. Es `security definer` y **sólo la ejecuta
+  `service_role`**: si `anon` pudiera, cualquiera juntaría los correos de la clientela
+  probando nombres, que es justo lo que el nombre de usuario debería evitar.
+- `reserved_usernames` impide que alguien se registre como `soporte` o `almatejida` y
+  responda preguntas pareciendo la tienda.

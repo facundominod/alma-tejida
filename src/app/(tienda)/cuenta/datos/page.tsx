@@ -12,6 +12,7 @@ export default async function MisDatosPage() {
     <div className="max-w-md">
       <ProfileForm
         fullName={profile.full_name ?? ''}
+        username={profile.username ?? ''}
         email={profile.email ?? ''}
         phone={profile.phone ?? ''}
         acceptsMarketing={profile.accepts_marketing}

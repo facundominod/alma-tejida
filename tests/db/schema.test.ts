@@ -63,11 +63,20 @@ describe('esquema', () => {
        having count(p.policyname) = 0
         order by t.tablename`,
     )
-    // Estas tres no tienen policies A PROPOSITO: nadie las toca desde el
-    // navegador, se escriben solo desde funciones SECURITY DEFINER.
+    // Estas no tienen policies A PROPOSITO: nadie las toca desde el
+    // navegador, se escriben y se leen solo desde funciones SECURITY DEFINER.
+    //
+    // La lista es exacta y no un "al menos estas": una tabla nueva con RLS y
+    // sin una sola policy es invisible para la aplicacion, y casi siempre eso
+    // significa que alguien se olvido de escribirla. Que esta prueba falle al
+    // agregar una tabla es el comportamiento buscado; sumarla aca es declarar
+    // que el silencio es deliberado.
     expect(rows.map((r) => r.tablename)).toEqual([
       'analytics_events',
       'rate_limit_hits',
+      // Solo la lee username_disponible(). Exponerla seria publicar la lista
+      // de nombres que la tienda se reserva.
+      'reserved_usernames',
     ])
   })
 

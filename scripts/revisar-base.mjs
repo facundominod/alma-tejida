@@ -80,7 +80,14 @@ if (sinRls.length) {
 // pero sí es una funcionalidad muerta: lo más probable es que falte una
 // política que alguien se olvidó de escribir. Las que son así a propósito se
 // listan acá para que el aviso signifique algo.
-const CERRADAS_A_PROPOSITO = ['_migraciones', 'analytics_events', 'rate_limit_hits']
+const CERRADAS_A_PROPOSITO = [
+  '_migraciones',
+  'analytics_events',
+  'rate_limit_hits',
+  // Sólo la lee `username_disponible()`, que es SECURITY DEFINER. Exponerla
+  // sería publicar la lista de nombres que la tienda se reserva.
+  'reserved_usernames',
+]
 const sinPoliticas = await q(`
   select t.tablename
     from pg_tables t

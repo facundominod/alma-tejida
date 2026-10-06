@@ -63,6 +63,8 @@ export type Profile = {
   id: string
   role: UserRole
   full_name: string | null
+  /** Nombre para entrar. Nulo en las cuentas creadas antes de la migracion 0015. */
+  username: string | null
   email: string | null
   phone: string | null
   accepts_marketing: boolean
@@ -725,6 +727,16 @@ export type Database = {
       }
       check_rate_limit: {
         Args: { p_key: string; p_max: number; p_window_seconds: number }
+        Returns: boolean
+      }
+      /** Solo service_role: desde el navegador seria una fuga de correos. */
+      email_for_username: {
+        Args: { p_username: string }
+        Returns: string | null
+      }
+      /** Solo service_role: un si/no repetido tambien permite enumerar cuentas. */
+      username_disponible: {
+        Args: { p_username: string }
         Returns: boolean
       }
       admin_dashboard: {

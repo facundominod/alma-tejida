@@ -107,15 +107,16 @@ export function SignInForm() {
       }
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <Field label="Correo" required>
+        <Field label="Usuario o correo" required>
           {(props) => (
             <Input
               {...props}
-              name="email"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              placeholder="tunombre@correo.com"
+              name="identificador"
+              // `type="text"`, no `type="email"`: con email el navegador
+              // marcaría "silvana" como inválido y no dejaría enviar.
+              type="text"
+              autoComplete="username"
+              placeholder="silvana  ·  tunombre@correo.com"
             />
           )}
         </Field>
@@ -212,7 +213,28 @@ export function SignUpForm() {
           {(props) => <Input {...props} name="fullName" autoComplete="name" />}
         </Field>
 
-        <Field label="Correo" required>
+        <Field
+          label="Nombre de usuario"
+          required
+          hint="Con esto vas a entrar. Entre 3 y 24 caracteres, empezando con una letra."
+        >
+          {(props) => (
+            <Input
+              {...props}
+              name="username"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder="silvana"
+            />
+          )}
+        </Field>
+
+        <Field
+          label="Correo"
+          required
+          hint="No hace falta para entrar. Es la única forma de recuperar la cuenta si olvidás la contraseña."
+        >
           {(props) => (
             <Input
               {...props}
