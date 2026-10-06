@@ -156,7 +156,7 @@ export function SignInForm() {
           </button>
           {!magic && (
             <Link href="/recuperar" className="text-ink-muted hover:text-clay-700">
-              Olvide mi contraseña
+              Olvidé mi contraseña
             </Link>
           )}
         </div>
