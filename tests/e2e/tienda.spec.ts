@@ -17,6 +17,25 @@ import { COPY } from '../../src/lib/labels'
 
 const esMovil = (page: Page) => (page.viewportSize()?.width ?? 0) < 768
 
+/**
+ * Va al catálogo y espera a que TERMINE de llegar.
+ *
+ * `/tienda` es dinámica y se envía en dos partes: primero el armazón con el
+ * hilo que se dibuja (`loading.tsx`), después el contenido. `page.goto()`
+ * vuelve con la primera, así que preguntar ahí por los productos mide el
+ * momento equivocado: no hay artículos, pero tampoco está todavía el mensaje
+ * de catálogo vacío.
+ *
+ * Corriendo de a una prueba no se nota; con seis navegadores a la vez contra
+ * una base en Brasil, sí. Falló una sola vez, en tablet, y era esto.
+ *
+ * El indicador de espera es el único `role="status"` de la página.
+ */
+async function irAlCatalogo(page: Page) {
+  await page.goto('/tienda')
+  await expect(page.getByRole('status')).toHaveCount(0, { timeout: 20_000 })
+}
+
 test.describe('la tienda carga y se navega', () => {
   test('la portada muestra la marca, el título y el botón principal', async ({ page }) => {
     await page.goto('/')
@@ -55,7 +74,7 @@ test.describe('la tienda carga y se navega', () => {
   })
 
   test('el catálogo vacío lo dice con claridad, sin hablar de filtros', async ({ page }) => {
-    await page.goto('/tienda')
+    await irAlCatalogo(page)
 
     const vacio = page.getByText(COPY.catalogComingSoon)
     const conProductos = page.locator('article').first()
@@ -228,7 +247,7 @@ test.describe('accesibilidad', () => {
   })
 
   test('el foco siempre se ve', async ({ page }) => {
-    await page.goto('/tienda')
+    await irAlCatalogo(page)
 
     const buscador = page.getByRole('searchbox', { name: /buscar en la tienda/i })
     await buscador.focus()
@@ -258,7 +277,7 @@ test.describe('accesibilidad', () => {
   })
 
   test('el buscador tiene etiqueta accesible', async ({ page }) => {
-    await page.goto('/tienda')
+    await irAlCatalogo(page)
     await expect(page.getByRole('searchbox', { name: /buscar en la tienda/i })).toBeVisible()
   })
 })
