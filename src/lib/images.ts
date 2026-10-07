@@ -99,9 +99,26 @@ export const UPLOAD_LIMITS = {
 } as const
 
 /** Derivados que se generan al subir. El original NO se conserva. */
+/**
+ * Los tamaños que se guardan de cada foto.
+ *
+ * La miniatura pasó de 480 a 800 px porque 480 no alcanzaba. La tarjeta del
+ * catálogo pide `50vw`: en un celular de 400 px con pantalla de 3× eso son
+ * **600 píxeles reales**, y el navegador estaba estirando una imagen de 480.
+ * Por eso las piezas se veían blandas en el catálogo y nítidas en la ficha.
+ *
+ * Esto no multiplica lo que se descarga: next/image pide a la CDN de
+ * imágenes el ancho exacto que necesita. Lo único que cambia es que ahora el
+ * original tiene píxeles suficientes para que esa reducción salga bien.
+ *
+ * Las calidades subieron porque la foto se comprime DOS veces: una en el
+ * navegador al achicarla antes de subir, otra en el servidor. Dos
+ * generaciones de pérdida encima de la misma imagen se notan, y en una
+ * tienda de piezas tejidas la textura es el producto.
+ */
 export const IMAGE_DERIVATIVES = {
-  main: { maxSide: 1600, quality: 82 },
-  thumb: { maxSide: 480, quality: 78 },
+  main: { maxSide: 1600, quality: 88 },
+  thumb: { maxSide: 800, quality: 84 },
   micro: { maxSide: 24, quality: 40 },
 } as const
 

@@ -1,7 +1,5 @@
 'use client'
 
-import { IMAGE_DERIVATIVES } from '@/lib/images'
-
 /**
  * Achica la foto ANTES de mandarla.
  *
@@ -26,8 +24,19 @@ import { IMAGE_DERIVATIVES } from '@/lib/images'
  * sigue como antes. Nunca impide subir una foto.
  */
 
-/** Un poco más grande que el derivado final, para no recortar dos veces. */
-const LADO_MAXIMO = IMAGE_DERIVATIVES.main.maxSide * 1.15 // ~1840px
+/**
+ * Bastante más grande que el derivado final, a propósito.
+ *
+ * Lo que sale de acá lo vuelve a reducir sharp en el servidor, que lo hace
+ * mejor que un canvas. Mandarle 2200 px para que saque 1600 le deja margen
+ * para trabajar; mandarle 1840 lo obligaba a una reducción mínima sobre una
+ * imagen que el navegador ya había maltratado.
+ *
+ * Son unos 600 KB en lugar de 250. Sigue siendo seis veces menos que los 4 MB
+ * del original, o sea que la subida sigue siendo rápida, y la textura de la
+ * lana llega entera.
+ */
+const LADO_MAXIMO = 2200
 
 /** Debajo de esto no vale la pena: el recodificado puede incluso agrandarla. */
 const MINIMO_PARA_ACHICAR = 400 * 1024
@@ -70,7 +79,10 @@ export async function achicarEnElNavegador(archivo: File): Promise<File> {
     contexto.drawImage(bitmap, 0, 0, ancho, alto)
 
     const blob = await new Promise<Blob | null>((resolve) =>
-      lienzo.toBlob(resolve, 'image/webp', 0.9),
+      // 0,95 y no 0,9: esta imagen se vuelve a comprimir en el servidor, y
+      // cada generacion de perdida se suma. Lo que se ahorra bajando la
+      // calidad aca lo paga la foto dos veces.
+      lienzo.toBlob(resolve, 'image/webp', 0.95),
     )
 
     // Si el resultado no es más chico, no se gana nada y se pierde calidad.
