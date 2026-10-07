@@ -156,6 +156,35 @@ Entra, pero sin mucho aire. Mitigaciones ya implementadas:
 Los 300 créditos se reparten entre tráfico, cómputo, peticiones y deploys, así que conviene
 no desplegar veinte veces por día: cada deploy cuesta 15 créditos, un 5 % del mes.
 
+### Las funciones corren en Ohio y no se pueden mover
+
+Medido el 2026-10-07 sobre la tienda publicada:
+
+| Ruta | TTFB | Total | HTML |
+|---|---|---|---|
+| `/` (estática) | 567 ms | 709 ms | 19 KB |
+| `/tienda` (dinámica) | 893 ms | 1,06 s | 16 KB |
+| `/producto/[slug]` | 639 ms | 830 ms | 16 KB |
+
+De los 567 ms de la portada, **335 son conexión y TLS**: distancia hasta el borde de
+Netlify. El catálogo suma ~330 ms porque es dinámico y va a buscar los datos a la base,
+que está en São Paulo, desde una función que está en **Ohio** (`functions_region: cmh`).
+
+Cada página dinámica hace el recorrido Argentina → Ohio → São Paulo → Ohio → Argentina.
+
+**Se intentó mover las funciones a `sa-east-1` y la API de Netlify lo rechaza**
+(`Unprocessable Entity`): elegir región de funciones es de plan pago.
+
+| Salida | Costo | Impacto |
+|---|---|---|
+| **Dejarlo así** | gratis | ~330 ms extra en las rutas dinámicas. Las públicas se sirven cacheadas y casi no lo sufren. |
+| Netlify Pro | **USD 19/mes** | Permite elegir región. Quitaría la mayor parte de esos 330 ms. |
+
+Se eligió dejarlo. Lo que sí se hizo, gratis, fue atacar el síntoma donde se nota:
+pantallas de espera en las rutas lentas, transición de entrada, y **achicar las fotos en
+el navegador antes de subirlas** —que es donde esa distancia dolía de verdad: 4 MB
+cruzando el continente eran quince segundos por foto, y ahora son 250 KB—.
+
 ### Un solo contribuyente en repositorios privados
 
 Encontrado al conectar el repositorio, no antes: Netlify **bloquea la compilación** si el
