@@ -28,10 +28,11 @@ export default async function OfertasPage() {
   return (
     <div className="py-8 md:py-12">
       <div className="at-container mb-8 space-y-2">
-        <Overline>Precios especiales</Overline>
+        <Overline>Por tiempo limitado</Overline>
         <h1 className="text-display-lg">Ofertas</h1>
         <p className="text-ink-muted">
-          Lo que está con descuento ahora mismo. Cuando la promoción termina, sale de acá.
+          Lo que está rebajado hoy. Cuando la promoción se termina, la pieza vuelve a su
+          precio y sale de esta lista.
         </p>
       </div>
 

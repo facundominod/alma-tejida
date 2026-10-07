@@ -23,7 +23,9 @@ export default async function NovedadesPage() {
       <header className="mb-8 space-y-2">
         <Overline>Recien salidas del telar</Overline>
         <h1 className="text-display-lg">Novedades</h1>
-        <p className="text-ink-muted">Lo último que terminamos, en orden de llegada.</p>
+        <p className="text-ink-muted">
+          Lo último que salió del telar, de lo más nuevo a lo más viejo.
+        </p>
       </header>
 
       {products.length > 0 ? (

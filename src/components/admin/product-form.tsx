@@ -9,6 +9,7 @@ import { Checkbox, Field, FormError, Input, Select, Textarea } from '@/component
 import { Overline } from '@/components/ui/primitives'
 import { saveProduct } from '@/lib/actions/admin/catalog'
 import { STOCK_DISPLAY_LABEL } from '@/lib/labels'
+import { cn, formatPrice } from '@/lib/utils'
 import type { AvailabilityMode, Category, Product, StockDisplayMode } from '@/types/database'
 
 /**
@@ -36,6 +37,11 @@ export function ProductForm({
   )
   const [hasSale, setHasSale] = React.useState(product?.sale_price != null)
 
+  // Precio y costo se llevan en estado para poder mostrar el margen mientras
+  // se escribe. El resto del formulario va sin control: no hace falta.
+  const [precio, setPrecio] = React.useState(String(product?.base_price ?? ''))
+  const [costo, setCosto] = React.useState(String(product?.base_cost ?? ''))
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSaving(true)
@@ -54,6 +60,7 @@ export function ProductForm({
       shortDescription: String(form.get('shortDescription') ?? ''),
       description: String(form.get('description') ?? ''),
       basePrice: number('basePrice') ?? 0,
+      baseCost: number('baseCost'),
       salePrice: hasSale ? number('salePrice') : null,
       saleStartsAt: hasSale ? String(form.get('saleStartsAt') ?? '') || null : null,
       saleEndsAt: hasSale ? String(form.get('saleEndsAt') ?? '') || null : null,
@@ -148,20 +155,44 @@ export function ProductForm({
       <section className="space-y-4 rounded-xl border border-border-soft bg-surface p-4 md:p-5">
         <Overline>Precio</Overline>
 
-        <Field label="Precio normal" required>
-          {(props) => (
-            <Input
-              {...props}
-              name="basePrice"
-              type="number"
-              inputMode="numeric"
-              min={0}
-              step={1}
-              defaultValue={product?.base_price ?? ''}
-              className="tabular"
-            />
-          )}
-        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Precio normal" required>
+            {(props) => (
+              <Input
+                {...props}
+                name="basePrice"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                value={precio}
+                onChange={(e) => setPrecio(e.target.value)}
+                className="tabular"
+              />
+            )}
+          </Field>
+
+          <Field
+            label="Cuánto te cuesta"
+            hint="Opcional. No sale nunca a la tienda."
+          >
+            {(props) => (
+              <Input
+                {...props}
+                name="baseCost"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                value={costo}
+                onChange={(e) => setCosto(e.target.value)}
+                className="tabular"
+              />
+            )}
+          </Field>
+        </div>
+
+        <MargenEnVivo precio={precio} costo={costo} />
 
         <Checkbox
           name="hasSale"
@@ -374,5 +405,43 @@ export function ProductForm({
         )}
       </div>
     </form>
+  )
+}
+
+/**
+ * El margen, mientras se escribe el precio.
+ *
+ * El numero que importa no es el precio ni el costo: es la diferencia. Verla
+ * recien en un informe a fin de mes es tarde para cambiarla; verla mientras
+ * se decide el precio es el momento en que sirve.
+ *
+ * No se muestra nada si falta alguno de los dos: un margen de 100% porque no
+ * hay costo cargado es peor que ningun margen.
+ */
+function MargenEnVivo({ precio, costo }: { precio: string; costo: string }) {
+  const p = Number(precio)
+  const c = Number(costo)
+
+  if (!Number.isFinite(p) || !Number.isFinite(c) || p <= 0 || c <= 0) return null
+
+  const ganancia = p - c
+  const margen = (ganancia / p) * 100
+  const perdida = ganancia <= 0
+
+  return (
+    <div
+      className={cn(
+        'flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-lg px-3.5 py-3 text-sm',
+        perdida ? 'bg-danger/10 text-danger' : 'bg-sage-100 text-sage-600',
+      )}
+    >
+      <span className="font-medium">
+        {perdida ? 'Estas perdiendo plata' : 'Te queda'}
+      </span>
+      <span className="tabular">
+        {formatPrice(ganancia)} por unidad
+        <span className="ml-2 opacity-75">({margen.toFixed(0)}% de margen)</span>
+      </span>
+    </div>
   )
 }

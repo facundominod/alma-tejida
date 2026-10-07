@@ -22,6 +22,7 @@ import {
   uploadProductImage,
   uploadProductVideo,
 } from '@/lib/actions/admin/media'
+import { achicarEnElNavegador } from '@/lib/images/achicar-en-el-navegador'
 import { formatBytes, storageUrl, UPLOAD_LIMITS } from '@/lib/images'
 import { cn } from '@/lib/utils'
 
@@ -82,9 +83,14 @@ export function MediaManager({
     setProgress({ done: 0, total: files.length })
 
     for (let index = 0; index < files.length; index += 1) {
+      // Se achica ACA, en el telefono, antes de que salga a la red. Los 4 MB
+      // de una foto de celular quedan en unos 250 KB. El servidor la procesa
+      // y la valida igual; lo unico que se ahorra es la espera de la subida.
+      const liviana = await achicarEnElNavegador(files[index])
+
       const formData = new FormData()
       formData.append('productId', productId)
-      formData.append('file', files[index])
+      formData.append('file', liviana)
 
       const result = await uploadProductImage(formData)
       setProgress({ done: index + 1, total: files.length })

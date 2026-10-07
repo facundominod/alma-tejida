@@ -7,6 +7,7 @@ import {
   MessageCircleQuestion,
   Receipt,
   ShoppingCart,
+  TrendingUp,
   Star,
   Wallet,
 } from 'lucide-react'
@@ -26,6 +27,7 @@ import {
   getLowStock,
   getSalesByDay,
   getTopProducts,
+  getMargenes,
   getTopViewed,
 } from '@/lib/queries/admin'
 import { formatPrice } from '@/lib/utils'
@@ -43,7 +45,7 @@ export default async function AdminDashboard() {
   const metrics = await getDashboard()
   const { from, to } = metrics.range
 
-  const [salesByDay, topByUnits, topByAmount, topViewed, funnel, lowStock] =
+  const [salesByDay, topByUnits, topByAmount, topViewed, funnel, lowStock, margenes] =
     await Promise.all([
       getSalesByDay(from, to),
       getTopProducts(from, to, 'units', 5),
@@ -51,6 +53,7 @@ export default async function AdminDashboard() {
       getTopViewed(from, to, 5),
       getFunnel(from, to),
       getLowStock(6),
+      getMargenes(from, to),
     ])
 
   const current = metrics.current
@@ -155,6 +158,98 @@ export default async function AdminDashboard() {
           {current.cancelled_count} pedidos cancelados por{' '}
           {formatPrice(current.cancelled_amount)}. No se cuentan como ingreso.
         </p>
+      )}
+
+      {/* LO QUE QUEDA --------------------------------------------------------
+          Vender no es ganar. Este bloque es la diferencia entre lo que entro
+          y lo que costo hacerlo, que es el numero con el que se decide si
+          conviene seguir haciendo una pieza o hay que subirle el precio.
+
+          Si no hay costos cargados no se inventa un margen: se dice que
+          faltan. Un 100% de margen porque el costo esta vacio es peor que no
+          mostrar nada, porque se le cree. */}
+      {margenes.resumen.unidades > 0 && (
+        <section aria-label="Ganancia" className="mt-6">
+          {margenes.resumen.margen === null ? (
+            <div className="rounded-xl border border-dashed border-border-soft bg-surface p-4">
+              <p className="text-sm text-ink-muted">
+                Vendiste{' '}
+                <strong className="tabular text-ink">
+                  {margenes.resumen.unidades}
+                </strong>{' '}
+                {margenes.resumen.unidades === 1 ? 'pieza' : 'piezas'} por{' '}
+                <strong className="tabular text-ink">
+                  {formatPrice(margenes.resumen.ingresos)}
+                </strong>
+                , pero todavia no se cuanto te costo hacerlas.
+              </p>
+              <p className="mt-1 text-sm text-ink-subtle">
+                Carga el costo en cada pieza y aca vas a ver cuanto te queda de
+                verdad.
+              </p>
+              <Button asChild variant="secondary" size="sm" className="mt-3">
+                <Link href="/admin/productos">Cargar costos</Link>
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <StatTile
+                  label="Vendido"
+                  value={formatPrice(margenes.resumen.ingresos)}
+                  icon={<Receipt className="size-4" />}
+                />
+                <StatTile
+                  label="Costo de lo vendido"
+                  value={formatPrice(margenes.resumen.costos)}
+                  icon={<Boxes className="size-4" />}
+                />
+                <StatTile
+                  label="Te quedo"
+                  value={formatPrice(margenes.resumen.ganancia)}
+                  icon={<Wallet className="size-4" />}
+                />
+                <StatTile
+                  label="Margen"
+                  value={`${margenes.resumen.margen}%`}
+                  icon={<TrendingUp className="size-4" />}
+                />
+              </div>
+
+              {margenes.piezas.length > 0 && (
+                <div className="mt-3 overflow-hidden rounded-xl border border-border-soft bg-surface">
+                  <table className="w-full text-sm">
+                    <caption className="sr-only">Ganancia por pieza</caption>
+                    <thead>
+                      <tr className="border-b border-border-soft text-left text-xs uppercase tracking-[0.1em] text-ink-subtle">
+                        <th className="px-4 py-2.5 font-medium">Pieza</th>
+                        <th className="px-4 py-2.5 text-right font-medium">Vendidas</th>
+                        <th className="px-4 py-2.5 text-right font-medium">Te quedo</th>
+                        <th className="px-4 py-2.5 text-right font-medium">Margen</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border-soft">
+                      {margenes.piezas.slice(0, 8).map((pieza) => (
+                        <tr key={pieza.product_id}>
+                          <td className="px-4 py-2.5">{pieza.nombre}</td>
+                          <td className="tabular px-4 py-2.5 text-right">
+                            {pieza.unidades}
+                          </td>
+                          <td className="tabular px-4 py-2.5 text-right">
+                            {formatPrice(pieza.ganancia)}
+                          </td>
+                          <td className="tabular px-4 py-2.5 text-right text-ink-muted">
+                            {pieza.margen === null ? 'sin costo' : `${pieza.margen}%`}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+        </section>
       )}
 
       {/* BANDEJA ------------------------------------------------------------ */}

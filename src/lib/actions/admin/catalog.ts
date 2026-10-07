@@ -41,6 +41,9 @@ const productSchema = z.object({
   shortDescription: z.string().trim().max(300).optional(),
   description: z.string().trim().max(8000).optional(),
   basePrice: z.number().nonnegative('El precio no puede ser negativo.'),
+  // Opcional: una tienda puede funcionar sin saber su costo, y obligar a
+  // cargarlo trabaria la carga de la primera pieza.
+  baseCost: z.number().nonnegative('El costo no puede ser negativo.').nullish(),
   salePrice: z.number().positive().nullish(),
   saleStartsAt: z.string().nullish(),
   saleEndsAt: z.string().nullish(),
@@ -89,6 +92,7 @@ export async function saveProduct(
     short_description: data.shortDescription || null,
     description: data.description || null,
     base_price: data.basePrice,
+    base_cost: data.baseCost ?? null,
     sale_price: data.salePrice ?? null,
     sale_starts_at: data.saleStartsAt || null,
     sale_ends_at: data.saleEndsAt || null,

@@ -123,7 +123,7 @@ export default async function HomePage() {
         <section className="pt-14 md:pt-20">
           <div className="at-container">
             <SectionHeading
-              overline="Explorar"
+              overline="Por donde empezar"
               title="Categorías"
               action={
                 <Button asChild variant="link" size="sm">
@@ -171,7 +171,7 @@ export default async function HomePage() {
       {featured.length > 0 && (
         <section className="at-container pt-16 md:pt-24">
           <SectionHeading
-            overline="Selección"
+            overline="Lo que elegimos mostrar"
             title="Piezas destacadas"
             description="Las que más nos gusta hacer, y las que más se llevan."
             action={
@@ -191,9 +191,9 @@ export default async function HomePage() {
         <section className="at-weave mt-16 py-14 md:mt-24 md:py-20">
           <div className="at-container">
             <SectionHeading
-              overline="Se están yendo"
+              overline="Quedan pocas"
               title="Últimas unidades"
-              description="Quedan pocas de cada una. Varias son piezas únicas."
+              description="De varias de estas no queda otra igual, porque no la hay."
             />
             <ProductGrid products={últimas} priorityCount={0} />
           </div>
@@ -241,18 +241,18 @@ export default async function HomePage() {
           {[
             {
               icon: Hand,
-              title: 'Hecho a mano',
-              text: 'Cada pieza se teje de a una. Las pequeñas diferencias son parte de eso.',
+              title: 'Una por una',
+              text: 'No hay dos iguales, y las diferencias no son fallas: son la prueba de que la hizo alguien.',
             },
             {
               icon: Heart,
-              title: 'Materiales elegidos',
-              text: 'Lanas y algodones seleccionados uno por uno, pensados para durar.',
+              title: 'Lana de verdad',
+              text: 'Elegida de a ovillo, para que la pieza siga entera dentro de diez años.',
             },
             {
               icon: Package,
-              title: 'Coordinamos con vos',
-              text: 'Hacés el pedido y lo terminamos de acordar por WhatsApp, sin apuro.',
+              title: 'Lo hablamos',
+              text: 'Hacés el pedido y el resto lo arreglamos por WhatsApp, a tu tiempo.',
             },
           ].map((item) => (
             <div key={item.title} className="flex gap-4">

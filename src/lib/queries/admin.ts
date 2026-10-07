@@ -475,3 +475,56 @@ export async function getUnreadCount(): Promise<number> {
 
   return count ?? 0
 }
+
+/* =============================================================================
+   MARGENES
+   ========================================================================== */
+
+export type MargenPorPieza = {
+  product_id: string
+  nombre: string
+  unidades: number
+  ingresos: number
+  costos: number
+  ganancia: number
+  /** Nulo cuando falta cargar el costo: un 100% inventado es peor que nada. */
+  margen: number | null
+}
+
+export type Margenes = {
+  resumen: {
+    unidades: number
+    ingresos: number
+    costos: number
+    ganancia: number
+    margen: number | null
+  }
+  piezas: MargenPorPieza[]
+}
+
+/**
+ * Cuánto se vendió y cuánto quedó, en un rango.
+ *
+ * Sólo cuenta pedidos COBRADOS: uno pendiente todavía no es una ganancia, y
+ * mezclarlos daría un número que se desinfla solo cuando alguien no transfiere.
+ *
+ * La función de la base comprueba `is_admin()` por su cuenta y lanza si no.
+ * El costo es información de adentro y no sale por ninguna otra vía.
+ */
+export async function getMargenes(desde: string, hasta: string): Promise<Margenes> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.rpc('admin_margenes', {
+    p_desde: desde,
+    p_hasta: hasta,
+  })
+
+  if (error || !data) {
+    return {
+      resumen: { unidades: 0, ingresos: 0, costos: 0, ganancia: 0, margen: null },
+      piezas: [],
+    }
+  }
+
+  return data as unknown as Margenes
+}

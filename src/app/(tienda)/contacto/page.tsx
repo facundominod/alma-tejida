@@ -71,11 +71,12 @@ export default async function ContactoPage() {
         <BrandWatermark className="pointer-events-none absolute -right-20 -top-16 size-72 text-linen-900" />
 
         <header className="relative space-y-3 text-center">
-          <Overline>Hablemos</Overline>
+          <Overline>Del otro lado hay alguien</Overline>
           <h1 className="text-display-lg">Contacto</h1>
           <p className="mx-auto max-w-lg text-ink-muted">
-            Cada pedido lo coordinamos con vos: forma de entrega, tiempos y pago. Si
-            tenés una idea para una pieza a medida, también escribinos.
+            La entrega, los tiempos y el pago los arreglamos hablando. Y si tenés una
+            idea para una pieza a medida —un respaldo para una cama rara, un tapiz de
+            un tamaño puntual—, contánosla: casi siempre se puede.
           </p>
         </header>
 

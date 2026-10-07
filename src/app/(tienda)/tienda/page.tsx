@@ -70,7 +70,8 @@ export default async function TiendaPage({ searchParams }: PageProps<'/tienda'>)
           {search ? `Resultados para "${search}"` : 'Todas las piezas'}
         </h1>
         <p className="text-ink-muted">
-          Cada una hecha a mano. Pueden existir pequeñas diferencias de color y medida.
+          Todas hechas a mano, de a una. Dos piezas iguales nunca salen idénticas: el color
+          y la medida pueden moverse un poco, y eso es parte de que sea tejida.
         </p>
       </header>
 

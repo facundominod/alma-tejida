@@ -142,6 +142,8 @@ export type Product = {
   availability_mode: AvailabilityMode
   lead_time_days: number | null
   base_price: number
+  /** Cuanto cuesta hacerla. NUNCA sale a la tienda publica. */
+  base_cost: number | null
   sale_price: number | null
   sale_starts_at: string | null
   sale_ends_at: string | null
@@ -748,6 +750,11 @@ export type Database = {
       username_disponible: {
         Args: { p_username: string }
         Returns: boolean
+      }
+      /** Solo admin: comprueba is_admin() adentro y lanza si no lo es. */
+      admin_margenes: {
+        Args: { p_desde?: string; p_hasta?: string }
+        Returns: Json
       }
       admin_dashboard: {
         Args: { p_from?: string | null; p_to?: string | null }
