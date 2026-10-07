@@ -26,6 +26,20 @@ export const metadata: Metadata = {
  * exige el número MAS el token de 122 bits. Sin token no hay pedido, y un
  * token equivocado da el mismo resultado que uno inexistente: nada.
  */
+/**
+ * NO lleva `loading.tsx`, a proposito.
+ *
+ * Se intento agregarle uno y rompio algo mas importante: un `loading.tsx`
+ * abre un limite de streaming, Next manda la cabecera HTTP apenas empieza a
+ * enviar el armazon, y a partir de ahi `notFound()` ya no puede cambiar el
+ * codigo de estado. El resultado era que un pedido con token invalido
+ * respondia **200** en lugar de 404 -decia "todo bien" sobre algo que no
+ * existe-.
+ *
+ * Lo encontro la prueba "un pedido sin token no se puede mirar". Vale mas el
+ * 404 correcto que un esqueleto en una ruta que se abre una sola vez, desde
+ * un enlace de WhatsApp.
+ */
 export default async function PedidoPage({
   params,
   searchParams,

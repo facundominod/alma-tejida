@@ -32,6 +32,18 @@ export default async function HomePage() {
     ])
 
   const hero = settings.home_hero ?? {}
+
+  /**
+   * `??` no alcanza: sólo cae al respaldo con nulo, y una casilla vacía del
+   * panel llega como `''`. La portada se quedaba con el texto vacío y no
+   * mostraba nada.
+   *
+   * Se arregló también del lado de guardar, pero esto queda igual: lo que ya
+   * está guardado en la base no se arregla solo, y una portada en blanco es
+   * de lo peor que puede pasarle a una tienda.
+   */
+  const texto = (valor: string | undefined, respaldo: string) =>
+    valor?.trim() ? valor : respaldo
   const heroImage = hero.image_url ? storageUrl(hero.image_url, 'brand') : null
   const hasCatalog = featured.length > 0 || novedades.length > 0
 
@@ -54,17 +66,17 @@ export default async function HomePage() {
                 />
 
                 <h1 className="text-display-xl max-w-[16ch] text-clay-900">
-                  {hero.title ?? PORTADA.titulo}
+                  {texto(hero.title, PORTADA.titulo)}
                 </h1>
 
                 <p className="max-w-md text-[1.0625rem] leading-relaxed text-clay-800/85">
-                  {hero.subtitle ?? PORTADA.subtitulo}
+                  {texto(hero.subtitle, PORTADA.subtitulo)}
                 </p>
 
                 <div className="flex flex-wrap gap-3 pt-1">
                   <Button asChild size="lg">
-                    <Link href={hero.cta_href ?? '/tienda'}>
-                      {hero.cta_label ?? PORTADA.boton}
+                    <Link href={texto(hero.cta_href, '/tienda')}>
+                      {texto(hero.cta_label, PORTADA.boton)}
                       <ArrowRight />
                     </Link>
                   </Button>

@@ -262,6 +262,17 @@
     }
   }
 
+  /* En monitores anchos, 1280px dejaba 320px vacios de cada lado. Se estira
+     hasta 1440, no mas: una grilla de fotos puede crecer, pero un parrafo de
+     1800px de ancho no se lee, se barre con la vista. Los bloques de texto
+     siguen con su propio tope (max-w-3xl) y no se enteran de esto. */
+  @media (min-width: 1536px) {
+    .at-container {
+      max-width: 90rem;
+      padding-inline: 3rem;
+    }
+  }
+
   /* 5. Marca de agua del isologo: pie y estado vacio del carrito */
   .at-watermark {
     opacity: 0.03;

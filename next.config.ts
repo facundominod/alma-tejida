@@ -77,6 +77,25 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '8mb',
     },
+
+    /**
+     * Cuánto vive en el navegador lo que ya se trajo.
+     *
+     * Next precarga los enlaces que entran en pantalla, pero por defecto
+     * descarta **al instante** lo precargado de una ruta dinámica
+     * (`dynamic: 0`). O sea: precarga, tira, y cuando la persona toca, vuelve
+     * a pedir todo. En una tienda cuyas funciones viven en Ohio y cuya base
+     * vive en São Paulo, ese "volver a pedir" es casi un segundo.
+     *
+     * Treinta segundos alcanzan para que ir y volver entre dos pantallas sea
+     * instantáneo, y son pocos para que alguien vea stock viejo: las acciones
+     * que cambian datos llaman a `revalidatePath`, que limpia esta caché sin
+     * esperar a que venza.
+     */
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
   },
 
   images: {

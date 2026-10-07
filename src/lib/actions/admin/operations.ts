@@ -355,13 +355,24 @@ const settingsSchema = z.object({
       }),
     )
     .optional(),
+  /**
+   * Una casilla vacía significa "no lo cargué", no "quiero que no diga nada".
+   *
+   * `.transform(v => v || undefined)` borra las cadenas vacías antes de que
+   * lleguen a la base. Sin eso se guardaba `{"title": ""}`, y la portada —que
+   * elige entre lo cargado y su respaldo con `??`— se quedaba con la cadena
+   * vacía, porque `??` sólo cae al respaldo cuando el valor es nulo.
+   *
+   * Resultado real: guardar la configuración sin tocar estos campos dejaba la
+   * portada SIN título, SIN subtítulo y con el botón principal sin texto.
+   */
   homeHero: z
     .object({
-      title: z.string().trim().max(120).optional(),
-      subtitle: z.string().trim().max(300).optional(),
-      cta_label: z.string().trim().max(40).optional(),
-      cta_href: z.string().trim().max(200).optional(),
-      image_url: z.string().trim().max(400).optional(),
+      title: z.string().trim().max(120).optional().transform((v) => v || undefined),
+      subtitle: z.string().trim().max(300).optional().transform((v) => v || undefined),
+      cta_label: z.string().trim().max(40).optional().transform((v) => v || undefined),
+      cta_href: z.string().trim().max(200).optional().transform((v) => v || undefined),
+      image_url: z.string().trim().max(400).optional().transform((v) => v || undefined),
     })
     .optional(),
   defaultStockDisplay: z.enum(['exact', 'vague', 'hidden']).optional(),

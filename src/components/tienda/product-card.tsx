@@ -154,7 +154,11 @@ export function ProductGrid({
   return (
     <div
       className={cn(
+        // Dos en celular, tres en tablet, cuatro en notebook y cinco en
+        // monitor ancho. La quinta columna recien a 1536px: antes de eso las
+        // fotos se achicarian tanto que la pieza deja de verse.
         'grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4',
+        '2xl:grid-cols-5 2xl:gap-x-7',
         className,
       )}
     >
