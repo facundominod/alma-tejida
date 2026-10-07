@@ -82,7 +82,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
         <EmptyState
           icon={<FolderTree className="size-10" strokeWidth={1.3} />}
           title="Todavía no hay categorías"
-          description="Mantas, almohadones, gorros... las que vos quieras. Se crean acá, no en el código."
+          description="Respaldos, espejos, tapices... las que vos quieras. Se crean acá, no en el código."
           action={<Button onClick={() => setEditing('new')}>Crear la primera</Button>}
         />
       ) : (
@@ -262,7 +262,7 @@ function CategoryForm({
               {...props}
               name="slug"
               defaultValue={category?.slug}
-              placeholder="mantas"
+              placeholder="respaldos"
               maxLength={80}
             />
           )}

@@ -72,7 +72,7 @@ export function PromotionManager({
         <EmptyState
           icon={<Tag className="size-10" strokeWidth={1.3} />}
           title="Todavía no hay promociones"
-          description="Un 20% en mantas, un precio especial, una liquidación. Se crean acá y aparecen solas en el inicio y en Ofertas."
+          description="Un 20% en respaldos, un precio especial, una liquidación. Se crean acá y aparecen solas en el inicio y en Ofertas."
           action={<Button onClick={() => setEditing('new')}>Crear la primera</Button>}
         />
       ) : (
@@ -235,7 +235,7 @@ function PromotionForm({
             {...props}
             name="title"
             defaultValue={promotion?.title}
-            placeholder="20% en mantas"
+            placeholder="20% en respaldos"
             maxLength={120}
           />
         )}
@@ -249,7 +249,7 @@ function PromotionForm({
             defaultValue={promotion?.description ?? ''}
             rows={2}
             maxLength={300}
-            placeholder="Hasta el domingo, en todas las mantas tejidas a mano"
+            placeholder="Hasta el domingo, en todos los respaldos tejidos a mano"
           />
         )}
       </Field>
@@ -393,7 +393,7 @@ function PromotionForm({
               {...props}
               name="ctaHref"
               defaultValue={promotion?.cta_href ?? ''}
-              placeholder="/categoria/mantas"
+              placeholder="/categoria/respaldos"
               maxLength={200}
             />
           )}

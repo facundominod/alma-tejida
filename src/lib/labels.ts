@@ -260,7 +260,7 @@ export const COPY = {
 export const PORTADA = {
   titulo: 'Nada de esto lo hizo una máquina.',
   subtitulo:
-    'Mantas, almohadones y decoración tejidos de a uno, con lana de verdad y el tiempo que haga falta.',
+    'Respaldos, espejos y tapices tejidos de a uno, con lana de verdad y el tiempo que haga falta.',
   boton: 'Ver las piezas',
 
   /**

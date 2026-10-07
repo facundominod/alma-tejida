@@ -70,7 +70,7 @@ export function formatRelative(value: string | Date): string {
   return rtf.format(-Math.round(amount), 'year')
 }
 
-/** Slug para URLs: "Manta Roma 1,50" -> "manta-roma-1-50" */
+/** Slug para URLs: "Respaldo Sol 1,50" -> "respaldo-sol-1-50" */
 export function slugify(text: string): string {
   return text
     .normalize('NFD')

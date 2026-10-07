@@ -197,7 +197,7 @@ export function CatalogFilters({
           type="search"
           value={searchDraft}
           onChange={(e) => setSearchDraft(e.target.value)}
-          placeholder="Buscar mantas, gorros, colores..."
+          placeholder="Buscar respaldos, espejos, tapices..."
           aria-label="Buscar en la tienda"
           className="h-12 w-full rounded-lg border border-border-soft bg-surface pl-11 pr-24 text-[0.9375rem] placeholder:text-linen-400 focus:border-primary focus:outline-none focus:ring-[3px] focus:ring-clay-500/25"
         />

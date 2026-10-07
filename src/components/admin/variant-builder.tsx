@@ -266,8 +266,8 @@ export function VariantBuilder({
           <div>
             <Overline>Características</Overline>
             <p className="mt-1 text-sm text-ink-muted">
-              Cada pieza define las suyas. Una manta puede tener color y medida; un
-              gorro, material y talle.
+              Cada pieza define las suyas. Un respaldo puede tener medida y color;
+              un espejo, diámetro y terminación.
             </p>
           </div>
           <Button size="sm" variant="secondary" onClick={addAttribute}>

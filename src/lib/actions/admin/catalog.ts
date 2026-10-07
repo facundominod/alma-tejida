@@ -571,7 +571,7 @@ export async function deletePromotion(promotionId: string): Promise<AdminResult>
    AUXILIAR
    ========================================================================== */
 
-/** Garantiza un slug único: "manta-roma", "manta-roma-2", ... */
+/** Garantiza un slug único: "respaldo-sol", "respaldo-sol-2", ... */
 async function uniqueSlug(
   supabase: Awaited<ReturnType<typeof createClient>>,
   base: string,

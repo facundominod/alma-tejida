@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     template: '%s · Alma Tejida',
   },
   description:
-    'Mantas, almohadones y piezas de decoración tejidas a mano, una por una. ' +
+    'Respaldos, espejos, tapices y piezas de decoración tejidas a mano, una por una. ' +
     'Creaciones que unen arte y esencia.',
   applicationName: 'Alma Tejida',
   authors: [{ name: 'Alma Tejida' }],
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     siteName: 'Alma Tejida',
     title: 'Alma Tejida · Piezas tejidas a mano',
     description:
-      'Mantas, almohadones y piezas de decoración tejidas a mano, una por una.',
+      'Respaldos, espejos, tapices y piezas de decoración tejidas a mano, una por una.',
   },
   twitter: { card: 'summary_large_image' },
   robots: { index: true, follow: true },

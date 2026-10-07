@@ -10,7 +10,7 @@ import type { Database } from '@/types/database'
  * Existe por una razon muy concreta. Cualquier llamada a `cookies()` obliga a
  * Next a renderizar la ruta de forma dinámica, y eso significaría una consulta
  * a Supabase POR CADA VISITA. Con el plan gratuito, mil personas mirando la
- * misma manta serían mil consultas.
+ * mismo respaldo serían mil consultas.
  *
  * Este cliente no toca cookies, así que el catálogo, la home y las fichas de
  * producto se pueden generar estaticamente y servirse desde el CDN de Vercel:

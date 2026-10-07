@@ -96,7 +96,7 @@ export function ProductForm({
               {...props}
               name="name"
               defaultValue={product?.name}
-              placeholder="Manta Roma"
+              placeholder="Respaldo Sol"
               maxLength={160}
             />
           )}

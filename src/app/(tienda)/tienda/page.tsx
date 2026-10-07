@@ -12,7 +12,7 @@ import { getTopCategories } from '@/lib/queries/store'
 export const metadata: Metadata = {
   title: 'Tienda',
   description:
-    'Todas las piezas de Alma Tejida: mantas, almohadones, gorros y decoración tejida a mano.',
+    'Todas las piezas de Alma Tejida: respaldos, espejos, tapices y decoración tejida a mano.',
 }
 
 // El catálogo se cachea por combinación de filtros. Al publicar o cambiar un
