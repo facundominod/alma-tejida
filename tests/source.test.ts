@@ -168,6 +168,31 @@ describe('higiene del código fuente', () => {
     expect(infractores).toEqual([])
   })
 
+  /**
+   * El framework no puede ser más estricto que la aplicación.
+   *
+   * Next limita el cuerpo de una Server Action a 1 MB por defecto. Nadie lo
+   * había tocado, y `uploadProductImage` decía aceptar hasta 8 MB: el
+   * framework rechazaba la foto ANTES de que esa validación corriera, y como
+   * el rechazo ocurre fuera de la acción, no habia mensaje. Ninguna foto de
+   * celular suba jamas, y el boton se quedaba clavado en "Subiendo".
+   *
+   * Esta prueba compara los dos numeros. Si alguien sube el limite de la
+   * aplicacion y se olvida del otro, el error vuelve exactamente igual.
+   */
+  it('el limite de las Server Actions no es menor que el de las fotos', () => {
+    const config = leer('next.config.ts')
+    const imagenes = leer('src/lib/images.ts')
+
+    const limiteDeNext = config.match(/bodySizeLimit:\s*'(\d+)mb'/i)
+    expect(limiteDeNext, 'falta bodySizeLimit en next.config.ts').not.toBeNull()
+
+    const limiteDeFotos = imagenes.match(/maxBytes:\s*(\d+)\s*\*\s*1024\s*\*\s*1024/)
+    expect(limiteDeFotos, 'falta maxBytes en images.ts').not.toBeNull()
+
+    expect(Number(limiteDeNext![1])).toBeGreaterThanOrEqual(Number(limiteDeFotos![1]))
+  })
+
   it('ningún contenido de usuario se renderiza como HTML crudo', () => {
     // La única excepción permitida son los datos estructurados de la ficha de
     // producto, que construimos nosotros desde la base (no hay entrada de

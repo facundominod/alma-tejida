@@ -1,6 +1,6 @@
 'use client'
 
-import { IMAGE_DERIVATIVES, UPLOAD_LIMITS } from '@/lib/images'
+import { IMAGE_DERIVATIVES } from '@/lib/images'
 
 /**
  * Achica la foto ANTES de mandarla.
@@ -34,11 +34,16 @@ const MINIMO_PARA_ACHICAR = 400 * 1024
 
 export async function achicarEnElNavegador(archivo: File): Promise<File> {
   if (archivo.size < MINIMO_PARA_ACHICAR) return archivo
-  // El tipo de un File es `string`; la lista de aceptados es una tupla de
-  // literales. Se compara como texto a proposito: lo que llega del navegador
-  // no es un valor de ese tipo hasta que se comprueba.
-  const aceptados: readonly string[] = UPLOAD_LIMITS.image.accept
-  if (!aceptados.includes(archivo.type)) return archivo
+  // Se intenta con CUALQUIER imagen, no solo con los formatos de la lista.
+  //
+  // Antes se saltaba todo lo que no estuviera en `accept`, y eso dejaba pasar
+  // justo el caso peor: un HEIC de iPhone, que pesa lo mismo que un JPEG y no
+  // se achicaba. Si el navegador no sabe decodificarlo, `createImageBitmap`
+  // lanza y el `catch` devuelve el original, que es lo mismo que hacia antes.
+  // Intentar no cuesta nada; no intentar cuesta 4 MB.
+  //
+  // Lo que salga de aca es WebP, que si esta en la lista del servidor.
+  if (!archivo.type.startsWith('image/')) return archivo
   if (typeof createImageBitmap !== 'function') return archivo
 
   let bitmap: ImageBitmap | undefined

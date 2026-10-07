@@ -92,11 +92,30 @@ export function MediaManager({
       formData.append('productId', productId)
       formData.append('file', liviana)
 
-      const result = await uploadProductImage(formData)
-      setProgress({ done: index + 1, total: files.length })
+      // El `try` abarca la llamada entera a propósito.
+      //
+      // Si Next rechaza el cuerpo por tamaño, o se corta la conexión a mitad
+      // de la subida, la promesa de la Server Action se rechaza y el error
+      // ocurre FUERA de cualquier `try` que tenga la accion del lado del
+      // servidor. Sin esto, la excepcion sube sin que nadie la agarre,
+      // `setUploading(false)` nunca corre y el boton se queda clavado en
+      // "Subiendo" para siempre, sin decir que paso. Fue exactamente lo que
+      // paso.
+      try {
+        const result = await uploadProductImage(formData)
+        setProgress({ done: index + 1, total: files.length })
 
-      if (!result.ok) {
-        setError(result.error)
+        if (!result.ok) {
+          setError(result.error)
+          break
+        }
+      } catch (error) {
+        const detalle = error instanceof Error ? error.message : ''
+        setError(
+          /body|size|exceed|payload|413/i.test(detalle)
+            ? `La foto pesó demasiado para subirla (${formatBytes(liviana.size)}). Probá con otra más chica.`
+            : 'Se cortó la subida. Revisá la conexión y probá de nuevo.',
+        )
         break
       }
     }

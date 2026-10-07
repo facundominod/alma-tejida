@@ -56,6 +56,27 @@ const nextConfig: NextConfig = {
    */
   experimental: {
     cpus: 4,
+
+    /**
+     * Las Server Actions aceptan hasta 8 MB, no 1 MB.
+     *
+     * El límite por defecto de Next es **1 MB**, y nadie lo había tocado. La
+     * aplicación decía aceptar fotos de hasta 8 MB —lo valida
+     * `uploadProductImage`— pero el framework rechazaba la petición antes de
+     * que esa validación llegara a correr. Una foto de celular pesa unos 4 MB:
+     * no subía ninguna, y como el rechazo ocurre fuera del `try` de la acción,
+     * el botón se quedaba clavado en "Subiendo" sin decir por qué.
+     *
+     * Ahora los dos límites dicen lo mismo. El de verdad, el que importa, es
+     * el de `UPLOAD_LIMITS.image.maxBytes`, que sí devuelve un mensaje.
+     *
+     * Ojo con subirlo más: las funciones de Netlify cortan alrededor de los
+     * 6 MB de petición, así que arriba de eso falla igual, más lejos y peor.
+     * Por eso las fotos se achican en el navegador antes de salir.
+     */
+    serverActions: {
+      bodySizeLimit: '8mb',
+    },
   },
 
   images: {
