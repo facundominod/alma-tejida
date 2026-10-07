@@ -342,6 +342,100 @@
 }
 
 /* =============================================================================
+   ALTO REAL DE LA VENTANA
+
+   `vh` miente en los celulares. Se calcula contra la ventana MAS GRANDE
+   posible -la que queda cuando la barra de direcciones se esconde- asi que
+   mientras la barra esta a la vista, `100vh` es mas alto que la pantalla y el
+   contenido de abajo queda cortado. Y al scrollear, cuando la barra se va, la
+   altura cambia de golpe y todo salta.
+
+   `dvh` es la medida que sigue a la ventana de verdad, momento a momento.
+
+   Las dos declaraciones juntas son el patron de respaldo de toda la vida: un
+   navegador viejo no entiende `dvh`, descarta esa linea y se queda con `vh`,
+   que es lo que tenia antes. Uno moderno aplica las dos y gana la ultima.
+   ========================================================================== */
+
+/* =============================================================================
+   EL OVILLO QUE GIRA
+
+   Es la señal de "esperando" de toda la tienda. Gira despacio —1,6 s la
+   vuelta— porque un ovillo que gira rápido parece un error, no una espera.
+
+   `transform` sobre un grupo de SVG lo resuelve el compositor: no repinta
+   nada aunque haya varios en pantalla.
+   ========================================================================== */
+
+@keyframes at-ovillo-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes at-hebra-salir {
+  from {
+    stroke-dashoffset: 26;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.at-ovillo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: at-ovillo-girar 1.6s linear infinite;
+}
+
+.at-hebra {
+  stroke-dasharray: 13 13;
+  animation: at-hebra-salir 1.6s linear infinite;
+}
+
+/* Entrada de cada pagina. Opacidad y 6px: las dos en el compositor. */
+@keyframes at-entrada {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.at-entrada {
+  animation: at-entrada 220ms var(--ease-out-alma) both;
+}
+
+.at-alto-hero {
+  min-height: 62vh;
+  min-height: 62dvh;
+}
+
+.at-alto-ventana {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.at-alto-espera {
+  min-height: 60vh;
+  min-height: 60dvh;
+}
+
+/* Hojas que suben desde abajo y visores de foto: tope de alto, no minimo. */
+.at-tope-hoja {
+  max-height: 85vh;
+  max-height: 85dvh;
+}
+
+.at-tope-visor {
+  max-height: 88vh;
+  max-height: 88dvh;
+}
+
+/* =============================================================================
    MOVIMIENTO REDUCIDO
    No es un `transition: none` global. El movimiento se va; la informacion y
    la jerarquia se quedan intactas.
@@ -366,7 +460,10 @@
   }
 
   /* El loader de hilo pasa a ser un punto que pulsa suavemente */
-  .at-loader-thread {
+  .at-loader-thread,
+  .at-ovillo,
+  .at-hebra,
+  .at-entrada {
     animation: none !important;
   }
 }

@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
-import { Check, FileUp, Loader2, Star, X } from 'lucide-react'
+import { Check, FileUp, Star, X } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { FormError, Textarea } from '@/components/ui/field'
 import { Overline } from '@/components/ui/primitives'
@@ -75,7 +76,7 @@ export function ProofUploader({
       />
       <Button asChild variant="secondary" block disabled={pending}>
         <label htmlFor="comprobante" className="cursor-pointer">
-          {pending ? <Loader2 className="animate-spin" /> : <FileUp />}
+          {pending ? <Ovillo /> : <FileUp />}
           {pending ? 'Subiendo...' : 'Enviar comprobante'}
         </label>
       </Button>
@@ -138,7 +139,7 @@ export function CancelOrderButton({
             else router.refresh()
           }}
         >
-          {pending ? <Loader2 className="animate-spin" /> : <X />}
+          {pending ? <Ovillo /> : <X />}
           Si, cancelar
         </Button>
         <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
@@ -254,7 +255,7 @@ export function ReviewForm({
             router.refresh()
           }}
         >
-          {pending && <Loader2 className="animate-spin" />}
+          {pending && <Ovillo />}
           Enviar
         </Button>
         <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>

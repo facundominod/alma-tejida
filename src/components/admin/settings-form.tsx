@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
-import { Check, HardDrive, Loader2, Plus, Trash2 } from 'lucide-react'
+import { Check, HardDrive, Plus, Trash2 } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { Checkbox, Field, FormError, Input, Select, Textarea } from '@/components/ui/field'
 import { Overline } from '@/components/ui/primitives'
@@ -559,7 +560,7 @@ export function SettingsForm({
 
       <div className="sticky bottom-16 z-10 rounded-xl border border-border-soft bg-background/95 p-3 backdrop-blur-sm md:bottom-4">
         <Button type="submit" size="lg" disabled={pending}>
-          {pending ? <Loader2 className="animate-spin" /> : saved ? <Check /> : null}
+          {pending ? <Ovillo /> : saved ? <Check /> : null}
           {pending ? 'Guardando...' : saved ? 'Guardado' : 'Guardar configuración'}
         </Button>
       </div>

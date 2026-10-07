@@ -6,12 +6,12 @@ import * as React from 'react'
 import {
   Camera,
   ImagePlus,
-  Loader2,
   Play,
   Star,
   Trash2,
   Video,
 } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { FormError, Input } from '@/components/ui/field'
 import { Badge, Overline } from '@/components/ui/primitives'
@@ -39,9 +39,21 @@ export type MediaItem = {
 /**
  * Fotos y video de una pieza.
  *
- * El `capture` del input deja que en el celular se pueda sacar la foto en el
- * momento (punto 132). Cada imagen se procesa en el servidor: se guardan una
- * versión de 1600px y una miniatura de 480px, nunca el original.
+ * Hay DOS botones de imagen a propósito, no uno.
+ *
+ * `capture` no es una sugerencia: cuando está puesto, el celular abre la
+ * cámara y **no ofrece la galería**. Un solo botón con `capture` deja sin
+ * forma de subir una foto ya sacada, que es casi siempre lo que se quiere:
+ * las fotos buenas de una pieza se sacan con calma, no mientras se carga el
+ * producto.
+ *
+ * Entonces: "Elegir fotos" abre la galería (y en una computadora, el
+ * explorador de archivos), y "Sacar foto" abre la cámara (punto 132). El
+ * segundo sólo aparece en celular: en una computadora de escritorio sería un
+ * botón que no hace nada útil.
+ *
+ * Cada imagen se procesa en el servidor: se guardan una versión de 1600px y
+ * una miniatura de 480px, nunca el original.
  */
 export function MediaManager({
   productId,
@@ -55,6 +67,7 @@ export function MediaManager({
   const [error, setError] = React.useState<string | null>(null)
   const [progress, setProgress] = React.useState({ done: 0, total: 0 })
   const imageInput = React.useRef<HTMLInputElement>(null)
+  const camaraInput = React.useRef<HTMLInputElement>(null)
   const videoInput = React.useRef<HTMLInputElement>(null)
 
   const images = media.filter((item) => item.type === 'image')
@@ -83,7 +96,10 @@ export function MediaManager({
     }
 
     setUploading(false)
+    // Los dos se limpian: sin esto, volver a elegir EXACTAMENTE el mismo
+    // archivo no dispara `change` y parece que el boton dejo de andar.
     if (imageInput.current) imageInput.current.value = ''
+    if (camaraInput.current) camaraInput.current.value = ''
     router.refresh()
   }
 
@@ -128,13 +144,13 @@ export function MediaManager({
 
       {/* Subida */}
       <div className="flex flex-wrap gap-2">
+        {/* SIN `capture`: abre la galeria del celular o el explorador de
+            archivos. Es el camino principal. */}
         <input
           ref={imageInput}
           type="file"
           accept={UPLOAD_LIMITS.image.accept.join(',')}
           multiple
-          // `capture` abre la camara directamente en el celular
-          capture="environment"
           className="sr-only"
           id="subir-fotos"
           onChange={(e) => handleImages(e.target.files)}
@@ -146,10 +162,33 @@ export function MediaManager({
           disabled={uploading || images.length >= UPLOAD_LIMITS.image.maxPerProduct}
         >
           <label htmlFor="subir-fotos" className="cursor-pointer">
-            {uploading ? <Loader2 className="animate-spin" /> : <ImagePlus />}
+            {uploading ? <Ovillo /> : <ImagePlus />}
             {uploading && progress.total > 0
               ? `Subiendo ${progress.done}/${progress.total}`
-              : 'Agregar fotos'}
+              : 'Elegir fotos'}
+          </label>
+        </Button>
+
+        {/* CON `capture`: abre la camara. Solo en celular (punto 132). */}
+        <input
+          ref={camaraInput}
+          type="file"
+          accept={UPLOAD_LIMITS.image.accept.join(',')}
+          capture="environment"
+          className="sr-only"
+          id="sacar-foto"
+          onChange={(e) => handleImages(e.target.files)}
+          disabled={uploading || images.length >= UPLOAD_LIMITS.image.maxPerProduct}
+        />
+        <Button
+          asChild
+          variant="secondary"
+          className="md:hidden"
+          disabled={uploading || images.length >= UPLOAD_LIMITS.image.maxPerProduct}
+        >
+          <label htmlFor="sacar-foto" className="cursor-pointer">
+            <Camera />
+            Sacar foto
           </label>
         </Button>
 

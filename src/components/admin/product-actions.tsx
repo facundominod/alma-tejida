@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
-import { Archive, Copy, Eye, EyeOff, Loader2, MoreVertical, Trash2 } from 'lucide-react'
+import { Archive, Copy, Eye, EyeOff, MoreVertical, Trash2 } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { FormError } from '@/components/ui/field'
 import {
@@ -77,7 +78,7 @@ export function ProductActions({
               run('unpublish', () => setProductStatus(productId, 'draft'))
             }
           >
-            {pending === 'unpublish' ? <Loader2 className="animate-spin" /> : <EyeOff />}
+            {pending === 'unpublish' ? <Ovillo /> : <EyeOff />}
             Despublicar
           </Button>
         ) : (
@@ -86,7 +87,7 @@ export function ProductActions({
             disabled={pending !== null}
             onClick={() => run('publish', () => setProductStatus(productId, 'published'))}
           >
-            {pending === 'publish' ? <Loader2 className="animate-spin" /> : <Eye />}
+            {pending === 'publish' ? <Ovillo /> : <Eye />}
             Publicar
           </Button>
         )}
@@ -134,7 +135,7 @@ export function ProductActions({
             className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm text-ink transition-colors hover:bg-surface-muted"
           >
             {pending === 'duplicate' ? (
-              <Loader2 className="size-4 animate-spin" />
+              <Ovillo />
             ) : (
               <Copy className="size-4 text-ink-subtle" />
             )}

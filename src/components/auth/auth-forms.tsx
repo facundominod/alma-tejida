@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import * as React from 'react'
-import { Loader2, Mail } from 'lucide-react'
+import { Mail } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { Checkbox, Field, FormError, Input } from '@/components/ui/field'
 import {
@@ -113,10 +114,14 @@ export function SignInForm() {
               {...props}
               name="identificador"
               // `type="text"`, no `type="email"`: con email el navegador
-              // marcaría "silvana" como inválido y no dejaría enviar.
+              // marcaría un nombre de usuario como inválido y no dejaría
+              // enviar el formulario.
               type="text"
               autoComplete="username"
-              placeholder="silvana  ·  tunombre@correo.com"
+              // Sin nombres de personas de verdad: un ejemplo así lo ve todo
+              // el mundo que entre, y no es un ejemplo, es el nombre de
+              // alguien.
+              placeholder="tu usuario o tu correo"
             />
           )}
         </Field>
@@ -138,7 +143,7 @@ export function SignInForm() {
         {state?.ok && state.message && <Success>{state.message}</Success>}
 
         <Button type="submit" size="lg" block disabled={pending}>
-          {pending ? <Loader2 className="animate-spin" /> : null}
+          {pending ? <Ovillo /> : null}
           {magic ? 'Enviarme el enlace' : 'Ingresar'}
         </Button>
 
@@ -225,7 +230,7 @@ export function SignUpForm() {
               autoComplete="username"
               autoCapitalize="none"
               spellCheck={false}
-              placeholder="silvana"
+              placeholder="cómo querés que te llamemos"
             />
           )}
         </Field>
@@ -266,7 +271,7 @@ export function SignUpForm() {
         {state && !state.ok && <FormError>{state.error}</FormError>}
 
         <Button type="submit" size="lg" block disabled={pending}>
-          {pending ? <Loader2 className="animate-spin" /> : null}
+          {pending ? <Ovillo /> : null}
           Crear cuenta
         </Button>
       </form>
@@ -309,7 +314,7 @@ export function ResetRequestForm() {
         {state?.ok && state.message && <Success>{state.message}</Success>}
 
         <Button type="submit" size="lg" block disabled={pending}>
-          {pending ? <Loader2 className="animate-spin" /> : null}
+          {pending ? <Ovillo /> : null}
           Enviar instrucciones
         </Button>
       </form>
@@ -346,7 +351,7 @@ export function NewPasswordForm() {
         {state?.ok && state.message && <Success>{state.message}</Success>}
 
         <Button type="submit" size="lg" block disabled={pending}>
-          {pending ? <Loader2 className="animate-spin" /> : null}
+          {pending ? <Ovillo /> : null}
           Guardar contraseña
         </Button>
       </form>

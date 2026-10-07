@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
-import { Check, Loader2, Plus, Sparkles, Trash2, X } from 'lucide-react'
+import { Check, Plus, Sparkles, Trash2, X } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { Field, FormError, Input, Select } from '@/components/ui/field'
 import { Badge, Overline } from '@/components/ui/primitives'
@@ -499,7 +500,7 @@ export function VariantBuilder({
 
       <div className="sticky bottom-16 z-10 rounded-xl border border-border-soft bg-background/95 p-3 backdrop-blur-sm md:bottom-4">
         <Button size="lg" onClick={save} disabled={saving}>
-          {saving ? <Loader2 className="animate-spin" /> : saved ? <Check /> : null}
+          {saving ? <Ovillo /> : saved ? <Check /> : null}
           {saving ? 'Guardando...' : saved ? 'Guardado' : 'Guardar características'}
         </Button>
       </div>

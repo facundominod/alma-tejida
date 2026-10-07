@@ -254,7 +254,7 @@ export function CatalogFilters({
             tabIndex={-1}
           />
           <div
-            className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-background p-5 shadow-overlay"
+            className="at-tope-hoja absolute inset-x-0 bottom-0 overflow-y-auto rounded-t-2xl bg-background p-5 shadow-overlay"
             role="dialog"
             aria-modal="true"
             aria-label="Filtros"

@@ -3,7 +3,15 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import * as React from 'react'
-import { LayoutDashboard, Menu, Search, ShoppingBag, User, X } from 'lucide-react'
+import {
+  ChevronRight,
+  LayoutDashboard,
+  Menu,
+  Search,
+  ShoppingBag,
+  User,
+  X,
+} from 'lucide-react'
 import { BrandMark } from '@/components/tienda/brand-mark'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/auth/auth-state'
@@ -16,6 +24,19 @@ type NavLink = { href: string; label: string }
 
 const BASE_LINKS: NavLink[] = [
   { href: '/tienda', label: 'Tienda' },
+  { href: '/ofertas', label: 'Ofertas' },
+  { href: '/contacto', label: 'Contacto' },
+]
+
+/**
+ * Lo que va abajo del todo en el menú del celular.
+ *
+ * No incluye "Tienda": en celular eso ya está en la barra de abajo, siempre a
+ * la vista. Un menú que repite lo que ya hay en pantalla hace pensar que son
+ * cosas distintas.
+ */
+const SECONDARY_LINKS: NavLink[] = [
+  { href: '/novedades', label: 'Novedades' },
   { href: '/ofertas', label: 'Ofertas' },
   { href: '/contacto', label: 'Contacto' },
 ]
@@ -275,33 +296,46 @@ function MobileMenu({
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-2 py-4" aria-label="Principal">
-          {BASE_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="block rounded-lg px-4 py-3 text-lg text-ink transition-colors hover:bg-surface-muted"
-            >
-              {link.label}
-            </Link>
-          ))}
-
-          {categories.length > 0 && (
-            <>
-              <p className="mt-6 px-4 text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
-                Categorías
-              </p>
+        {/* Las CATEGORIAS primero y grandes.
+            Abajo de la pantalla ya hay una barra con Inicio, Tienda, Carrito
+            y Cuenta. Repetir "Tienda" acá arriba no agrega nada: lo único que
+            este menú tiene y esa barra no son las categorías, o sea lo que
+            alguien viene a mirar. Van arriba, con el tamaño de algo que se
+            toca con el pulgar. */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Categorías y secciones">
+          {categories.length > 0 ? (
+            <ul className="space-y-1">
               {categories.map((category) => (
+                <li key={category.id}>
+                  <Link
+                    href={`/categoria/${category.slug}`}
+                    className="flex items-center justify-between rounded-xl px-4 py-3.5 font-display text-lg text-linen-900 transition-colors hover:bg-clay-50"
+                  >
+                    {category.name}
+                    <ChevronRight className="size-4 text-linen-300" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="px-4 py-3 text-sm text-ink-subtle">
+              Todavía no hay categorías.
+            </p>
+          )}
+
+          {/* Lo demás, en letra chica: no compite con lo de arriba. */}
+          <ul className="mt-6 space-y-0.5 border-t border-border-soft pt-4">
+            {SECONDARY_LINKS.map((link) => (
+              <li key={link.href}>
                 <Link
-                  key={category.id}
-                  href={`/categoria/${category.slug}`}
+                  href={link.href}
                   className="block rounded-lg px-4 py-2.5 text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink"
                 >
-                  {category.name}
+                  {link.label}
                 </Link>
-              ))}
-            </>
-          )}
+              </li>
+            ))}
+          </ul>
         </nav>
 
         <div className="space-y-2 border-t border-border-soft p-4">

@@ -29,7 +29,7 @@ export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {
   const [settings, unread] = await Promise.all([getStoreSettings(), getUnreadCount()])
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface-muted/40 md:flex-row">
+    <div className="at-alto-ventana flex flex-col bg-surface-muted/40 md:flex-row">
       <AdminNav
         storeName={settings.store_name}
         logoUrl={settings.logo_url}

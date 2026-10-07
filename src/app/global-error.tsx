@@ -24,7 +24,8 @@ export default function GlobalError({
       <body
         style={{
           margin: 0,
-          minHeight: '100vh',
+          // `dvh` sigue el alto real de la ventana del celular; `vh` no.
+          minHeight: '100dvh',
           display: 'grid',
           placeItems: 'center',
           padding: '2rem 1.5rem',

@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import * as React from 'react'
-import { Check, Loader2 } from 'lucide-react'
+import { Check } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { Checkbox, Field, FormError, Input } from '@/components/ui/field'
 import { updateProfile, type AuthResult } from '@/lib/actions/auth'
@@ -89,7 +90,7 @@ export function ProfileForm({
 
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="animate-spin" />}
+          {pending && <Ovillo />}
           Guardar cambios
         </Button>
         <Button asChild variant="ghost">

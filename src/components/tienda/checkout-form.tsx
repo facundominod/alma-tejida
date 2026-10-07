@@ -4,7 +4,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
-import { ImageOff, Loader2, ShoppingBag } from 'lucide-react'
+import { ImageOff, ShoppingBag } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { Checkbox, Field, FormError, Input, Textarea } from '@/components/ui/field'
 import { EmptyState, Overline, ThreadLoader } from '@/components/ui/primitives'
@@ -362,7 +363,7 @@ export function CheckoutForm({
           <Button type="submit" size="lg" block disabled={submitting}>
             {submitting ? (
               <>
-                <Loader2 className="animate-spin" />
+                <Ovillo />
                 Creando tu pedido...
               </>
             ) : (

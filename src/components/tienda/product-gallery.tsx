@@ -356,7 +356,7 @@ function Lightbox({
         animate={{ scale: 1 }}
         exit={{ scale: 0.97 }}
         transition={{ duration: 0.24, ease: [0.22, 0.61, 0.36, 1] }}
-        className="relative max-h-[88vh] w-full max-w-4xl"
+        className="at-tope-visor relative w-full max-w-4xl"
         style={{ aspectRatio: `${media.width ?? 4} / ${media.height ?? 5}` }}
       >
         <Image

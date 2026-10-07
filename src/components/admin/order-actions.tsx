@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
-import { Check, FileText, Loader2, X } from 'lucide-react'
+import { Check, FileText, X } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { FormError, Textarea } from '@/components/ui/field'
 import { Overline } from '@/components/ui/primitives'
@@ -106,7 +107,7 @@ export function OrderActions({
                   onClick={() => change('paid', 'Pago confirmado por transferencia')}
                 >
                   {pending === 'paid' ? (
-                    <Loader2 className="animate-spin" />
+                    <Ovillo />
                   ) : (
                     <Check />
                   )}
@@ -146,7 +147,7 @@ export function OrderActions({
                   disabled={pending !== null}
                   onClick={() => change(next)}
                 >
-                  {pending === next && <Loader2 className="animate-spin" />}
+                  {pending === next && <Ovillo />}
                   {ORDER_STATUS_LABEL[next]}
                 </Button>
               ))}
@@ -181,7 +182,7 @@ export function OrderActions({
                   onClick={() => change('cancelled', cancelReason.trim())}
                 >
                   {pending === 'cancelled' ? (
-                    <Loader2 className="animate-spin" />
+                    <Ovillo />
                   ) : (
                     <X />
                   )}

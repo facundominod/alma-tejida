@@ -12,5 +12,5 @@ import { COPY } from '@/lib/labels'
  * Con él, el header y el pie ya están pintados y sólo el centro espera.
  */
 export default function CatalogoCargando() {
-  return <ThreadLoader label={COPY.loading} className="min-h-[60vh] justify-center" />
+  return <ThreadLoader label={COPY.loading} className="at-alto-espera justify-center" />
 }

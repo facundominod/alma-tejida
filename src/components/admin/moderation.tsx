@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
-import { Check, EyeOff, Loader2, Send } from 'lucide-react'
+import { Check, EyeOff, Send } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { Checkbox, FormError, Textarea } from '@/components/ui/field'
 import { Badge, StarRating } from '@/components/ui/primitives'
@@ -119,7 +120,7 @@ export function QuestionCard({ question }: { question: WithProduct<Question> }) 
 
       <div className="flex flex-wrap gap-2">
         <Button size="sm" onClick={submit} disabled={pending || !answer.trim()}>
-          {pending ? <Loader2 className="animate-spin" /> : saved ? <Check /> : <Send />}
+          {pending ? <Ovillo /> : saved ? <Check /> : <Send />}
           {saved ? 'Guardada' : 'Responder'}
         </Button>
 
@@ -266,7 +267,7 @@ export function ReviewCard({ review }: { review: WithProduct<Review> }) {
       <div className="flex flex-wrap gap-2">
         {review.status !== 'approved' && (
           <Button size="sm" onClick={() => run('approve')} disabled={pending}>
-            {pending ? <Loader2 className="animate-spin" /> : <Check />}
+            {pending ? <Ovillo /> : <Check />}
             Aprobar
           </Button>
         )}

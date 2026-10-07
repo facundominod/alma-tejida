@@ -44,7 +44,7 @@ export default async function HomePage() {
       <section className="relative">
         <div className="at-container pt-6 md:pt-10">
           <div className="at-organic relative overflow-hidden bg-clay-100">
-            <div className="relative grid min-h-[62vh] md:min-h-[520px] md:grid-cols-2">
+            <div className="at-alto-hero relative grid md:min-h-[520px] md:grid-cols-2">
               {/* Texto */}
               <div className="relative z-10 flex flex-col justify-center gap-5 px-6 py-12 md:px-12 md:py-16">
                 {/* La frase de la tienda primero, después las de la casa. */}

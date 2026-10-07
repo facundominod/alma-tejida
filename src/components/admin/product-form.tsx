@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
-import { Check, Eye, Loader2 } from 'lucide-react'
+import { Check, Eye } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { Checkbox, Field, FormError, Input, Select, Textarea } from '@/components/ui/field'
 import { Overline } from '@/components/ui/primitives'
@@ -359,7 +360,7 @@ export function ProductForm({
 
       <div className="sticky bottom-16 z-10 flex flex-wrap gap-3 rounded-xl border border-border-soft bg-background/95 p-3 backdrop-blur-sm md:bottom-4">
         <Button type="submit" size="lg" disabled={saving}>
-          {saving ? <Loader2 className="animate-spin" /> : saved ? <Check /> : null}
+          {saving ? <Ovillo /> : saved ? <Check /> : null}
           {saving ? 'Guardando...' : saved ? 'Guardado' : 'Guardar'}
         </Button>
 

@@ -6,7 +6,7 @@ export default async function AuthLayout({ children }: LayoutProps<'/'>) {
   const settings = await getStoreSettings()
 
   return (
-    <div className="at-weave relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12">
+    <div className="at-weave at-alto-ventana relative flex flex-col items-center justify-center overflow-hidden px-4 py-12">
       <BrandWatermark className="pointer-events-none absolute -right-24 top-1/4 size-96 text-linen-900" />
 
       <Link href="/" className="relative mb-8" aria-label={`${settings.store_name} — Inicio`}>

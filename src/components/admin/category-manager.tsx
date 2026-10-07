@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
-import { Eye, EyeOff, FolderTree, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Eye, EyeOff, FolderTree, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { Checkbox, Field, FormError, Input, Select, Textarea } from '@/components/ui/field'
 import { Badge, EmptyState } from '@/components/ui/primitives'
@@ -158,7 +159,7 @@ function CategoryRow({
           aria-label={category.is_visible ? 'Ocultar categoría' : 'Mostrar categoría'}
         >
           {pending ? (
-            <Loader2 className="animate-spin" />
+            <Ovillo />
           ) : category.is_visible ? (
             <Eye />
           ) : (
@@ -322,7 +323,7 @@ function CategoryForm({
 
       <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="animate-spin" />}
+          {pending && <Ovillo />}
           Guardar
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel}>

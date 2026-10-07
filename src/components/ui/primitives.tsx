@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Star } from 'lucide-react'
 import * as React from 'react'
+import { OvilloConAgujas } from '@/components/ui/ovillo'
 import { cn, formatPrice } from '@/lib/utils'
 
 /* =============================================================================
@@ -205,17 +206,7 @@ export function ThreadLoader({
       role="status"
       aria-live="polite"
     >
-      <svg width="72" height="24" viewBox="0 0 72 24" fill="none" aria-hidden="true">
-        <path
-          d="M2 12 C 10 2, 18 22, 26 12 S 42 2, 50 12 S 62 22, 70 12"
-          stroke="var(--color-clay-400)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeDasharray="14 10"
-          className="at-loader-thread"
-          style={{ animation: 'at-stitch 1.2s linear infinite' }}
-        />
-      </svg>
+      <OvilloConAgujas />
       <span className="text-sm text-ink-subtle">{label}</span>
     </div>
   )

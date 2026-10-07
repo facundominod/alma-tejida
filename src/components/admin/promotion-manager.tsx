@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
-import { Loader2, Pencil, Plus, Tag, Trash2, X } from 'lucide-react'
+import { Pencil, Plus, Tag, Trash2, X } from 'lucide-react'
+import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { Checkbox, Field, FormError, Input, Select, Textarea } from '@/components/ui/field'
 import { Badge, EmptyState } from '@/components/ui/primitives'
@@ -122,7 +123,7 @@ export function PromotionManager({
                       else router.refresh()
                     }}
                   >
-                    {pending === promo.id && <Loader2 className="animate-spin" />}
+                    {pending === promo.id && <Ovillo />}
                     {promo.is_active ? 'Apagar' : 'Encender'}
                   </Button>
 
@@ -432,7 +433,7 @@ function PromotionForm({
 
       <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="animate-spin" />}
+          {pending && <Ovillo />}
           Guardar promoción
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel}>

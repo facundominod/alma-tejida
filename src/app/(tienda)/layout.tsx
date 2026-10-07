@@ -1,3 +1,4 @@
+import { TransicionDePagina } from '@/components/tienda/transicion-de-pagina'
 import { BottomNav } from '@/components/tienda/bottom-nav'
 import { CartSheet } from '@/components/tienda/cart-sheet'
 import { SiteFooter } from '@/components/tienda/site-footer'
@@ -33,7 +34,7 @@ export default async function TiendaLayout({ children }: LayoutProps<'/'>) {
 
         {/* pb-14 deja lugar a la barra inferior de móvil */}
         <main id="contenido" className="flex-1 pb-14 md:pb-0">
-          {children}
+          <TransicionDePagina>{children}</TransicionDePagina>
         </main>
 
         <SiteFooter settings={settings} categories={categories} />
