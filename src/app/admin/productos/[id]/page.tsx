@@ -103,8 +103,52 @@ export default async function EditarProductoPage({
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className="space-y-6">
+      {/* Accesos directos a las tres partes del editor.
+          En un celular, esta pantalla mide varias veces el alto de la
+          pantalla: sin esto hay que adivinar que mas abajo hay algo. */}
+      <nav
+        aria-label="Partes de esta pieza"
+        className="-mx-1 flex gap-1 overflow-x-auto pb-1 xl:hidden"
+      >
+        {[
+          { href: '#fotos', label: 'Fotos' },
+          { href: '#datos', label: 'Datos y precio' },
+          { href: '#caracteristicas', label: 'Caracteristicas' },
+        ].map((parte) => (
+          <a
+            key={parte.href}
+            href={parte.href}
+            className="shrink-0 rounded-lg border border-border-soft px-3 py-2 text-sm text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink"
+          >
+            {parte.label}
+          </a>
+        ))}
+      </nav>
+
+      {/* En pantalla ancha: datos a la izquierda, fotos y caracteristicas a la
+          derecha. En celular se apila, y ahi las FOTOS van primero.
+
+          Antes iba primero el formulario entero -quince campos- y el gestor de
+          fotos quedaba tan abajo que parecia no existir. Recien creada una
+          pieza, lo siguiente que se quiere hacer es sacarle fotos, no volver a
+          escribir el nombre. */}
+      <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
+        <div className="order-1 space-y-6 xl:order-2">
+          <div id="fotos" className="scroll-mt-20">
+            <MediaManager productId={product.id} media={media} />
+          </div>
+
+          <div id="caracteristicas" className="scroll-mt-20">
+            <VariantBuilder
+              productId={product.id}
+              basePrice={Number(product.base_price)}
+              initialAttributes={attributeDrafts}
+              initialVariants={variantDrafts}
+            />
+          </div>
+        </div>
+
+        <div id="datos" className="order-2 scroll-mt-20 space-y-6 xl:order-1">
           <ProductForm
             product={product}
             categories={categories}
@@ -112,17 +156,6 @@ export default async function EditarProductoPage({
               stockDisplay: settings.default_stock_display,
               lowStockThreshold: settings.default_low_stock_threshold,
             }}
-          />
-        </div>
-
-        <div className="space-y-6">
-          <MediaManager productId={product.id} media={media} />
-
-          <VariantBuilder
-            productId={product.id}
-            basePrice={Number(product.base_price)}
-            initialAttributes={attributeDrafts}
-            initialVariants={variantDrafts}
           />
         </div>
       </div>

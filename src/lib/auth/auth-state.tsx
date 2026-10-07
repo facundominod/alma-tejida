@@ -28,6 +28,16 @@ type AuthState = {
   userId: string | null
   email: string | null
   isLoggedIn: boolean
+  /**
+   * Sólo decide si se MUESTRA el enlace al panel. No autoriza nada.
+   *
+   * Quien quiera, puede poner esto en true desde la consola del navegador y
+   * lo único que va a conseguir es ver un enlace que, al tocarlo, lo devuelve
+   * a /ingresar. Lo que protege el panel es el proxy del servidor y, debajo,
+   * RLS: ninguna de las dos cosas le pregunta al navegador quién es
+   * (punto 10).
+   */
+  isAdmin: boolean
   /** false hasta la primera comprobación */
   ready: boolean
 }
@@ -36,6 +46,7 @@ const INICIAL: AuthState = {
   userId: null,
   email: null,
   isLoggedIn: false,
+  isAdmin: false,
   ready: false,
 }
 
@@ -56,23 +67,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const supabase = createClient()
 
-      const aplicar = (user: { id: string; email?: string } | null) => {
+      const aplicar = async (user: { id: string; email?: string } | null) => {
         if (!activo) return
+
+        // Se pinta enseguida con lo que ya se sabe; el rol llega después.
         setState({
           userId: user?.id ?? null,
           email: user?.email ?? null,
           isLoggedIn: Boolean(user),
+          isAdmin: false,
           ready: true,
         })
+
+        if (!user) return
+
+        // Una consulta más, y sólo para quien inició sesión: quien entra a
+        // mirar la tienda —la enorme mayoría— no paga nada por esto.
+        //
+        // El rol no viaja en el token: vive en `profiles`, y RLS deja que cada
+        // persona lea únicamente su propia fila. Por eso preguntarlo acá no
+        // expone nada de nadie.
+        const { data: perfil } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (!activo) return
+        setState((previo) =>
+          previo.userId === user.id
+            ? { ...previo, isAdmin: perfil?.role === 'admin' }
+            : previo,
+        )
       }
 
       const { data } = await supabase.auth.getUser()
-      aplicar(data.user ?? null)
+      void aplicar(data.user ?? null)
 
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_evento, sesion) => {
-        aplicar(sesion?.user ?? null)
+        void aplicar(sesion?.user ?? null)
       })
 
       desuscribir = () => subscription.unsubscribe()

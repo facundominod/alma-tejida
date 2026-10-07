@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import * as React from 'react'
-import { Menu, Search, ShoppingBag, User, X } from 'lucide-react'
+import { LayoutDashboard, Menu, Search, ShoppingBag, User, X } from 'lucide-react'
 import { BrandMark } from '@/components/tienda/brand-mark'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/auth/auth-state'
@@ -31,7 +31,7 @@ export function SiteHeader({
 }) {
   const pathname = usePathname()
   const cart = useCart()
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, isAdmin } = useAuth()
   const [menuOpen, setMenuOpen] = React.useState(false)
   const [hidden, setHidden] = React.useState(false)
   const [scrolled, setScrolled] = React.useState(false)
@@ -150,6 +150,19 @@ export function SiteHeader({
             <Search className="size-5" />
           </Link>
 
+          {/* Sólo para quien administra. Antes no existía: había que escribir
+              /admin a mano para entrar al panel de la propia tienda. */}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="grid size-11 place-items-center rounded-lg text-clay-700 transition-colors hover:bg-clay-50"
+              aria-label="Panel de administración"
+              title="Panel"
+            >
+              <LayoutDashboard className="size-5" />
+            </Link>
+          )}
+
           <Link
             href={isLoggedIn ? '/cuenta' : '/ingresar'}
             className="hidden size-11 place-items-center rounded-lg text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink md:grid"
@@ -184,6 +197,7 @@ export function SiteHeader({
         abierto={menuOpen}
         categories={categories}
         isLoggedIn={isLoggedIn}
+        isAdmin={isAdmin}
         onClose={() => setMenuOpen(false)}
       />
     </header>
@@ -194,11 +208,13 @@ function MobileMenu({
   abierto,
   categories,
   isLoggedIn,
+  isAdmin,
   onClose,
 }: {
   abierto: boolean
   categories: Category[]
   isLoggedIn: boolean
+  isAdmin: boolean
   onClose: () => void
 }) {
   const panelRef = React.useRef<HTMLDivElement>(null)
@@ -288,7 +304,15 @@ function MobileMenu({
           )}
         </nav>
 
-        <div className="border-t border-border-soft p-4">
+        <div className="space-y-2 border-t border-border-soft p-4">
+          {isAdmin && (
+            <Button asChild block>
+              <Link href="/admin">
+                <LayoutDashboard />
+                Administrar la tienda
+              </Link>
+            </Button>
+          )}
           <Button asChild variant="secondary" block>
             <Link href={isLoggedIn ? '/cuenta' : '/ingresar'}>
               <User />
