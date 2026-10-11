@@ -99,7 +99,9 @@ export function ProductView({
             )}
             {isNew(product.published_at) && <Badge tone="wood">Nuevo</Badge>}
             {(product.discount_percent ?? 0) > 0 && (
-              <Badge tone="sale">{product.discount_percent}% OFF</Badge>
+              <Badge tone="sale" className="at-descuento">
+                {product.discount_percent}% OFF
+              </Badge>
             )}
             {product.promotion_title && (
               <Badge tone="sale">{product.promotion_title}</Badge>

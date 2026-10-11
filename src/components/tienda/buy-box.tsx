@@ -205,6 +205,7 @@ export function BuyBox({
               attributes={attributes}
               variants={variants}
               combinations={combinations}
+              porEncargo={product.availability_mode === 'made_to_order'}
               onSelect={(valueId) => selectOption(attribute.id, valueId)}
             />
           ))}
@@ -326,6 +327,12 @@ export function BuyBox({
  * Una opción se desactiva cuando ninguna variante activa la incluye junto con
  * el resto de lo ya elegido. Es mejor no poder elegir "Rosa / 1,50x2,00" que
  * elegirlo y descubrir después que no existe.
+ *
+ * UNA PIEZA POR ENCARGO NO TIENE STOCK, Y ESO NO ES FALTA DE STOCK.
+ * El respaldo a medida tiene 42 combinaciones y ninguna en depósito: se anuda
+ * cuando alguien la encarga. Hasta ahora se tachaban TODAS las medidas como
+ * agotadas, que es exactamente lo contrario de lo que pasa —están todas
+ * disponibles— y espantaba la venta en la pantalla donde se decide.
  */
 function AttributeSelector({
   attribute,
@@ -333,6 +340,7 @@ function AttributeSelector({
   selection,
   variants,
   combinations,
+  porEncargo,
   onSelect,
 }: {
   attribute: AttributeWithValues
@@ -340,6 +348,8 @@ function AttributeSelector({
   selection: Record<string, string>
   variants: VariantView[]
   combinations: Record<string, Record<string, string>>
+  /** Si la pieza se hace por encargo, el stock no decide nada. */
+  porEncargo: boolean
   onSelect: (valueId: string) => void
 }) {
   const otherAttributes = attributes.filter((a) => a.id !== attribute.id)
@@ -354,6 +364,9 @@ function AttributeSelector({
     })
 
     if (matching.length === 0) return 'unavailable'
+    // Por encargo alcanza con que la combinación exista: no se fabrica contra
+    // depósito, se fabrica contra el pedido.
+    if (porEncargo) return 'ok'
     return matching.some((v) => v.available > 0) ? 'ok' : 'sold-out'
   }
 

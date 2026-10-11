@@ -73,7 +73,7 @@ export function ProductCard({
           {/* Etiquetas: como mucho dos, arriba a la izquierda */}
           <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1.5">
             {discount > 0 && (
-              <Badge tone="sale" size="sm">
+              <Badge tone="sale" size="sm" className="at-descuento">
                 {discount}% OFF
               </Badge>
             )}

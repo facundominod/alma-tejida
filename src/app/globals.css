@@ -740,6 +740,43 @@ a:hover .at-sello-puntada {
   animation: at-tachar 420ms var(--ease-out-alma) both;
 }
 
+/* -----------------------------------------------------------------------------
+   EL PORCENTAJE DE DESCUENTO, VIVO
+
+   Un "19 % OFF" quieto entre otras etiquetas se lee como una mas. Este entra
+   con un golpe corto y despues late muy despacio: se nota de reojo mientras se
+   recorre la grilla y no molesta al leer la pieza.
+
+   Late la ETIQUETA entera y no solo el numero: animar el texto suelto obliga
+   al navegador a rehacer el layout en cada cuadro. Esto es solo transform y
+   opacity, que se resuelven en el compositor.
+   -------------------------------------------------------------------------- */
+@keyframes at-descuento-entra {
+  from {
+    transform: scale(0.82) rotate(-3deg);
+  }
+  to {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes at-descuento-late {
+  0%,
+  92%,
+  100% {
+    transform: scale(1);
+  }
+  96% {
+    transform: scale(1.06);
+  }
+}
+
+.at-descuento {
+  animation:
+    at-descuento-entra 420ms var(--ease-soft-alma),
+    at-descuento-late 4.5s var(--ease-soft-alma) 420ms infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

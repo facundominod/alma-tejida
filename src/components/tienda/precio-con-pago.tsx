@@ -52,9 +52,15 @@ export function PrecioConPago({
       <div className={cn('space-y-0.5', className)}>
         <Price final={p.tarjeta} list={hayOferta ? lista : null} from={desde} size="md" />
         {p.hayDescuento && (
-          <p className="text-[0.8125rem] leading-snug text-sage-600">
-            <span className="tabular font-medium">{formatPrice(p.contado)}</span> con
-            transferencia
+          /* Resaltado y no una línea gris más: es el precio más bajo de la
+             tarjeta y el que conviene que se lea primero. El fondo lo despega
+             del resto sin gritarlo. */
+          /* `flex-wrap` y no `inline-flex` a secas: en un teléfono de 320 px el
+             recuadro se iba 2 px fuera de la tarjeta y la página entera se
+             podía correr de costado. Envolviendo, el texto baja de renglón. */
+          <p className="flex w-fit max-w-full flex-wrap items-baseline gap-x-1 rounded-md bg-sage-100 px-1.5 py-0.5 text-[0.8125rem] leading-snug text-sage-600">
+            <span className="tabular font-semibold">{formatPrice(p.contado)}</span>
+            <span>con transferencia</span>
           </p>
         )}
       </div>
@@ -77,11 +83,14 @@ export function PrecioConPago({
       </p>
 
       {p.hayDescuento && (
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg bg-sage-100 px-3.5 py-2.5 text-sage-600">
-          <span className="tabular text-xl font-semibold">{formatPrice(p.contado)}</span>
-          <span className="text-sm">por transferencia o efectivo</span>
-          <span className="w-full text-[0.8125rem] opacity-90">
-            {COPY_PAGO.ahorroLargo(p)} · {p.porcentaje}% menos
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-sage-500/30 bg-sage-100 px-4 py-3 text-sage-600 ring-1 ring-inset ring-white/40">
+          <span className="tabular text-2xl font-semibold">{formatPrice(p.contado)}</span>
+          <span className="text-sm font-medium">por transferencia o efectivo</span>
+          <span className="w-full pt-0.5 text-[0.8125rem] font-medium">
+            {COPY_PAGO.ahorroLargo(p)}
+            <span className="at-descuento ml-1.5 inline-block rounded bg-sage-600 px-1.5 py-0.5 text-[0.75rem] font-semibold text-white">
+              {p.porcentaje}% menos
+            </span>
           </span>
         </div>
       )}
