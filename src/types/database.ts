@@ -257,6 +257,28 @@ export type PromotionTarget = {
   category_id: string | null
 }
 
+/**
+ * Una regla dentro de un motivo (migracion 0024/0027).
+ *
+ * `payment_mode` dice si el descuento del motivo REEMPLAZA al descuento de
+ * contado habitual o se suma a el. Por defecto reemplaza: poner "15 % en
+ * efectivo" dentro de una campana casi siempre quiere decir 15 en lugar de 20,
+ * no 32.
+ */
+export type PromotionRule = {
+  id: string
+  promotion_id: string
+  kind: 'cantidad' | 'medio_de_pago'
+  min_quantity: number | null
+  payment_method: 'transferencia' | 'efectivo' | 'tarjeta' | null
+  payment_mode: 'reemplaza' | 'ademas'
+  discount_percent: number
+  position: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export type Cart = {
   id: string
   user_id: string | null
@@ -690,6 +712,7 @@ export type Database = {
       price_history: Table<PriceHistory, 'product_id' | 'field'>
       promotions: Table<Promotion, 'title' | 'discount_type' | 'discount_value'>
       promotion_targets: Table<PromotionTarget, 'promotion_id'>
+      promotion_rules: Table<PromotionRule, 'promotion_id' | 'kind' | 'discount_percent'>
       carts: Table<Cart>
       cart_items: Table<CartItem, 'cart_id' | 'variant_id'>
       orders: Table<
@@ -845,6 +868,32 @@ export type Database = {
           created: number
           deactivated: number
         }
+      }
+      /** Precio con reglas acumuladas, neto y ganancia (migracion 0027). */
+      precio_con_reglas: {
+        Args: {
+          p_product_id: string
+          p_variant_id?: string | null
+          p_cantidad?: number
+          p_medio_de_pago?: string
+          p_reglas?: unknown
+          p_promotion_id?: string | null
+        }
+        Returns: {
+          list_price: number
+          precio_base: number
+          precio_unitario: number
+          total: number
+          descuento_percent: number
+          ahorro_unitario: number
+          ahorro_total: number
+          costo_unitario: number | null
+          ganancia_unitaria: number | null
+          ganancia_total: number | null
+          margen_percent: number | null
+          reglas_aplicadas: Array<{ motivo: string; porcentaje: number }>
+          tope_alcanzado: boolean
+        }[]
       }
       /** Deja una pregunta sin necesidad de cuenta (migracion 0023). */
       preguntar: {

@@ -418,6 +418,149 @@ export async function deleteProduct(productId: string): Promise<AdminResult> {
 }
 
 /* =============================================================================
+   LAS REGLAS DE UN MOTIVO
+   ========================================================================== */
+
+const reglaSchema = z.object({
+  kind: z.enum(['cantidad', 'medio_de_pago']),
+  minQuantity: z.number().int().min(2).nullish(),
+  paymentMethod: z.enum(['transferencia', 'efectivo', 'tarjeta']).nullish(),
+  paymentMode: z.enum(['reemplaza', 'ademas']).default('reemplaza'),
+  discountPercent: z
+    .number()
+    .gt(0, 'El descuento tiene que ser mayor a cero.')
+    .lt(100, 'Un descuento del 100 % seria regalar la pieza.'),
+})
+
+/**
+ * Guarda TODAS las reglas de un motivo de una vez.
+ *
+ * Se borran las que habia y se escriben las nuevas, en lugar de ir fila por
+ * fila. Son cinco o seis reglas como mucho, y asi lo que queda guardado es
+ * exactamente lo que se ve en la pantalla: con altas y bajas sueltas, una
+ * baja que falla deja una regla fantasma aplicando descuentos que nadie ve.
+ */
+export async function guardarReglas(input: unknown): Promise<AdminResult> {
+  await requireAdmin()
+
+  const parsed = z
+    .object({
+      promotionId: z.string().uuid(),
+      reglas: z.array(reglaSchema).max(12),
+    })
+    .safeParse(input)
+
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Revisá las reglas.' }
+  }
+
+  const { promotionId, reglas } = parsed.data
+  const supabase = await createClient()
+
+  const { error: errorBorrado } = await supabase
+    .from('promotion_rules')
+    .delete()
+    .eq('promotion_id', promotionId)
+
+  if (errorBorrado) {
+    return { ok: false, error: `No pudimos guardar las reglas. ${errorBorrado.message}` }
+  }
+
+  if (reglas.length > 0) {
+    const { error } = await supabase.from('promotion_rules').insert(
+      reglas.map((regla, i) => ({
+        promotion_id: promotionId,
+        kind: regla.kind,
+        min_quantity: regla.kind === 'cantidad' ? (regla.minQuantity ?? 2) : null,
+        payment_method: regla.kind === 'medio_de_pago' ? (regla.paymentMethod ?? null) : null,
+        payment_mode: regla.paymentMode,
+        discount_percent: regla.discountPercent,
+        position: i,
+      })),
+    )
+
+    if (error) {
+      return { ok: false, error: `No pudimos guardar las reglas. ${error.message}` }
+    }
+  }
+
+  revalidatePath('/admin/promociones')
+  await refreshStorefront()
+  return { ok: true }
+}
+
+/**
+ * Cuánto se cobra y cuánto queda, con las reglas que están en pantalla.
+ *
+ * Llama a `precio_con_reglas()` pasándole las reglas SIN GUARDAR. Es la misma
+ * función que va a cobrar: si la vista previa calculara por su cuenta en el
+ * navegador, las dos cuentas empezarían iguales y terminarían distintas, y el
+ * día que se separen el panel promete un número y la tienda cobra otro.
+ */
+export async function simularOferta(input: unknown): Promise<
+  AdminResult<{
+    precioBase: number
+    precioUnitario: number
+    total: number
+    descuento: number
+    gananciaUnitaria: number | null
+    margen: number | null
+    aplicadas: Array<{ motivo: string; porcentaje: number }>
+    topeAlcanzado: boolean
+  }>
+> {
+  await requireAdmin()
+
+  const parsed = z
+    .object({
+      productId: z.string().uuid(),
+      cantidad: z.number().int().min(1).max(99).default(1),
+      medioDePago: z.enum(['transferencia', 'efectivo', 'tarjeta']).default('transferencia'),
+      reglas: z.array(reglaSchema).max(12),
+    })
+    .safeParse(input)
+
+  if (!parsed.success) return { ok: false, error: 'Revisá los datos de la simulación.' }
+
+  const { productId, cantidad, medioDePago, reglas } = parsed.data
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.rpc('precio_con_reglas', {
+    p_product_id: productId,
+    p_variant_id: null,
+    p_cantidad: cantidad,
+    p_medio_de_pago: medioDePago,
+    p_reglas: reglas.map((regla) => ({
+      kind: regla.kind,
+      min_quantity: regla.minQuantity ?? null,
+      payment_method: regla.paymentMethod ?? null,
+      payment_mode: regla.paymentMode,
+      discount_percent: regla.discountPercent,
+    })),
+    p_promotion_id: null,
+  })
+
+  const fila = Array.isArray(data) ? data[0] : data
+
+  if (error || !fila) {
+    return { ok: false, error: 'No pudimos calcular el precio de esta pieza.' }
+  }
+
+  return {
+    ok: true,
+    precioBase: Number(fila.precio_base),
+    precioUnitario: Number(fila.precio_unitario),
+    total: Number(fila.total),
+    descuento: Number(fila.descuento_percent),
+    gananciaUnitaria:
+      fila.ganancia_unitaria == null ? null : Number(fila.ganancia_unitaria),
+    margen: fila.margen_percent == null ? null : Number(fila.margen_percent),
+    aplicadas: fila.reglas_aplicadas ?? [],
+    topeAlcanzado: Boolean(fila.tope_alcanzado),
+  }
+}
+
+/* =============================================================================
    DEJAR LOS PRECIOS TERMINADOS EN 99, EN TANDA
    ========================================================================== */
 

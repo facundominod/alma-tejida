@@ -14,6 +14,7 @@ import type {
   PaymentProof,
   Product,
   Promotion,
+  PromotionRule,
   Question,
   Review,
   StorageUsage,
@@ -389,15 +390,22 @@ export async function getAdminCategories(): Promise<Category[]> {
 }
 
 export async function getAdminPromotions(): Promise<
-  Array<Promotion & { target_count: number; is_current: boolean }>
+  Array<Promotion & { target_count: number; is_current: boolean; rules: PromotionRule[] }>
 > {
   await requireAdmin()
   const supabase = await createClient()
   const { data } = await supabase
     .from('promotions')
-    .select('*, promotion_targets(count)')
+    .select('*, promotion_targets(count), promotion_rules(*)')
     .order('position')
-    .returns<Array<Promotion & { promotion_targets: Array<{ count: number }> }>>()
+    .returns<
+      Array<
+        Promotion & {
+          promotion_targets: Array<{ count: number }>
+          promotion_rules: PromotionRule[]
+        }
+      >
+    >()
 
   // "Vigente" se resuelve acá y no en el navegador: leer el reloj durante el
   // render de un componente cliente lo vuelve no idempotente.
@@ -406,6 +414,7 @@ export async function getAdminPromotions(): Promise<
   return (data ?? []).map((promo) => ({
     ...promo,
     target_count: promo.promotion_targets?.[0]?.count ?? 0,
+    rules: (promo.promotion_rules ?? []).sort((a, b) => a.position - b.position),
     is_current:
       promo.is_active &&
       (!promo.starts_at || new Date(promo.starts_at).getTime() <= now) &&

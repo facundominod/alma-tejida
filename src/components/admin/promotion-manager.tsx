@@ -13,9 +13,19 @@ import {
   togglePromotion,
 } from '@/lib/actions/admin/catalog'
 import { formatDate, formatPrice } from '@/lib/utils'
-import type { Category, DiscountType, Promotion } from '@/types/database'
+import { ReglasDelMotivo } from '@/components/admin/reglas-del-motivo'
+import type {
+  Category,
+  DiscountType,
+  Promotion,
+  PromotionRule,
+} from '@/types/database'
 
-type PromotionRow = Promotion & { target_count: number; is_current: boolean }
+type PromotionRow = Promotion & {
+  target_count: number
+  is_current: boolean
+  rules: PromotionRule[]
+}
 
 /**
  * Promociones (puntos 25, 106, 107).
@@ -66,6 +76,18 @@ export function PromotionManager({
             router.refresh()
           }}
           onCancel={() => setEditing(null)}
+        />
+      )}
+
+      {/* Las reglas van aparte del formulario y sólo con el motivo ya creado:
+          una regla necesita a qué motivo pertenecer. Primero se guarda el
+          motivo, después se le cuelgan las reglas. */}
+      {editing && editing !== 'new' && (
+        <ReglasDelMotivo
+          key={editing.id}
+          promotionId={editing.id}
+          reglasGuardadas={editing.rules ?? []}
+          productos={products}
         />
       )}
 
