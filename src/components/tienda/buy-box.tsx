@@ -5,7 +5,8 @@ import * as React from 'react'
 import { Check, MessageCircle, ShoppingBag } from 'lucide-react'
 import { QuantityStepper } from '@/components/tienda/cart-sheet'
 import { Button } from '@/components/ui/button'
-import { Badge, Price } from '@/components/ui/primitives'
+import { Badge } from '@/components/ui/primitives'
+import { PrecioConPago } from '@/components/tienda/precio-con-pago'
 import { trackEvent } from '@/lib/analytics/track'
 import { useCart } from '@/lib/cart/cart-store'
 import { coverUrl, storageUrl } from '@/lib/images'
@@ -133,6 +134,12 @@ export function BuyBox({
             : null,
         maxAvailable: selectedVariant.available,
         madeToOrder: product.availability_mode === 'made_to_order',
+        cashDiscountPercent: product.cash_discount_percent,
+        cardInstallments: product.card_installments,
+        // Arranca en transferencia: es la opción más barata y la que la
+        // clienta estuvo viendo destacada en la ficha. Puede cambiarla en el
+        // carrito.
+        medioDePago: 'transferencia',
       },
       quantity,
     )
@@ -156,24 +163,30 @@ export function BuyBox({
 
   return (
     <div className="space-y-6">
-      {/* PRECIO — alto fijo: cambiar de variante no mueve nada */}
-      <div className="min-h-[52px] space-y-1">
-        <Price
-          final={selectedVariant?.final_price ?? product.final_price}
-          list={
+      {/* PRECIO */}
+      <div className="space-y-2">
+        <PrecioConPago
+          precioLista={
             selectedVariant?.discount_amount
               ? selectedVariant.list_price
               : product.discount_percent
                 ? product.list_price
                 : null
           }
-          size="lg"
+          precioFinal={selectedVariant?.final_price ?? product.final_price}
+          porcentajeContado={product.cash_discount_percent}
+          cuotas={product.card_installments}
+          variante="ficha"
         />
-        {selectedVariant?.promotion_title && (
-          <Badge tone="sale" size="sm">
-            {selectedVariant.promotion_title}
-          </Badge>
-        )}
+        {/* Alto fijo: la promoción aparece en algunas variantes y no en otras,
+            y sin esto el botón de compra se movería al cambiar de opción. */}
+        <div className="min-h-[26px]">
+          {selectedVariant?.promotion_title && (
+            <Badge tone="sale" size="sm">
+              {selectedVariant.promotion_title}
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* OPCIONES */}

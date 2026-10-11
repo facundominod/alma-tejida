@@ -42,6 +42,8 @@ const DEFAULT_SETTINGS: StoreSettings = {
   about_text: null,
   default_stock_display: 'vague',
   default_low_stock_threshold: 2,
+  cash_discount_percent: 20,
+  card_installments: 3,
   currency: 'ARS',
   is_open: true,
   closed_message: null,

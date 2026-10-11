@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import type { MedioDePago } from '@/lib/medios-de-pago'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { COPY } from '@/lib/labels'
 import { createClient, getCurrentProfile } from '@/lib/supabase/server'
@@ -15,13 +16,16 @@ import type { CreateOrderResult } from '@/types/database'
  * transacción de PostgreSQL. Acá solo se arma el carrito del lado del
  * servidor y se traduce el resultado a un mensaje entendible.
  *
- * Reparar en lo que el navegador manda: `variantId` y `quantity`. Nada más.
- * No hay campo de precio ni de total: no existe donde escribir una mentira.
+ * Reparar en lo que el navegador manda: `variantId`, `quantity` y cómo quiere
+ * pagar. No hay campo de precio ni de total: no existe donde escribir una
+ * mentira. El medio de pago es el NOMBRE de una opción, de una lista cerrada;
+ * el descuento que le corresponde lo resuelve la base.
  */
 
 const lineSchema = z.object({
   variantId: z.string().uuid(),
   quantity: z.number().int().min(1).max(99),
+  paymentMethod: z.enum(['transferencia', 'efectivo', 'tarjeta']).default('transferencia'),
 })
 
 const placeOrderSchema = z.object({
@@ -141,7 +145,7 @@ async function buildServerCart(
   params: {
     userId: string | null
     anonToken: string
-    lines: Array<{ variantId: string; quantity: number }>
+    lines: Array<{ variantId: string; quantity: number; paymentMethod: MedioDePago }>
   },
 ): Promise<string> {
   const { userId, anonToken, lines } = params
@@ -175,6 +179,7 @@ async function buildServerCart(
       cart_id: cartId!,
       variant_id: line.variantId,
       quantity: line.quantity,
+      payment_method: line.paymentMethod,
     })),
   )
 

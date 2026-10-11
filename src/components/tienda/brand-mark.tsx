@@ -21,14 +21,24 @@ export function BrandMark({
   className?: string
 }) {
   const scale = {
-    sm: { alma: 'text-[1.25rem]', tejida: 'text-[0.64rem]', sello: 'size-8', img: 'h-9' },
+    sm: {
+      alma: 'text-[1.25rem]',
+      tejida: 'text-[0.64rem]',
+      sello: 'size-8',
+      img: 'max-h-9 max-w-[30vw] sm:max-w-none',
+    },
     md: {
       alma: 'text-[1.8rem]',
       tejida: 'text-[0.78rem]',
       sello: 'size-11',
-      img: 'h-12 md:h-14',
+      img: 'max-h-12 md:max-h-14 max-w-[40vw] sm:max-w-none',
     },
-    lg: { alma: 'text-[3rem]', tejida: 'text-[1.1rem]', sello: 'size-20', img: 'h-28 md:h-36' },
+    lg: {
+      alma: 'text-[3rem]',
+      tejida: 'text-[1.1rem]',
+      sello: 'size-20',
+      img: 'max-h-28 md:max-h-36 max-w-[70vw] sm:max-w-none',
+    },
   }[size]
 
   if (logoUrl) {
@@ -36,16 +46,25 @@ export function BrandMark({
       <Image
         src={logoUrl}
         alt={storeName}
-        // El tamano se fija por ALTURA, no por ancho: el encabezado tiene una
-        // altura dada y el logo tiene que entrar en ella. Fijandolo por ancho,
-        // un sello un poco mas alto que ancho se desborda -paso: 65px de logo
-        // en un encabezado de 57-.
+        // EL LOGO ENTRA EN UNA CAJA, no se fija por un solo lado.
+        //
+        // Primero se fijaba solo la altura, porque el encabezado tiene una
+        // altura dada y un sello mas alto que ancho se desbordaba hacia abajo
+        // -paso: 65px de logo en un encabezado de 57-.
+        //
+        // Pero con la altura fija y el ancho libre, MIENTRAS LA IMAGEN CARGA el
+        // navegador usa el ancho del atributo para maquetar: 512px de logo en
+        // un telefono de 320, y la pagina se podia correr de costado. Duraba
+        // un instante, el suficiente para verse.
+        //
+        // Con un maximo en los dos lados la proporcion se mantiene y no se sale
+        // por ninguno, ni antes ni despues de cargar.
         //
         // `width`/`height` son solo la proporcion que next/image necesita para
-        // reservar el espacio; el tamano real lo pone la clase.
+        // reservar el espacio; el tamano real lo ponen las clases.
         width={512}
         height={512}
-        className={cn('w-auto object-contain', scale.img, className)}
+        className={cn('h-auto w-auto object-contain', scale.img, className)}
         priority
       />
     )

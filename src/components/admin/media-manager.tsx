@@ -42,6 +42,8 @@ export type MediaItem = {
   position: number
   is_cover: boolean
   size_bytes: number | null
+  /** Nulo = esta foto no tiene marca de agua (migracion 0020). */
+  watermarked_at: string | null
 }
 
 /**
@@ -412,6 +414,16 @@ function MediaCard({
           <Badge tone="primary" size="sm" className="absolute left-2 top-2">
             <Star className="size-3 fill-current" />
             Portada
+          </Badge>
+        )}
+
+        {/* Las fotos subidas antes de que existiera la marca de agua no la
+            tienen, y no se puede estampar sobre el archivo ya comprimido sin
+            perder calidad otra vez. Se avisa cual es para volver a subir ESA
+            y ninguna otra. Ver la migracion 0020. */}
+        {item.type === 'image' && !item.watermarked_at && (
+          <Badge tone="warning" size="sm" className="absolute bottom-2 left-2">
+            Sin marca de agua
           </Badge>
         )}
 

@@ -501,6 +501,49 @@ a:hover .at-sello-puntada {
    la jerarquia se quedan intactas.
    ========================================================================== */
 
+/* -----------------------------------------------------------------------------
+   PROMOCIONES QUE SE TERMINAN
+   Un latido lento, no un parpadeo. La diferencia no es estetica: un cartel que
+   parpadea se vuelve imposible de leer y es lo primero que el ojo aprende a
+   ignorar. Un latido de dos segundos se nota de reojo y no molesta al leer.
+   Con prefers-reduced-motion el bloque global de mas abajo lo apaga.
+   -------------------------------------------------------------------------- */
+@keyframes at-latido {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.62;
+  }
+}
+
+.at-latido {
+  animation: at-latido 2s var(--ease-soft-alma) infinite;
+}
+
+/* El brillo que recorre la cinta de una promocion por fecha puntual. Va sobre
+   un pseudo-elemento para no tocar el contenido ni su legibilidad. */
+.at-cinta-fugaz {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.at-cinta-fugaz::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in oklab, white 28%, transparent) 50%,
+    transparent 80%
+  );
+  animation: at-shimmer 3.4s var(--ease-soft-alma) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

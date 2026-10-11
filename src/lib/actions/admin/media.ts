@@ -155,6 +155,10 @@ export async function uploadProductImage(formData: FormData): Promise<MediaResul
         attribute_value_id: parsed.data.attributeValueId ?? null,
         type: 'image',
         storage_path: mainPath,
+        // Queda anotado que esta foto SI lleva marca. Es lo que permite
+        // distinguirla de las que se subieron antes de que existiera, sin
+        // tener que mirar el archivo. Ver la migracion 0020.
+        watermarked_at: new Date().toISOString(),
         thumb_path: thumbPath,
         blur_data: `data:image/webp;base64,${micro.toString('base64')}`,
         alt: parsed.data.alt ?? null,

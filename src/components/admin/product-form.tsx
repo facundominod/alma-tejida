@@ -10,6 +10,7 @@ import { Overline } from '@/components/ui/primitives'
 import { saveProduct } from '@/lib/actions/admin/catalog'
 import { STOCK_DISPLAY_LABEL } from '@/lib/labels'
 import { cn, formatPrice } from '@/lib/utils'
+import { calcularPreciosDePago, porcentajeDesdePrecio } from '@/lib/medios-de-pago'
 import type { AvailabilityMode, Category, Product, StockDisplayMode } from '@/types/database'
 
 /**
@@ -25,7 +26,12 @@ export function ProductForm({
 }: {
   product?: Product
   categories: Category[]
-  defaults: { stockDisplay: StockDisplayMode; lowStockThreshold: number }
+  defaults: {
+    stockDisplay: StockDisplayMode
+    lowStockThreshold: number
+    cashDiscountPercent: number
+    cardInstallments: number
+  }
 }) {
   const router = useRouter()
   const [saving, setSaving] = React.useState(false)
@@ -36,6 +42,16 @@ export function ProductForm({
     product?.availability_mode ?? 'in_stock',
   )
   const [hasSale, setHasSale] = React.useState(product?.sale_price != null)
+
+  // Descuento por transferencia o efectivo. Nulo en la pieza significa "el de
+  // la tienda", así que el interruptor arranca prendido solo si esta pieza
+  // tiene uno propio.
+  const [descuentoPropio, setDescuentoPropio] = React.useState(
+    product?.cash_discount_percent != null,
+  )
+  const [descuento, setDescuento] = React.useState(
+    product?.cash_discount_percent != null ? String(product.cash_discount_percent) : '',
+  )
 
   // Precio y costo se llevan en estado para poder mostrar el margen mientras
   // se escribe. El resto del formulario va sin control: no hace falta.
@@ -62,6 +78,9 @@ export function ProductForm({
       basePrice: number('basePrice') ?? 0,
       baseCost: number('baseCost'),
       salePrice: hasSale ? number('salePrice') : null,
+      // Nulo a propósito cuando no tiene uno propio: así hereda el de la
+      // tienda para siempre, en vez de quedar congelado en el valor de hoy.
+      cashDiscountPercent: descuentoPropio ? (Number(descuento) || 0) : null,
       saleStartsAt: hasSale ? String(form.get('saleStartsAt') ?? '') || null : null,
       saleEndsAt: hasSale ? String(form.get('saleEndsAt') ?? '') || null : null,
       availabilityMode: availability,
@@ -193,6 +212,16 @@ export function ProductForm({
         </div>
 
         <MargenEnVivo precio={precio} costo={costo} />
+
+        <PagoDeLaPieza
+          precio={precio}
+          propio={descuentoPropio}
+          alCambiarPropio={setDescuentoPropio}
+          descuento={descuento}
+          alCambiarDescuento={setDescuento}
+          porDefecto={defaults.cashDiscountPercent}
+          cuotas={defaults.cardInstallments}
+        />
 
         <Checkbox
           name="hasSale"
@@ -418,6 +447,147 @@ export function ProductForm({
  * No se muestra nada si falta alguno de los dos: un margen de 100% porque no
  * hay costo cargado es peor que ningun margen.
  */
+/**
+ * Los dos precios de la pieza, según cómo se pague.
+ *
+ * POR QUÉ SE PUEDE ESCRIBIR EL PRECIO Y NO SOLO EL PORCENTAJE
+ * Nadie decide "16,28 % de descuento". Se decide "este respaldo lo doy a
+ * 180 lucas por transferencia". Así que los dos campos editan lo mismo y cada
+ * uno calcula el otro.
+ *
+ * Lo que se GUARDA es siempre el porcentaje -ver la migración 0018-, para que
+ * el precio de contado siga al de lista cuando éste cambie. Si se guardara el
+ * precio, subir el de lista dejaría el de contado viejo y nadie se enteraría
+ * hasta cobrar de menos.
+ *
+ * EL BORRADOR
+ * Mientras se escribe en el campo del precio, lo que se muestra es el
+ * borrador y no el valor recalculado. Sin eso los dos campos se pelean: cada
+ * tecla recalcularía el porcentaje, el porcentaje recalcularía el precio, y el
+ * cursor saltaría encima de lo que se está tipeando.
+ */
+function PagoDeLaPieza({
+  precio,
+  propio,
+  alCambiarPropio,
+  descuento,
+  alCambiarDescuento,
+  porDefecto,
+  cuotas,
+}: {
+  precio: string
+  propio: boolean
+  alCambiarPropio: (v: boolean) => void
+  descuento: string
+  alCambiarDescuento: (v: string) => void
+  porDefecto: number
+  cuotas: number
+}) {
+  const [borrador, setBorrador] = React.useState<string | null>(null)
+
+  const aplicado = propio ? Number(descuento) || 0 : porDefecto
+  const p = calcularPreciosDePago({
+    precioTarjeta: precio,
+    porcentajeContado: aplicado,
+    cuotas,
+  })
+
+  function escribirPrecio(valor: string) {
+    setBorrador(valor)
+    const pct = porcentajeDesdePrecio({ precioTarjeta: precio, precioContado: valor })
+    if (pct != null) alCambiarDescuento(String(pct))
+  }
+
+  return (
+    <div className="space-y-3.5 rounded-lg bg-surface-muted/60 p-3.5">
+      <Checkbox
+        name="descuentoPropio"
+        label="Esta pieza tiene su propio descuento por transferencia"
+        description={`Si lo dejás destildado usa el de la tienda: ${porDefecto}%.`}
+        checked={propio}
+        onChange={(e) => {
+          alCambiarPropio(e.target.checked)
+          // Al prender el interruptor arranca desde el de la tienda, que es el
+          // número que ya estaba rigiendo: así se ajusta en vez de empezar de
+          // cero y dejar la pieza sin descuento por un paso intermedio.
+          if (e.target.checked && !descuento) alCambiarDescuento(String(porDefecto))
+          setBorrador(null)
+        }}
+      />
+
+      {propio && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Descuento" hint="En porcentaje">
+            {(props) => (
+              <Input
+                {...props}
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={99.99}
+                step={0.01}
+                value={descuento}
+                onChange={(e) => {
+                  alCambiarDescuento(e.target.value)
+                  setBorrador(null)
+                }}
+                className="tabular"
+              />
+            )}
+          </Field>
+
+          <Field label="O el precio que querés cobrar" hint="Por transferencia o efectivo">
+            {(props) => (
+              <Input
+                {...props}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={100}
+                value={borrador ?? (p.contado || '')}
+                onChange={(e) => escribirPrecio(e.target.value)}
+                onBlur={() => setBorrador(null)}
+                className="tabular"
+              />
+            )}
+          </Field>
+        </div>
+      )}
+
+      {p.tarjeta > 0 && (
+        <dl className="space-y-1.5 text-sm">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+            <dt className="text-ink-soft">Con tarjeta</dt>
+            <dd className="tabular font-medium">
+              {formatPrice(p.tarjeta)}
+              {p.cuotas > 1 && (
+                <span className="ml-2 font-normal opacity-75">
+                  ({p.cuotas} × {formatPrice(p.valorCuota)})
+                </span>
+              )}
+            </dd>
+          </div>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+            <dt className="text-ink-soft">Por transferencia o efectivo</dt>
+            <dd className="tabular font-medium text-sage-600">
+              {formatPrice(p.contado)}
+              {p.hayDescuento && (
+                <span className="ml-2 font-normal opacity-75">(−{p.porcentaje}%)</span>
+              )}
+            </dd>
+          </div>
+          {p.hayDescuento && (
+            <p className="pt-0.5 text-xs text-ink-soft">
+              La clienta se ahorra {formatPrice(p.ahorro)}. Es el número que va a ver en la
+              tienda.
+            </p>
+          )}
+        </dl>
+      )}
+    </div>
+  )
+}
+
 function MargenEnVivo({ precio, costo }: { precio: string; costo: string }) {
   const p = Number(precio)
   const c = Number(costo)

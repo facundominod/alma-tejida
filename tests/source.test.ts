@@ -114,15 +114,20 @@ describe('higiene del código fuente', () => {
    * rompe los tipos: simplemente llega vacío al servidor.
    */
   it('cada campo del checkout tiene quien lo lea en el servidor', () => {
-    const formulario = leer('src/components/tienda/checkout-form.tsx')
+    // Sin comentarios: un `name="x"` citado en una explicación no es un campo.
+    const formulario = sinComentarios(leer('src/components/tienda/checkout-form.tsx'))
 
     const campos = [...formulario.matchAll(/name="([^"]+)"/g)]
       .map(([, name]) => name)
       // los radio de entrega se leen por estado de React, no por FormData
       .filter((name) => name !== 'entrega' && name !== 'crearCuenta')
 
+    // Cualquier `.get('x')` cuenta, no sólo `form.get('x')`: el checkout lee
+    // los campos dentro de un ayudante que recibe el formulario, y lo que esta
+    // prueba vigila es que el campo tenga QUIEN lo lea, no cómo se llame la
+    // variable que lo lee.
     const leidos = new Set(
-      [...formulario.matchAll(/form\.get\('([^']+)'\)/g)].map(([, name]) => name),
+      [...formulario.matchAll(/\.get\('([^']+)'\)/g)].map(([, name]) => name),
     )
 
     const huerfanos = [...new Set(campos)].filter((name) => !leidos.has(name))

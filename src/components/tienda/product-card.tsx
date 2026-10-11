@@ -4,7 +4,8 @@ import Image from 'next/image'
 import type * as React from 'react'
 import Link from 'next/link'
 import { ImageOff } from 'lucide-react'
-import { Badge, Price, StarRating } from '@/components/ui/primitives'
+import { Badge, StarRating } from '@/components/ui/primitives'
+import { PrecioConPago } from '@/components/tienda/precio-con-pago'
 import { blurProps, IMAGE_SIZES, storageUrl } from '@/lib/images'
 import { availabilityView } from '@/lib/labels'
 import { useRotacion } from '@/lib/ui/use-rotacion'
@@ -98,12 +99,13 @@ export function ProductCard({
             <span className="at-thread-underline">{product.name}</span>
           </h3>
 
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 pt-0.5">
-            <Price
-              final={product.final_price}
-              list={discount > 0 ? product.list_price : null}
-              from={product.has_price_range}
-              size="sm"
+          <div className="pt-0.5">
+            <PrecioConPago
+              precioLista={discount > 0 ? product.list_price : null}
+              precioFinal={product.final_price}
+              porcentajeContado={product.cash_discount_percent}
+              cuotas={product.card_installments}
+              desde={product.has_price_range}
             />
           </div>
 

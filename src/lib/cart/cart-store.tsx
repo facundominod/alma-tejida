@@ -24,9 +24,16 @@ import * as React from 'react'
  * haya mandado el navegador (punto 108).
  */
 
-const STORAGE_KEY = 'alma-tejida:carrito:v1'
+import { calcularPreciosDePago, precioSegunMedio, type MedioDePago } from '@/lib/medios-de-pago'
+
+// v2: las líneas ahora llevan el medio de pago y el descuento por contado.
+// Se cambia la clave en lugar de rellenar lo que falte porque un carrito
+// viejo mostraría el precio de tarjeta como si no hubiera descuento, que es
+// el error que más caro sale: la clienta ve un número y paga otro.
+const STORAGE_KEY = 'alma-tejida:carrito:v2'
 const TOKEN_KEY = 'alma-tejida:visitante:v1'
 const MAX_QTY = 99
+const MEDIOS: MedioDePago[] = ['transferencia', 'efectivo', 'tarjeta']
 
 export type CartLine = {
   variantId: string
@@ -42,6 +49,12 @@ export type CartLine = {
   /** Disponible al momento de agregar; se revalida siempre en el servidor. */
   maxAvailable: number | null
   madeToOrder: boolean
+  /** Descuento por transferencia o efectivo de esta pieza, ya resuelto. */
+  cashDiscountPercent: number
+  /** Cuotas sin interés que incluye el precio de tarjeta. */
+  cardInstallments: number
+  /** Cómo elige pagar ESTA pieza. Arranca en transferencia: es la más barata. */
+  medioDePago: MedioDePago
 }
 
 type Snapshot = {
@@ -70,14 +83,24 @@ function readStored(): CartLine[] {
     if (!Array.isArray(parsed)) return []
 
     // Se valida la forma: un localStorage corrupto no puede romper la tienda.
-    return parsed.filter(
-      (line): line is CartLine =>
-        typeof line === 'object' &&
-        line !== null &&
-        typeof (line as CartLine).variantId === 'string' &&
-        typeof (line as CartLine).quantity === 'number' &&
-        (line as CartLine).quantity > 0,
-    )
+    return parsed
+      .filter(
+        (line): line is CartLine =>
+          typeof line === 'object' &&
+          line !== null &&
+          typeof (line as CartLine).variantId === 'string' &&
+          typeof (line as CartLine).quantity === 'number' &&
+          (line as CartLine).quantity > 0,
+      )
+      // Los campos de pago se normalizan en lugar de darse por buenos. Si otra
+      // pestaña abierta desde antes del despliegue escribe una línea sin
+      // `medioDePago`, el carrito tiene que seguir funcionando.
+      .map((line) => ({
+        ...line,
+        cashDiscountPercent: Number(line.cashDiscountPercent) || 0,
+        cardInstallments: Number(line.cardInstallments) || 1,
+        medioDePago: MEDIOS.includes(line.medioDePago) ? line.medioDePago : 'transferencia',
+      }))
   } catch {
     return []
   }
@@ -188,6 +211,13 @@ function setQuantity(variantId: string, quantity: number) {
   )
 }
 
+/** Cómo se paga ESTA pieza. Cada línea elige por su cuenta. */
+function setMedioDePago(variantId: string, medio: MedioDePago) {
+  setLines(
+    snapshot.lines.map((l) => (l.variantId === variantId ? { ...l, medioDePago: medio } : l)),
+  )
+}
+
 function removeLine(variantId: string) {
   setLines(snapshot.lines.filter((l) => l.variantId !== variantId))
 }
@@ -228,8 +258,13 @@ type CartState = Snapshot & {
   subtotal: number
   listSubtotal: number
   discount: number
+  /** Lo que se paga de verdad, con el medio elegido en cada línea. */
+  totalAPagar: number
+  /** Cuánto se ahorra por los medios de pago elegidos. */
+  ahorroPorPago: number
   add: typeof addLine
   setQuantity: typeof setQuantity
+  setMedioDePago: typeof setMedioDePago
   remove: typeof removeLine
   clear: typeof clearCart
   replaceVariant: typeof replaceVariant
@@ -254,18 +289,34 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       0,
     )
 
+    // Lo que se paga de verdad. Se calcula por línea y con el MISMO cálculo
+    // que la tarjeta y la ficha: si acá se repitiera la multiplicación, un
+    // redondeo distinto haría que el total del carrito no cierre con la suma
+    // de los precios que la clienta vino viendo.
+    const totalAPagar = store.lines.reduce((sum, line) => {
+      const p = calcularPreciosDePago({
+        precioTarjeta: line.price,
+        porcentajeContado: line.cashDiscountPercent,
+        cuotas: line.cardInstallments,
+      })
+      return sum + precioSegunMedio(p, line.medioDePago) * line.quantity
+    }, 0)
+
     return {
       ...store,
       count,
       subtotal,
       listSubtotal,
       discount: Math.max(listSubtotal - subtotal, 0),
+      totalAPagar,
+      ahorroPorPago: Math.max(subtotal - totalAPagar, 0),
       // Agregar algo abre el carrito: es la confirmación de que paso.
       add: (line, quantity) => {
         addLine(line, quantity)
         setIsOpen(true)
       },
       setQuantity,
+      setMedioDePago,
       remove: removeLine,
       clear: clearCart,
       replaceVariant,

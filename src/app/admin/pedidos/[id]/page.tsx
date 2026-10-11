@@ -10,6 +10,7 @@ import { ORDER_STATUS_LABEL, ORDER_STATUS_TONE } from '@/lib/labels'
 import { getOrderDetail } from '@/lib/queries/admin'
 import { getStoreSettings } from '@/lib/queries/store'
 import { formatDateTime, formatPrice, whatsappLink } from '@/lib/utils'
+import { COPY_PAGO } from '@/lib/medios-de-pago'
 
 export async function generateMetadata({ params }: PageProps<'/admin/pedidos/[id]'>) {
   const { id } = await params
@@ -112,6 +113,16 @@ export default async function AdminPedidoPage({ params }: PageProps<'/admin/pedi
                       {item.quantity} × {formatPrice(item.unit_price)}
                       {item.sku && <span className="text-ink-subtle"> · {item.sku}</span>}
                     </p>
+                    {/* Cómo eligió pagar ESTA pieza. Es el dato que Silvana
+                        necesita para saber qué cobrar y cómo. */}
+                    {item.payment_method && (
+                      <p className="text-sm font-medium text-sage-600">
+                        {COPY_PAGO.elegido(item.payment_method)}
+                        {Number(item.cash_discount_percent) > 0 &&
+                          item.payment_method !== 'tarjeta' &&
+                          ` · −${Number(item.cash_discount_percent)}%`}
+                      </p>
+                    )}
                     {item.promotion_title && (
                       <Badge tone="sale" size="sm" className="mt-1">
                         {item.promotion_title}

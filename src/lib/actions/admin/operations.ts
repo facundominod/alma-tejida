@@ -375,6 +375,19 @@ const settingsSchema = z.object({
       image_url: z.string().trim().max(400).optional().transform((v) => v || undefined),
     })
     .optional(),
+  // Medios de pago: el descuento general y las cuotas que incluye el precio
+  // de lista. Cada pieza puede pisar el descuento; las cuotas son de la tienda.
+  cashDiscountPercent: z
+    .number()
+    .min(0, 'El descuento no puede ser negativo.')
+    .max(99.99, 'Un descuento del 100 % seria regalar las piezas.')
+    .optional(),
+  cardInstallments: z
+    .number()
+    .int()
+    .min(1, 'Como minimo un pago.')
+    .max(24, 'Veinticuatro cuotas es el tope.')
+    .optional(),
   defaultStockDisplay: z.enum(['exact', 'vague', 'hidden']).optional(),
   defaultLowStockThreshold: z.number().int().nonnegative().optional(),
   isOpen: z.boolean().optional(),
@@ -415,6 +428,10 @@ export async function updateStoreSettings(input: unknown): Promise<AdminResult> 
       payment_instructions: data.paymentInstructions || null,
       delivery_methods: data.deliveryMethods ?? [],
       home_hero: data.homeHero ?? {},
+      // `??` y no `||`: un descuento de 0 % es una decision valida -"ninguna
+      // pieza tiene descuento por contado"- y con `||` se perderia.
+      cash_discount_percent: data.cashDiscountPercent ?? 20,
+      card_installments: data.cardInstallments ?? 3,
       default_stock_display: data.defaultStockDisplay ?? 'vague',
       default_low_stock_threshold: data.defaultLowStockThreshold ?? 2,
       is_open: data.isOpen ?? true,

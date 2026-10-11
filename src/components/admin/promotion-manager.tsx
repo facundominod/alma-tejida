@@ -307,13 +307,18 @@ function PromotionForm({
             />
           )}
         </Field>
-        <Field label="Hasta" hint="Opcional. Vacío = sin fecha de corte.">
+        <Field
+          label="Hasta"
+          hint="Opcional. Con hora, para una promoción de unas horas; sin hora, vale todo el día."
+        >
           {(props) => (
             <Input
               {...props}
               name="endsAt"
-              type="date"
-              defaultValue={promotion?.ends_at?.slice(0, 10) ?? ''}
+              type="datetime-local"
+              // Se recorta a minutos: los segundos no se eligen a mano y el
+              // campo los rechaza.
+              defaultValue={promotion?.ends_at?.slice(0, 16) ?? ''}
             />
           )}
         </Field>

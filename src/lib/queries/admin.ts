@@ -372,6 +372,7 @@ export async function getAdminProduct(productId: string) {
       variant_id: string | null
       attribute_value_id: string | null
       size_bytes: number | null
+      watermarked_at: string | null
     }>,
   }
 }

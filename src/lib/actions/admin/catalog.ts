@@ -45,6 +45,13 @@ const productSchema = z.object({
   // cargarlo trabaria la carga de la primera pieza.
   baseCost: z.number().nonnegative('El costo no puede ser negativo.').nullish(),
   salePrice: z.number().positive().nullish(),
+  // Nulo = usa el de la tienda. Cero = esta pieza no tiene descuento por
+  // contado. Son dos cosas distintas, y por eso no se normaliza a cero.
+  cashDiscountPercent: z
+    .number()
+    .min(0, 'El descuento no puede ser negativo.')
+    .max(99.99, 'Un descuento del 100 % seria regalar la pieza.')
+    .nullish(),
   saleStartsAt: z.string().nullish(),
   saleEndsAt: z.string().nullish(),
   availabilityMode: z.enum(['in_stock', 'made_to_order', 'unique_piece']),
@@ -94,6 +101,7 @@ export async function saveProduct(
     base_price: data.basePrice,
     base_cost: data.baseCost ?? null,
     sale_price: data.salePrice ?? null,
+    cash_discount_percent: data.cashDiscountPercent ?? null,
     sale_starts_at: data.saleStartsAt || null,
     sale_ends_at: data.saleEndsAt || null,
     availability_mode: data.availabilityMode,
@@ -255,6 +263,7 @@ export async function duplicateProduct(
       short_description: original.short_description,
       description: original.description,
       base_price: original.base_price,
+      cash_discount_percent: original.cash_discount_percent,
       availability_mode: original.availability_mode,
       lead_time_days: original.lead_time_days,
       stock_display: original.stock_display,
@@ -372,6 +381,75 @@ export async function deleteProduct(productId: string): Promise<AdminResult> {
 }
 
 /* =============================================================================
+   DESCUENTO POR CONTADO, EN TANDA
+   ========================================================================== */
+
+/**
+ * Aplica un descuento por transferencia o efectivo a muchas piezas de una vez.
+ *
+ * POR QUÉ NO PISA LO QUE YA TIENE DESCUENTO PROPIO
+ * Una pieza con descuento propio es una decisión que alguien tomó mirándola:
+ * "este respaldo grande lo doy al 10 % y no al 20 %". Una tanda que pase por
+ * encima de eso borra esas decisiones sin dejar rastro y sin forma de volver
+ * atrás. Así que por defecto SOLO toca las que no tienen uno propio, y pisar
+ * las demás hay que pedirlo expresamente.
+ *
+ * `volverAlDeLaTienda` hace lo inverso: borra el descuento propio para que esas
+ * piezas vuelvan a seguir el general. Es la salida para cuando una tanda quedó
+ * mal: en vez de adivinar qué tenía cada pieza, se las devuelve al valor común.
+ */
+const descuentoMasivo = z
+  .object({
+    porcentaje: z
+      .number()
+      .min(0, 'El descuento no puede ser negativo.')
+      .max(99.99, 'Un descuento del 100 % seria regalar las piezas.')
+      .optional(),
+    categoryId: z.string().uuid().nullish(),
+    pisarLasQueTienenPropio: z.boolean().default(false),
+    volverAlDeLaTienda: z.boolean().default(false),
+  })
+  .refine((d) => d.volverAlDeLaTienda || d.porcentaje != null, {
+    message: 'Falta el porcentaje.',
+  })
+
+export async function aplicarDescuentoMasivo(
+  input: unknown,
+): Promise<AdminResult<{ piezas: number }>> {
+  await requireAdmin()
+
+  const parsed = descuentoMasivo.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Revisá los datos.' }
+  }
+
+  const { porcentaje, categoryId, pisarLasQueTienenPropio, volverAlDeLaTienda } = parsed.data
+  const supabase = await createClient()
+
+  let query = supabase
+    .from('products')
+    .update({ cash_discount_percent: volverAlDeLaTienda ? null : (porcentaje ?? null) })
+    .is('deleted_at', null)
+
+  if (categoryId) query = query.eq('category_id', categoryId)
+
+  // Al volver al de la tienda se tocan todas las que tengan uno propio: son
+  // justamente las que hay que limpiar.
+  if (!pisarLasQueTienenPropio && !volverAlDeLaTienda) {
+    query = query.is('cash_discount_percent', null)
+  }
+
+  const { data, error } = await query.select('id')
+
+  if (error) return { ok: false, error: 'No pudimos aplicar el descuento.' }
+
+  revalidatePath('/admin/productos')
+  await refreshStorefront()
+
+  return { ok: true, piezas: data?.length ?? 0 }
+}
+
+/* =============================================================================
    CATEGORIAS
    ========================================================================== */
 
@@ -471,6 +549,27 @@ const promotionSchema = z.object({
   categoryIds: z.array(z.string().uuid()).default([]),
 })
 
+/**
+ * Una fecha de corte significa "hasta el final de ese día".
+ *
+ * EL PROBLEMA QUE ARREGLA
+ * Un campo de fecha entrega "2026-10-15", que como instante es la medianoche
+ * del 15: el primer segundo de ese día. Y la promoción sigue vigente mientras
+ * `ends_at >= now()`, así que una promoción puesta "hasta el 15" se apagaba a
+ * las 00:00 del 15 -o sea, el 14 a la noche-. Un día antes de lo que entiende
+ * cualquiera que escribio esa fecha, y descubierto por una clienta que ve el
+ * precio viejo.
+ *
+ * Si viene con hora, se respeta tal cual: es justamente lo que hace falta para
+ * una promoción de unas pocas horas.
+ */
+function finDelDia(valor: string | null | undefined): string | null {
+  if (!valor) return null
+  // Con hora incluida ("2026-10-15T18:30") no hay nada que corregir.
+  if (valor.includes('T')) return valor
+  return `${valor}T23:59:59`
+}
+
 export async function savePromotion(input: unknown): Promise<AdminResult> {
   await requireAdmin()
 
@@ -497,7 +596,8 @@ export async function savePromotion(input: unknown): Promise<AdminResult> {
     discount_type: data.discountType,
     discount_value: data.discountValue,
     starts_at: data.startsAt || null,
-    ends_at: data.endsAt || null,
+    // Hasta el FINAL del día elegido: ver finDelDia().
+    ends_at: finDelDia(data.endsAt),
     is_active: data.isActive,
     show_in_hero: data.showInHero,
     position: data.position ?? 0,

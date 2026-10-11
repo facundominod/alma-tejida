@@ -41,6 +41,8 @@ export default async function NuevoProductoPage() {
           defaults={{
             stockDisplay: settings.default_stock_display,
             lowStockThreshold: settings.default_low_stock_threshold,
+            cashDiscountPercent: settings.cash_discount_percent,
+            cardInstallments: settings.card_installments,
           }}
         />
       </div>

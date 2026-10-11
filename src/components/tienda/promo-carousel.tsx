@@ -8,6 +8,7 @@ import * as React from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Overline } from '@/components/ui/primitives'
 import { storageUrl } from '@/lib/images'
+import { CuentaRegresiva } from '@/components/tienda/cuenta-regresiva'
 import { cn } from '@/lib/utils'
 import type { Promotion } from '@/types/database'
 
@@ -138,6 +139,10 @@ function PromoSlide({
   const image = storageUrl(promo.image_path)
   const href = promo.cta_href ?? '/ofertas'
 
+  // El brillo que recorre la cinta se reserva para las promociones con fecha
+  // de fin. Si lo llevaran todas, dejaría de significar "esto se termina".
+  const fugaz = promo.ends_at != null
+
   return (
     <div
       className="min-w-0 flex-[0_0_100%]"
@@ -147,7 +152,10 @@ function PromoSlide({
     >
       <Link
         href={href}
-        className="group relative flex min-h-[160px] items-center overflow-hidden rounded-xl bg-clay-100 md:min-h-[220px]"
+        className={cn(
+          'group relative flex min-h-[160px] items-center overflow-hidden rounded-xl bg-clay-100 md:min-h-[220px]',
+          fugaz && !image && 'at-cinta-fugaz',
+        )}
       >
         {image && (
           <Image
@@ -166,11 +174,20 @@ function PromoSlide({
             image && 'bg-gradient-to-r from-linen-900/75 via-linen-900/45 to-transparent',
           )}
         >
-          <Overline className={image ? 'text-white/75' : 'text-clay-600'}>
-            {promo.discount_type === 'percent'
-              ? `${Number(promo.discount_value)}% de descuento`
-              : 'Promoción'}
-          </Overline>
+          <div className="flex flex-wrap items-center gap-2">
+            <Overline className={image ? 'text-white/75' : 'text-clay-600'}>
+              {promo.discount_type === 'percent'
+                ? `${Number(promo.discount_value)}% de descuento`
+                : 'Promoción'}
+            </Overline>
+            {/* El reloj sólo aparece si la promoción TIENE fecha de fin. Una
+                promoción abierta con un reloj al lado sería una urgencia
+                inventada, y eso se nota. */}
+            <CuentaRegresiva
+              termina={promo.ends_at}
+              className={image ? 'bg-white/20 text-white' : undefined}
+            />
+          </div>
           <p
             className={cn(
               'font-display text-2xl leading-tight md:text-3xl',

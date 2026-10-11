@@ -11,6 +11,8 @@ import { useCart } from '@/lib/cart/cart-store'
 import { IMAGE_SIZES } from '@/lib/images'
 import { COPY } from '@/lib/labels'
 import { formatPrice, whatsappLink } from '@/lib/utils'
+import { calcularPreciosDePago, precioSegunMedio } from '@/lib/medios-de-pago'
+import { SelectorDePago } from '@/components/tienda/selector-de-pago'
 
 /**
  * Página de carrito.
@@ -107,7 +109,19 @@ export function CartPageView({ whatsappNumber }: { whatsappNumber: string | null
                 </button>
               </div>
 
-              <div className="mt-auto flex flex-wrap items-center justify-between gap-3">
+              <div className="mt-3">
+                <SelectorDePago
+                  precio={line.price}
+                  porcentajeContado={line.cashDiscountPercent}
+                  cuotas={line.cardInstallments}
+                  cantidad={line.quantity}
+                  valor={line.medioDePago}
+                  alElegir={(medio) => cart.setMedioDePago(line.variantId, medio)}
+                  etiqueta={line.name}
+                />
+              </div>
+
+              <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-3">
                 <QuantityStepper
                   value={line.quantity}
                   max={line.madeToOrder ? 99 : (line.maxAvailable ?? 99)}
@@ -115,14 +129,23 @@ export function CartPageView({ whatsappNumber }: { whatsappNumber: string | null
                   label={line.name}
                   size="md"
                 />
-                <Price
-                  final={line.price * line.quantity}
-                  list={
-                    line.listPrice && line.listPrice > line.price
-                      ? line.listPrice * line.quantity
-                      : null
-                  }
-                />
+                {(() => {
+                  // El precio de la línea es el del medio ELEGIDO. Mostrar el de
+                  // tarjeta mientras el botón de transferencia está marcado es
+                  // la contradicción que hace desconfiar de todo el resto.
+                  const p = calcularPreciosDePago({
+                    precioTarjeta: line.price,
+                    porcentajeContado: line.cashDiscountPercent,
+                    cuotas: line.cardInstallments,
+                  })
+                  const unitario = precioSegunMedio(p, line.medioDePago)
+                  return (
+                    <Price
+                      final={unitario * line.quantity}
+                      list={unitario < p.tarjeta ? p.tarjeta * line.quantity : null}
+                    />
+                  )
+                })()}
               </div>
             </div>
           </li>
@@ -148,17 +171,30 @@ export function CartPageView({ whatsappNumber }: { whatsappNumber: string | null
                 </dd>
               </div>
             )}
+            {cart.ahorroPorPago > 0 && (
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Por tu forma de pago</dt>
+                <dd className="tabular font-medium text-sage-600">
+                  −{formatPrice(cart.ahorroPorPago)}
+                </dd>
+              </div>
+            )}
             <div className="flex items-baseline justify-between border-t border-border-soft pt-3">
-              <dt className="font-medium">Subtotal</dt>
+              <dt className="font-medium">Total</dt>
               <dd className="tabular text-xl font-semibold">
-                {formatPrice(cart.subtotal)}
+                {formatPrice(cart.totalAPagar)}
               </dd>
             </div>
           </dl>
 
+          {cart.ahorroPorPago > 0 && (
+            <p className="rounded-lg bg-sage-100 px-3.5 py-2.5 text-sm font-medium text-sage-600">
+              Te estás ahorrando {formatPrice(cart.ahorroPorPago)} por cómo elegiste pagar.
+            </p>
+          )}
+
           <p className="text-xs leading-relaxed text-ink-subtle">
-            La entrega y el total final se confirman al hacer el pedido. El pago se
-            coordina por transferencia.
+            La entrega y el total final se confirman al hacer el pedido.
           </p>
 
           <Button asChild size="lg" block>

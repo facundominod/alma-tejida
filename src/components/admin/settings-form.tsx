@@ -81,6 +81,8 @@ export function SettingsForm({
         cta_label: value('heroCtaLabel'),
         cta_href: value('heroCtaHref'),
       },
+      cashDiscountPercent: Number(form.get('cashDiscountPercent') ?? 20),
+      cardInstallments: Number(form.get('cardInstallments') ?? 3),
       defaultStockDisplay: value('defaultStockDisplay') as StockDisplayMode,
       defaultLowStockThreshold: Number(form.get('defaultLowStockThreshold') ?? 2),
       isOpen: form.get('isOpen') === 'on',
@@ -258,6 +260,56 @@ export function SettingsForm({
               )}
             </Field>
           ))}
+        </div>
+      </section>
+
+      {/* MEDIOS DE PAGO ---------------------------------------------------- */}
+      <section className="space-y-4 rounded-xl border border-border-soft bg-surface p-4 md:p-5">
+        <Overline>Medios de pago</Overline>
+        <p className="text-sm text-ink-muted">
+          El precio que se muestra en la tienda es el de tarjeta. Pagando por
+          transferencia o efectivo se descuenta lo que pongas acá. Cada pieza puede
+          llevar su propio descuento; esto es lo que usan todas las que no lo tengan.
+        </p>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Descuento por transferencia o efectivo"
+            hint="En porcentaje. Poné 0 si no querés dar descuento."
+          >
+            {(props) => (
+              <Input
+                {...props}
+                name="cashDiscountPercent"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={99.99}
+                step={0.01}
+                defaultValue={settings.cash_discount_percent}
+                className="tabular"
+              />
+            )}
+          </Field>
+
+          <Field
+            label="Cuotas sin interés"
+            hint="Las que incluye el precio de lista."
+          >
+            {(props) => (
+              <Input
+                {...props}
+                name="cardInstallments"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={24}
+                step={1}
+                defaultValue={settings.card_installments}
+                className="tabular"
+              />
+            )}
+          </Field>
         </div>
       </section>
 

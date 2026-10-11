@@ -169,14 +169,24 @@ export function CartSheet() {
                       </span>
                     </div>
                   )}
+                  {cart.ahorroPorPago > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-ink-muted">Por tu forma de pago</span>
+                      <span className="tabular font-medium text-sage-600">
+                        −{formatPrice(cart.ahorroPorPago)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-baseline justify-between">
-                    <span className="text-ink-muted">Subtotal</span>
+                    <span className="text-ink-muted">Total</span>
                     <span className="tabular text-xl font-semibold">
-                      {formatPrice(cart.subtotal)}
+                      {formatPrice(cart.totalAPagar)}
                     </span>
                   </div>
                   <p className="text-xs text-ink-subtle">
-                    El total final se confirma al hacer el pedido.
+                    {cart.ahorroPorPago > 0
+                      ? `Elegiste cómo pagar cada pieza y te ahorrás ${formatPrice(cart.ahorroPorPago)}.`
+                      : 'El total final se confirma al hacer el pedido.'}
                   </p>
                   <Button asChild size="lg" block>
                     <Link href="/checkout" onClick={cart.close}>

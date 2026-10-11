@@ -96,10 +96,50 @@ test.describe('la tienda carga y se navega', () => {
     for (const ruta of ['/', '/tienda', '/ofertas', '/contacto', '/carrito']) {
       await page.goto(ruta)
 
-      const desborda = await page.evaluate(
-        () => document.documentElement.scrollWidth > window.innerWidth + 1,
-      )
-      expect(desborda, `${ruta} desborda horizontalmente`).toBe(false)
+      // Se informa QUÉ elemento se sale, no sólo que algo se sale. Un
+      // "desborda horizontalmente" sin culpable obliga a buscarlo a mano cada
+      // vez, y el culpable casi nunca es el elemento donde uno mira primero.
+      const diagnostico = await page.evaluate(() => {
+        const vw = window.innerWidth
+        const culpables = []
+        for (const el of document.querySelectorAll('body *')) {
+          const b = el.getBoundingClientRect()
+          if (b.width > 0 && b.right > vw + 1) {
+            // Sólo los que de verdad empujan la página: un hijo dentro de un
+            // contenedor con scroll propio -el carrusel de categorías- se sale
+            // a propósito y no agranda el documento.
+            let dentroDeScroll = false
+            for (let p = el.parentElement; p; p = p.parentElement) {
+              const o = getComputedStyle(p).overflowX
+              if (o === 'auto' || o === 'scroll' || o === 'hidden') {
+                dentroDeScroll = true
+                break
+              }
+            }
+            if (!dentroDeScroll) {
+              culpables.push(
+                `<${el.tagName.toLowerCase()} class="${String(el.className).slice(0, 80)}"> ` +
+                  `hasta ${Math.round(b.right)}px (ancho ${Math.round(b.width)})`,
+              )
+            }
+          }
+        }
+        return {
+          desborda: document.documentElement.scrollWidth > vw + 1,
+          vw,
+          scrollWidth: document.documentElement.scrollWidth,
+          culpables: culpables.slice(0, 5),
+        }
+      })
+
+      const detalle = [
+        `${ruta} desborda horizontalmente: ${diagnostico.scrollWidth}px en una ventana de ${diagnostico.vw}px.`,
+        ...(diagnostico.culpables.length
+          ? diagnostico.culpables
+          : ['(ningún elemento se sale: puede ser un margen o un ancho en vw)']),
+      ].join('; ')
+
+      expect(diagnostico.desborda, detalle).toBe(false)
     }
   })
 
@@ -226,7 +266,7 @@ test.describe('el carrito', () => {
     // Se escribe un carrito como lo haría la tienda
     await page.evaluate(() => {
       window.localStorage.setItem(
-        'alma-tejida:carrito:v1',
+        'alma-tejida:carrito:v2',
         JSON.stringify([
           {
             variantId: '00000000-0000-0000-0000-000000000001',
@@ -240,6 +280,12 @@ test.describe('el carrito', () => {
             quantity: 2,
             maxAvailable: 5,
             madeToOrder: false,
+            // Sin descuento por contado: esta prueba es sobre que el carrito
+            // sobreviva, no sobre los medios de pago. Con descuento, el
+            // importe de la linea cambiaria y la prueba mediria dos cosas.
+            cashDiscountPercent: 0,
+            cardInstallments: 3,
+            medioDePago: 'transferencia',
           },
         ]),
       )
@@ -257,10 +303,45 @@ test.describe('el carrito', () => {
     await otra.close()
   })
 
+  /**
+   * Una pestaña abierta desde antes del despliegue puede escribir una línea
+   * sin los campos de pago. El carrito tiene que completarlos en lugar de
+   * descartar la línea: perderle el carrito a alguien es peor que mostrarlo
+   * sin descuento.
+   */
+  test('una línea guardada sin los campos de pago no se pierde', async ({ page, context }) => {
+    await page.goto('/')
+    await page.evaluate(() => {
+      window.localStorage.setItem(
+        'alma-tejida:carrito:v2',
+        JSON.stringify([
+          {
+            variantId: '00000000-0000-0000-0000-000000000003',
+            productId: '00000000-0000-0000-0000-000000000004',
+            slug: 'manta-vieja',
+            name: 'Manta vieja',
+            variantLabel: null,
+            image: null,
+            price: 40000,
+            listPrice: null,
+            quantity: 1,
+            maxAvailable: 5,
+            madeToOrder: false,
+          },
+        ]),
+      )
+    })
+
+    const otra = await context.newPage()
+    await otra.goto('/carrito')
+    await expect(otra.getByText('Manta vieja')).toBeVisible()
+    await otra.close()
+  })
+
   test('un localStorage corrupto no rompe la tienda', async ({ page }) => {
     await page.goto('/')
     await page.evaluate(() => {
-      window.localStorage.setItem('alma-tejida:carrito:v1', '{{{ esto no es json')
+      window.localStorage.setItem('alma-tejida:carrito:v2', '{{{ esto no es json')
     })
 
     await page.goto('/carrito')

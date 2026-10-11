@@ -111,6 +111,10 @@ export type StoreSettings = {
   about_text: string | null
   default_stock_display: StockDisplayMode
   default_low_stock_threshold: number
+  /** Descuento general por transferencia o efectivo, en %. */
+  cash_discount_percent: number
+  /** Cuotas sin interes incluidas en el precio de lista. */
+  card_installments: number
   currency: string
   is_open: boolean
   closed_message: string | null
@@ -147,6 +151,8 @@ export type Product = {
   sale_price: number | null
   sale_starts_at: string | null
   sale_ends_at: string | null
+  /** Descuento por transferencia o efectivo. Nulo = el de la tienda. */
+  cash_discount_percent: number | null
   stock_display: StockDisplayMode
   low_stock_threshold: number
   show_when_out_of_stock: boolean
@@ -217,6 +223,8 @@ export type ProductMedia = {
   duration_seconds: number | null
   position: number
   is_cover: boolean
+  /** Cuando se le estampo la marca de agua. Nulo = no la tiene (migracion 0020). */
+  watermarked_at: string | null
   created_at: string
 }
 
@@ -260,6 +268,8 @@ export type CartItem = {
   cart_id: string
   variant_id: string
   quantity: number
+  /** Como quiere pagar esta pieza. Nulo = todavia no eligio. */
+  payment_method: 'transferencia' | 'efectivo' | 'tarjeta' | null
   created_at: string
   updated_at: string
 }
@@ -309,6 +319,10 @@ export type OrderItem = {
   line_total: number
   promotion_id: string | null
   promotion_title: string | null
+  /** Como eligio pagar esta pieza, congelado al hacer el pedido. */
+  payment_method: 'transferencia' | 'efectivo' | 'tarjeta' | null
+  /** Descuento por contado vigente al pedir. Congelado a proposito. */
+  cash_discount_percent: number
   created_at: string
 }
 
@@ -482,6 +496,10 @@ export type CatalogProduct = {
   cover_alt: string | null
   /** Las primeras 3 fotos, portada incluida. Nulo si la pieza no tiene ninguna. */
   gallery: ProductThumb[] | null
+  /** Descuento por transferencia o efectivo, ya resuelto (migracion 0018). */
+  cash_discount_percent: number
+  /** Cuotas sin interes incluidas en el precio de lista. */
+  card_installments: number
 }
 
 /** Una foto de la galeria corta que trae el catalogo (migracion 0016). */
@@ -556,6 +574,8 @@ export type PublicOrder = {
     quantity: number
     unit_price: number
     line_total: number
+    payment_method: 'transferencia' | 'efectivo' | 'tarjeta' | null
+    cash_discount_percent: number
   }>
   timeline: Array<{ status: OrderStatus; label: string; created_at: string }>
 }

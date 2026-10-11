@@ -12,6 +12,8 @@ import { safeQuery } from '@/lib/queries/safe'
 import { getStoreSettings } from '@/lib/queries/store'
 import { createPublicClient } from '@/lib/supabase/public'
 import { cn, formatDate, formatPrice, whatsappLink } from '@/lib/utils'
+import { mensajeDePedido, totalesDelPedido } from '@/lib/mensaje-de-pedido'
+import { COPY_PAGO } from '@/lib/medios-de-pago'
 import type { PublicOrder } from '@/types/database'
 
 export const metadata: Metadata = {
@@ -70,10 +72,13 @@ export default async function PedidoPage({
 
   const settings = await getStoreSettings()
 
+  // El mensaje lleva el pedido entero: del otro lado hay alguien con el
+  // teléfono en la mano, no un panel abierto.
   const whatsapp = whatsappLink(
     settings.whatsapp_number,
-    `Hola! Te escribo por el pedido ${order.order_number}.`,
+    mensajeDePedido(order, settings.store_name),
   )
+  const totales = totalesDelPedido(order)
 
   const currentIndex = ORDER_FLOW.indexOf(order.status)
   const cancelled = order.status === 'cancelled'
@@ -185,7 +190,9 @@ export default async function PedidoPage({
                 {settings.payment_bank && (
                   <PaymentRow label="Banco" value={settings.payment_bank} />
                 )}
-                <PaymentRow label="Importe" value={formatPrice(order.total)} />
+                {/* El importe a transferir es el de los medios ELEGIDOS. Con el
+                    de lista, quien eligió transferencia pagaría de más. */}
+                <PaymentRow label="Importe" value={formatPrice(totales.segunPago)} />
               </dl>
               {settings.payment_instructions && (
                 <p className="text-sm leading-relaxed text-ink-muted">
@@ -233,6 +240,11 @@ export default async function PedidoPage({
                   <p className="tabular text-sm text-ink-muted">
                     {item.quantity} × {formatPrice(item.unit_price)}
                   </p>
+                  {item.payment_method && (
+                    <p className="text-sm text-sage-600">
+                      {COPY_PAGO.elegido(item.payment_method)}
+                    </p>
+                  )}
                 </div>
                 <p className="tabular shrink-0 font-medium">
                   {formatPrice(item.line_total)}
@@ -258,10 +270,33 @@ export default async function PedidoPage({
                 <dd className="tabular">{formatPrice(order.delivery_cost)}</dd>
               </div>
             )}
-            <div className="flex items-baseline justify-between border-t border-border-soft pt-2">
-              <dt className="font-medium">Total</dt>
-              <dd className="tabular text-xl font-semibold">{formatPrice(order.total)}</dd>
-            </div>
+            {totales.hayDiferencia ? (
+              <>
+                <div className="flex justify-between border-t border-border-soft pt-2">
+                  <dt className="text-ink-muted">Total de lista</dt>
+                  <dd className="tabular">{formatPrice(totales.lista)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-ink-muted">Por tus formas de pago</dt>
+                  <dd className="tabular font-medium text-sage-600">
+                    −{formatPrice(totales.ahorro)}
+                  </dd>
+                </div>
+                <div className="flex items-baseline justify-between pt-1">
+                  <dt className="font-medium">A pagar</dt>
+                  <dd className="tabular text-xl font-semibold">
+                    {formatPrice(totales.segunPago)}
+                  </dd>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-baseline justify-between border-t border-border-soft pt-2">
+                <dt className="font-medium">Total</dt>
+                <dd className="tabular text-xl font-semibold">
+                  {formatPrice(totales.lista)}
+                </dd>
+              </div>
+            )}
           </dl>
         </section>
 

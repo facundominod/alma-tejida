@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Package, Plus, Search } from 'lucide-react'
 import { AdminHeader } from '@/components/admin/admin-nav'
+import { DescuentoMasivo } from '@/components/admin/descuento-masivo'
 import { Badge, EmptyState } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/button'
 import { storageUrl } from '@/lib/images'
@@ -50,6 +51,8 @@ export default async function AdminProductosPage({
           </Button>
         }
       />
+
+      <DescuentoMasivo categories={categories} totalPiezas={products.length} />
 
       <form className="relative mb-4" role="search">
         {status !== 'all' && <input type="hidden" name="estado" value={status} />}
