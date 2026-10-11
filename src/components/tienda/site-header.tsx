@@ -54,15 +54,23 @@ export function SiteHeader({
   const cart = useCart()
   const { isLoggedIn, isAdmin } = useAuth()
   const [menuOpen, setMenuOpen] = React.useState(false)
-  const [hidden, setHidden] = React.useState(false)
   const [scrolled, setScrolled] = React.useState(false)
   const lastY = React.useRef(0)
 
-  // El header se esconde al bajar y vuelve al subir: en un celular, 56px de
-  // alto son 56px menos de fotografía.
+  // El header NO se esconde al bajar. Antes sí: la idea era ganar 56px de
+  // fotografía en el celular. En la práctica desaparecía y volvía todo el
+  // tiempo, y perder de vista el carrito y el buscador a mitad del catálogo
+  // cuesta más que los píxeles que gana.
   //
-  // Un listener de scroll pasivo en lugar de useScroll de Motion: hace lo
-  // mismo y no obliga a cargar la librería en todas las páginas.
+  // El único lugar donde desaparece es la foto a pantalla completa, que se
+  // dibuja encima de todo.
+  //
+  // El listener sigue, pero sólo para el fondo: apenas se baja, la barra pasa
+  // de transparente a traslúcida con desenfoque, así se despega del contenido
+  // que pasa por debajo.
+  //
+  // Un listener pasivo en lugar de useScroll de Motion: hace lo mismo y no
+  // obliga a cargar la librería en todas las páginas.
   React.useEffect(() => {
     let pendiente = false
 
@@ -75,11 +83,6 @@ export function SiteHeader({
       requestAnimationFrame(() => {
         const y = window.scrollY
         setScrolled(y > 8)
-
-        // Con el menú abierto el header no se mueve: taparía el panel.
-        if (!menuOpen) {
-          setHidden(y > lastY.current && y > 140)
-        }
 
         lastY.current = y
         pendiente = false
@@ -119,7 +122,6 @@ export function SiteHeader({
         'transition-[transform,background-color,border-color]',
         'duration-[var(--at-dur-base)] ease-[var(--ease-out-alma)]',
         'motion-reduce:transition-none',
-        hidden ? '-translate-y-full' : 'translate-y-0',
         scrolled
           ? 'border-border-soft bg-background/85 backdrop-blur-md'
           : 'border-transparent bg-background',

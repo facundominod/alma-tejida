@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import * as React from 'react'
-import { ChevronRight } from 'lucide-react'
+import { CalendarDays, ChevronRight } from 'lucide-react'
 import { BuyBox } from '@/components/tienda/buy-box'
 import { ProductGallery } from '@/components/tienda/product-gallery'
 import { Badge, StarRating } from '@/components/ui/primitives'
 import { trackEvent } from '@/lib/analytics/track'
+import type { Entrega } from '@/lib/fecha-de-entrega'
 import { isNew } from '@/lib/utils'
 import type {
   CatalogProduct,
@@ -27,6 +28,7 @@ export function ProductView({
   product,
   variants,
   attributes,
+  entrega,
   combinations,
   media,
   whatsappNumber,
@@ -34,6 +36,8 @@ export function ProductView({
   product: CatalogProduct
   variants: VariantView[]
   attributes: Array<ProductAttribute & { values: ProductAttributeValue[] }>
+  /** Para cuando estaria si se encarga hoy. Null si no es a pedido. */
+  entrega: Entrega | null
   combinations: Record<string, Record<string, string>>
   media: ProductMedia[]
   whatsappNumber: string | null
@@ -83,16 +87,30 @@ export function ProductView({
               <Badge tone="primary">Pieza única</Badge>
             )}
             {product.availability_mode === 'made_to_order' && (
-              <Badge tone="warning">
-                Se hace por encargo
-                {product.lead_time_days ? ` · ~${product.lead_time_days} días` : ''}
-              </Badge>
+              <Badge tone="warning">Se hace por encargo</Badge>
             )}
             {isNew(product.published_at) && <Badge tone="wood">Nuevo</Badge>}
             {(product.discount_percent ?? 0) > 0 && (
               <Badge tone="sale">{product.discount_percent}% OFF</Badge>
             )}
           </div>
+
+          {/* La fecha, no el plazo.
+              "~15 dias" obliga a abrir el calendario y contar. Esto responde
+              la pregunta que la persona se esta haciendo de verdad, que es si
+              llega para el cumpleanios. */}
+          {entrega && (
+            <p className="mt-3 flex items-start gap-2 rounded-lg bg-surface-muted px-3 py-2.5 text-sm text-ink-muted">
+              <CalendarDays className="mt-0.5 size-4 shrink-0 text-clay-500" />
+              <span>
+                Si lo encargás hoy, lo tenés{' '}
+                <strong className="font-medium text-ink">{entrega.texto}</strong>.{' '}
+                <span className="text-ink-subtle">
+                  Son {entrega.dias} días de taller, sin contar domingos.
+                </span>
+              </span>
+            </p>
+          )}
 
           <h1 className="text-display-md">{product.name}</h1>
 

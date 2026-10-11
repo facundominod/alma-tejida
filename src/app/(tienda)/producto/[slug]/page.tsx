@@ -7,6 +7,7 @@ import { ProductQuestions } from '@/components/tienda/product-questions'
 import { ProductReviews } from '@/components/tienda/product-reviews'
 import { ProductView } from '@/components/tienda/product-view'
 import { SectionHeading, ThreadDivider } from '@/components/ui/primitives'
+import { calcularEntrega } from '@/lib/fecha-de-entrega'
 import { coverUrl, storageUrl } from '@/lib/images'
 import {
   getProductBySlug,
@@ -131,6 +132,11 @@ export default async function ProductoPage({ params }: PageProps<'/producto/[slu
 
       <div className="at-container py-6 md:py-10">
         <ProductView
+          entrega={
+            product.availability_mode === 'made_to_order'
+              ? calcularEntrega(product.lead_time_days ?? 0)
+              : null
+          }
           product={product}
           variants={variants}
           attributes={attributes}

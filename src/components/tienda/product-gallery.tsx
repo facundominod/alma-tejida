@@ -1,12 +1,11 @@
 'use client'
 
 import useEmblaCarousel from 'embla-carousel-react'
-import { AnimatePresence, motion } from 'motion/react'
 import Image from 'next/image'
 import * as React from 'react'
-import { ChevronLeft, ChevronRight, Expand, ImageOff, Play, X } from 'lucide-react'
-import { useVentanaVisible } from '@/lib/ui/use-ventana-visible'
+import { ChevronLeft, ChevronRight, Expand, ImageOff, Play } from 'lucide-react'
 import { blurProps, IMAGE_SIZES, imageAlt, storageUrl } from '@/lib/images'
+import { VisorPantallaCompleta } from '@/components/tienda/visor-pantalla-completa'
 import { trackEvent } from '@/lib/analytics/track'
 import { cn } from '@/lib/utils'
 import type { ProductMedia } from '@/types/database'
@@ -97,6 +96,10 @@ export function ProductGallery({
   }
 
   const active = ordered[selected]
+
+  // El visor muestra solo fotos: un video a pantalla completa necesita
+  // controles propios y no es lo que se pidio.
+  const imagenes = ordered.filter((m) => m.type === 'image')
 
   function onZoomMove(event: React.MouseEvent<HTMLDivElement>) {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -236,16 +239,16 @@ export function ProductGallery({
         </div>
       </div>
 
-      <AnimatePresence>
-        {lightbox && active && (
-          <Lightbox
-            media={active}
-            productName={productName}
-            index={selected}
-            onClose={() => setLightbox(false)}
-          />
-        )}
-      </AnimatePresence>
+      {/* Sin AnimatePresence: el visor ocupa la pantalla entera y animar su
+          salida solo retrasa el momento en que se vuelve a ver la pagina. */}
+      {lightbox && imagenes.length > 0 && (
+        <VisorPantallaCompleta
+          media={imagenes}
+          productName={productName}
+          inicial={Math.min(selected, imagenes.length - 1)}
+          onClose={() => setLightbox(false)}
+        />
+      )}
     </>
   )
 }
@@ -308,73 +311,3 @@ function VideoPlayer({
   )
 }
 
-function Lightbox({
-  media,
-  productName,
-  index,
-  onClose,
-}: {
-  media: ProductMedia
-  productName: string
-  index: number
-  onClose: () => void
-}) {
-  React.useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    document.body.style.overflow = 'hidden'
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
-    }
-  }, [onClose])
-
-  const cajaVisible = useVentanaVisible()
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      // Con zoom, `fixed inset-0` apunta a la ventana de maquetado y el borde
-      // de arriba -con el boton de cerrar- queda afuera de lo que se ve.
-      // `cajaVisible` lo reubica sobre la ventana real. Sin zoom es null y
-      // manda el `inset-0` de siempre.
-      style={cajaVisible ?? undefined}
-      className="fixed inset-0 z-50 grid place-items-center bg-linen-900/92 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label={`${productName}, imagen ampliada`}
-      onClick={onClose}
-    >
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute right-4 top-4 grid size-11 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
-        aria-label="Cerrar"
-      >
-        <X className="size-5" />
-      </button>
-
-      <motion.div
-        initial={{ scale: 0.97 }}
-        animate={{ scale: 1 }}
-        exit={{ scale: 0.97 }}
-        transition={{ duration: 0.24, ease: [0.22, 0.61, 0.36, 1] }}
-        className="at-tope-visor relative w-full max-w-4xl"
-        style={{ aspectRatio: `${media.width ?? 4} / ${media.height ?? 5}` }}
-      >
-        <Image
-          src={storageUrl(media.storage_path)!}
-          alt={imageAlt(media.alt, productName, index)}
-          fill
-          sizes="100vw"
-          className="object-contain"
-        />
-      </motion.div>
-    </motion.div>
-  )
-}
