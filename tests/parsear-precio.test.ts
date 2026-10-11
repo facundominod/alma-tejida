@@ -77,3 +77,32 @@ describe('formatearParaEditar', () => {
     expect(formatearParaEditar(NaN)).toBe('')
   })
 })
+
+/**
+ * LA COMA TAMBIÉN ES AMBIGUA, Y SE RESUELVE POR LOS DECIMALES.
+ *
+ * "150,000" parece ciento cincuenta con tres decimales. Pero un precio con
+ * tres decimales no existe: eso es un separador de miles a la inglesa, que es
+ * lo que sale de un teclado de teléfono o de copiar y pegar de cualquier lado.
+ */
+describe('la coma: decimal o miles', () => {
+  it('con tres dígitos detrás y sin punto, la coma son miles', () => {
+    expect(parsearPrecio('150,000')).toBe(150_000)
+    expect(parsearPrecio('45,760')).toBe(45_760)
+  })
+
+  it('con más de una coma, todas son miles', () => {
+    expect(parsearPrecio('1,500,000')).toBe(1_500_000)
+  })
+
+  it('con uno o dos dígitos detrás, la coma es el decimal', () => {
+    expect(parsearPrecio('150,5')).toBe(150.5)
+    expect(parsearPrecio('150,50')).toBe(150.5)
+    expect(parsearPrecio('1500,50')).toBe(1500.5)
+  })
+
+  it('si hay punto y coma, la coma manda como decimal', () => {
+    expect(parsearPrecio('150.000,00')).toBe(150_000)
+    expect(parsearPrecio('1.500,50')).toBe(1500.5)
+  })
+})

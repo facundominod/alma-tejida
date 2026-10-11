@@ -47,9 +47,23 @@ export function parsearPrecio(texto: string | number | null | undefined): number
   let normalizado: string
 
   if (tieneComa) {
-    // Con coma presente no hay ambigüedad: la coma es el decimal y todos los
-    // puntos son separadores de miles.
-    normalizado = limpio.replace(/\./g, '').replace(',', '.')
+    const comas = (limpio.match(/,/g) ?? []).length
+    const ultimaComa = limpio.lastIndexOf(',')
+    const trasLaComa = limpio.length - ultimaComa - 1
+
+    // "150,000" NO es ciento cincuenta con tres decimales: un precio con tres
+    // decimales no existe. Es separador de miles a la inglesa, que es lo que
+    // sale de un teclado de teléfono o de copiar y pegar. Lo mismo con
+    // "1,500,000", donde hay más de una coma.
+    //
+    // En cambio "1.500,50" y "150.000,00" llevan dos decimales, que sí es un
+    // precio: ahí la coma es el decimal, como se escribe acá.
+    const comaEsDeMiles =
+      comas > 1 || (trasLaComa === 3 && !limpio.includes('.'))
+
+    normalizado = comaEsDeMiles
+      ? limpio.replace(/,/g, '')
+      : limpio.replace(/\./g, '').replace(',', '.')
   } else if (ultimoPunto === -1) {
     normalizado = limpio
   } else {
