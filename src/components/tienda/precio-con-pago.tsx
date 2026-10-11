@@ -49,14 +49,29 @@ export function PrecioConPago({
 
   if (variante === 'tarjeta') {
     return (
-      <div className={cn('space-y-0.5', className)}>
+      <div className={cn('space-y-1', className)}>
         <Price final={p.tarjeta} list={hayOferta ? lista : null} from={desde} size="md" />
+
+        {/* LAS CUOTAS, TAMBIÉN EN LA TARJETA DEL CATÁLOGO.
+            Estaban sólo en la ficha, que es la pantalla siguiente. En una
+            pieza de seis cifras, "3 cuotas sin interés" es lo que decide si
+            alguien entra a mirarla o pasa de largo: tiene que estar donde se
+            pasa de largo. */}
+        {p.cuotas > 1 && (
+          <p className="text-[0.75rem] leading-snug text-ink-muted">
+            <span className="tabular font-medium text-ink">
+              {p.cuotas}×{' '}{formatPrice(p.valorCuota)}
+            </span>{' '}
+            sin interés
+          </p>
+        )}
+
         {p.hayDescuento && (
-          /* Resaltado y no una línea gris más: es el precio más bajo de la
-             tarjeta y el que conviene que se lea primero. El fondo lo despega
-             del resto sin gritarlo. */
-          /* `flex-wrap` y no `inline-flex` a secas: en un teléfono de 320 px el
-             recuadro se iba 2 px fuera de la tarjeta y la página entera se
+          /* Resaltado y no una línea gris más: es el precio más bajo y el que
+             conviene que se lea primero.
+
+             `flex-wrap` y no `inline-flex` a secas: en un teléfono de 320 px
+             el recuadro se iba 2 px fuera de la tarjeta y la página entera se
              podía correr de costado. Envolviendo, el texto baja de renglón. */
           <p className="flex w-fit max-w-full flex-wrap items-baseline gap-x-1 rounded-md bg-sage-100 px-1.5 py-0.5 text-[0.8125rem] leading-snug text-sage-600">
             <span className="tabular font-semibold">{formatPrice(p.contado)}</span>
@@ -71,16 +86,23 @@ export function PrecioConPago({
     <div className={cn('space-y-2', className)}>
       <Price final={p.tarjeta} list={hayOferta ? lista : null} from={desde} size="lg" />
 
-      <p className="text-sm text-ink-muted">
-        {p.cuotas > 1 ? (
-          <>
-            Hasta <span className="font-medium text-ink">{COPY_PAGO.cuotasSinInteres(p)}</span>{' '}
+      {/* LAS CUOTAS, CON PESO PROPIO.
+          Era una línea gris chiquita debajo del precio. En una pieza de seis
+          cifras, poder pagarla en tres veces sin recargo es la mitad del
+          argumento de venta: merece leerse sin buscarla. */}
+      {p.cuotas > 1 ? (
+        <p className="flex flex-wrap items-baseline gap-x-1.5 text-[0.9375rem] text-ink-muted">
+          <span className="rounded-md bg-clay-100 px-2 py-0.5 font-semibold text-clay-700">
+            {p.cuotas} cuotas sin interés
+          </span>
+          <span>
+            de <span className="tabular font-medium text-ink">{formatPrice(p.valorCuota)}</span>{' '}
             con tarjeta
-          </>
-        ) : (
-          'Un pago con tarjeta'
-        )}
-      </p>
+          </span>
+        </p>
+      ) : (
+        <p className="text-sm text-ink-muted">Un pago con tarjeta</p>
+      )}
 
       {p.hayDescuento && (
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-sage-500/30 bg-sage-100 px-4 py-3 text-sage-600 ring-1 ring-inset ring-white/40">
