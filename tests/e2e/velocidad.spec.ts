@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { CONTACTO, PORTADA } from '../../src/lib/labels'
 
 /**
  * Cuánto tarda la tienda en RESPONDER a un toque.
@@ -15,8 +16,17 @@ import { test, expect, type Page } from '@playwright/test'
  *   E2E_BASE_URL=https://alma-tejida.netlify.app npx playwright test velocidad
  */
 
-/** Tiempo desde el click hasta que el contenido nuevo es visible. */
-async function medirToque(page: Page, enlace: RegExp, señalDestino: RegExp) {
+/**
+ * Tiempo desde el click hasta que el contenido nuevo es visible.
+ *
+ * Acepta texto plano además de expresión regular, y por eso los textos pueden
+ * venir de COPY tal cual, sin escapar nada.
+ */
+async function medirToque(
+  page: Page,
+  enlace: string | RegExp,
+  señalDestino: string | RegExp,
+) {
   const inicio = Date.now()
   await page.getByRole('link', { name: enlace }).first().click()
   await expect(page.getByRole('heading', { name: señalDestino }).first()).toBeVisible({
@@ -32,11 +42,15 @@ test.describe('velocidad de respuesta', () => {
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 
-    const aCatalogo = await medirToque(page, /ver las piezas/i, /todas las piezas/i)
+    // Los textos salen de COPY y no se escriben acá. Cuando el botón de la
+    // portada pasó de "Ver las piezas" a "Pedí tu medida", esta prueba se
+    // quedó esperando un enlace que ya no existía: medía una cosa y fallaba
+    // por otra. Atada a la constante, sigue sola al texto.
+    const aCatalogo = await medirToque(page, PORTADA.boton, /todas las piezas/i)
     console.log(`  portada -> catalogo: ${aCatalogo} ms`)
 
     await page.goto('/')
-    const aContacto = await medirToque(page, /contacto/i, /contacto/i)
+    const aContacto = await medirToque(page, /^contacto$/i, CONTACTO.titulo)
     console.log(`  portada -> contacto: ${aContacto} ms`)
 
     // Topes anchos: esto avisa de un empeoramiento, no vigila milisegundos.

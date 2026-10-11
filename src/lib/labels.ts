@@ -5,6 +5,7 @@ import type {
   ProductStatus,
   StockDisplayMode,
 } from '@/types/database'
+import { etiquetaDeEntrega } from '@/lib/fecha-de-entrega'
 
 /**
  * Todo el texto que ve una persona vive acá.
@@ -138,8 +139,12 @@ export function availabilityView(params: {
 
   if (available <= 0) {
     if (mode === 'made_to_order') {
+      // El plazo sale de `etiquetaDeEntrega`, que es la misma fuente que usa la
+      // ficha para calcular las fechas. Antes acá decía "~N días" por su
+      // cuenta, y la ficha prometía otro número en la pantalla siguiente.
+      const plazo = etiquetaDeEntrega(leadTimeDays)
       return {
-        label: leadTimeDays ? `A pedido · ~${leadTimeDays} días` : 'A pedido',
+        label: plazo ? `A pedido · ${plazo}` : 'A pedido',
         tone: 'warning',
         canBuy: true,
       }
@@ -174,9 +179,13 @@ export function availabilityView(params: {
    necesita saber qué hacer. "Se cortó el hilo" es lindo; "revisá tu conexión"
    es lo que resuelve el problema. Van juntas o no van.
 
-   El vocabulario sale del oficio —telar, hilo, madeja, trama, bastidor— y no
-   de un diccionario de sinónimos. Si una frase no la diría alguien que teje,
-   no entra.
+   El vocabulario sale del oficio —nudo, hilo, trama, bastidor, telar— y no de
+   un diccionario de sinónimos. Si una frase no la diría alguien que anuda, no
+   entra.
+
+   NO SE DICE LANA, Y NO ES UN DETALLE. Acá se trabaja con hilo Kraft, algodón,
+   yute y polipropileno. Decir "lana" no es una licencia poética: es nombrar un
+   material que no se usa, y la primera que lo nota es la clienta que lo recibe.
 
    Todo el texto vive acá para que cambiar el tono de la tienda sea editar un
    archivo, y no buscar cadenas sueltas por veinte componentes.
@@ -258,19 +267,261 @@ export const COPY = {
    ========================================================================== */
 
 export const PORTADA = {
-  titulo: 'Nada de esto lo hizo una máquina.',
+  /**
+   * EL TÍTULO ES UNA AFIRMACIÓN, NO UNA NEGACIÓN.
+   *
+   * El anterior decía "Nada de esto lo hizo una máquina": definía la tienda por
+   * lo que NO es, y le contestaba a una fábrica que nadie había nombrado. Este
+   * pone a la persona adelante y dice el oficio.
+   */
+  titulo: 'Cada nudo lo hago yo.',
+
+  /**
+   * Largo a propósito. Es la única pantalla que todos ven, y tiene que
+   * contestar las cuatro preguntas de quien llega: qué se vende, de qué está
+   * hecho, si entra en su medida, y cuándo lo tiene. A estos precios, no
+   * contestarlas acá es perder a la mitad.
+   */
   subtitulo:
-    'Respaldos, espejos y tapices tejidos de a uno, con lana de verdad y el tiempo que haga falta.',
-  boton: 'Ver las piezas',
+    'Soy Silvana, de Córdoba. Anudo a mano respaldos de 0,80 a 2,00 m de ancho, ' +
+    'espejos, tapices y lámparas. Elegís medida y diseño, te digo cuánto tarda, ' +
+    'y llega listo para colgar.',
+
+  /**
+   * El detalle de materiales, que se suma al subtítulo desde la primera
+   * pantalla que da el alto.
+   *
+   * En un iPhone SE —568 px de alto— el subtítulo completo empujaba el botón
+   * 54 px por debajo del pliegue, y el botón arriba del pliegue es el punto
+   * 125. No se pierde nada: los hilos los dicen las frases que giran arriba del
+   * título, y tienen su propia página.
+   */
+  subtituloDetalle: 'Con hilo Kraft, algodón o yute sobre bastidor de madera.',
+
+  /** Invita a encargar, no a mirar. */
+  boton: 'Pedí tu medida',
 
   /**
    * La primera la pone la tienda desde su configuración; éstas siguen.
    * Se muestran en orden y vuelven a empezar.
+   *
+   * Ninguna pasa de cinco palabras y ninguna dice lana, ovillo ni telar: acá no
+   * se teje en telar, se anuda. Los hilos son Kraft, algodón, yute y
+   * polipropileno.
    */
   frases: [
-    'Una pieza por vez, sin apuro',
-    'Lana de verdad, tiempo de verdad',
-    'Nada sale dos veces igual',
-    'Recién salidas del telar',
+    'Nudo por nudo, a mano',
+    'Tu medida, mis nudos',
+    'Hilo Kraft, algodón y yute',
+    'Líneas, Cuadrillé o Nido',
+    'Te cuento cuánto tarda',
   ],
+
+  /**
+   * Los tres bloques que van debajo del hero y adelantan lo que hay más abajo.
+   *
+   * El del medio decía "Lana de verdad · Elegida de a ovillo". Era falso: en
+   * esta tienda no entra un gramo de lana. Ahora dice los hilos que se usan de
+   * verdad, con el mismo argumento de durabilidad que justificaba el bloque.
+   */
+  adelanto: [
+    {
+      titulo: 'Una por una',
+      texto:
+        'Cada pieza sale distinta de la anterior: esas pequeñas diferencias son la ' +
+        'firma de la mano que la anudó.',
+    },
+    {
+      titulo: 'Kraft, algodón y yute',
+      texto:
+        'Hilos elegidos uno por uno y bastidor de madera, para que la pieza siga ' +
+        'firme después de años en la pared.',
+    },
+    {
+      titulo: 'Lo hablamos',
+      texto:
+        'Me escribís con la medida y la idea, y lo definimos entre los dos antes ' +
+        'del primer nudo.',
+    },
+  ],
+} as const
+
+/* =============================================================================
+   LOS MATERIALES
+
+   La página que explica con qué está hecha cada pieza. Vive acá y no dentro del
+   componente por la misma razón que el resto de la copia: es texto que Silvana
+   va a querer corregir, y buscarlo entre el maquetado es garantía de que no se
+   corrija nunca.
+
+   CADA HILO TERMINA EN PIEZAS CONCRETAS, CON ENLACE.
+   Nadie elige un hilo en abstracto. Se entra a leer qué es el yute y se sale
+   mirando los espejos de kraft y yute. Las que todavía no tienen categoría
+   propia van sin enlace: un enlace a una búsqueda vacía es peor que ninguno.
+
+   LOS COLORES SON LOS DE LA PALETA, NO INVENTADOS.
+   La paleta tiene clay, linen, sage y wood. Kraft va en wood —el papel madera—,
+   algodón en linen —el crudo—, yute en clay —lo terroso— y polipropileno en
+   sage, que es el único que no es una fibra natural y conviene que se distinga.
+   ========================================================================== */
+
+export const MATERIALES = {
+  /** Lo que dice la pestaña del navegador y el menú. */
+  tituloCorto: 'Materiales',
+
+  intro: {
+    titulo: 'Todo empieza por el hilo.',
+    texto:
+      'Cada pieza se arma nudo a nudo sobre madera y fibras naturales, y el hilo ' +
+      'que elegís cambia todo lo que viene después: la textura, la caída, el color, ' +
+      'cómo se ve ese respaldo en tu pared. Trabajamos con cuatro, y acá te cuento ' +
+      'para qué anda mejor cada uno.',
+  },
+
+  hilos: [
+    {
+      nombre: 'Hilo Kraft',
+      lema: 'Rusticidad y carácter',
+      texto:
+        'Es el más firme de los cuatro y el que más se nota: textura de papel ' +
+        'madera, color tierra y nudos que quedan marcados. Es el que elige casi ' +
+        'todo el mundo para un respaldo, porque a 1,20 m de alto el dibujo tiene ' +
+        'que leerse desde la puerta.',
+      muestra: 'bg-wood-400/30',
+      acento: 'text-wood-500',
+      paraQue: [
+        { texto: 'Respaldos a medida', href: '/categoria/respaldos' },
+        { texto: 'Espejos Kraft', href: '/categoria/espejos' },
+        { texto: 'Tapices', href: '/categoria/tapices' },
+        { texto: 'Bandejas', href: null },
+        { texto: 'Sujeta cortinas', href: null },
+      ],
+    },
+    {
+      nombre: 'Hilo de algodón',
+      lema: 'Suavidad y caída',
+      texto:
+        'Suave y flexible: el nudo queda definido y los flecos caen derechos en ' +
+        'lugar de abrirse. Es el hilo de las piezas livianas, las que se miran de ' +
+        'cerca y se tocan al pasar. Si la pieza va a quedar a la altura de la mano, ' +
+        'elegí algodón.',
+      muestra: 'bg-linen-200',
+      acento: 'text-linen-700',
+      paraQue: [
+        { texto: 'Espejos', href: '/categoria/espejos' },
+        { texto: 'Tapices con flecos', href: '/categoria/tapices' },
+        { texto: 'Lámparas', href: null },
+        { texto: 'Porta macetas', href: null },
+        { texto: 'Atrapa sueños', href: null },
+      ],
+    },
+    {
+      nombre: 'Hilo de yute',
+      lema: 'Naturalidad y textura orgánica',
+      texto:
+        'Fibra noble, color natural y una hebra irregular que se nota a un metro de ' +
+        'distancia. Va solo con la madera del bastidor, los muebles claros y las ' +
+        'plantas, así que casi no hay que pensar el color. Es el hilo para los ' +
+        'espacios que ya tienen madera, fibra y verde.',
+      muestra: 'bg-clay-200',
+      acento: 'text-clay-700',
+      paraQue: [
+        { texto: 'Espejos Kraft y Yute', href: '/categoria/espejos' },
+        { texto: 'Tapices', href: '/categoria/tapices' },
+        { texto: 'Porta macetas', href: null },
+        { texto: 'Camas colgantes', href: null },
+      ],
+    },
+    {
+      nombre: 'Hilo de polipropileno',
+      lema: 'Versatilidad y resistencia',
+      texto:
+        'Es el único al que no le hace nada la humedad, y el que se limpia pasándole ' +
+        'un trapo. Viene en varios grosores, colores y acabados, así que es el que ' +
+        'sirve cuando hay que igualar un color puntual. Lo elijo para lo que recibe ' +
+        'sol, vapor o manos todos los días.',
+      muestra: 'bg-sage-100',
+      acento: 'text-sage-600',
+      paraQue: [
+        { texto: 'Camas colgantes', href: null },
+        { texto: 'Porta macetas de galería', href: null },
+        { texto: 'Tapices para exterior', href: '/categoria/tapices' },
+        { texto: 'Lo que haya que limpiar seguido', href: null },
+      ],
+    },
+  ],
+
+  cierre: {
+    titulo: 'Si dudás, lo elegimos juntos',
+    texto:
+      'Contame qué pieza querés, dónde va a estar y qué medidas tenés, y te digo ' +
+      'qué hilo le va mejor y cuánto sale. Todo se hace a medida: si tu cama tiene ' +
+      'una medida que no está en la lista, casi siempre se puede.',
+    boton: 'Escribime por WhatsApp',
+  },
+} as const
+
+/* =============================================================================
+   CONTACTO
+
+   Lo que tenía antes era un "Contacto" como título y una bajada que hablaba de
+   "un respaldo para una cama rara". Dos problemas: el título no decía nada, y
+   la frase ponía el problema del lado de quien lee —su cama es la rara—. Lo que
+   hay que decir es lo contrario: que la medida la pone el cliente y la pieza se
+   adapta.
+
+   LOS CUATRO PASOS SON LA PARTE QUE VENDE.
+   A estos precios, lo que frena no es el precio: es no saber cómo sigue. Quien
+   lee los cuatro pasos sabe que va a ver el precio por escrito antes de pagar
+   nada, y eso es lo que hace que escriba.
+   ========================================================================== */
+
+export const CONTACTO = {
+  overline: 'Del otro lado hay alguien',
+  titulo: 'Contame qué tenés en mente',
+  bajada:
+    'Te contesto yo, la misma persona que después hace la pieza. Preguntar no te ' +
+    'compromete a nada: primero vemos medida, diseño y precio, y después decidís.',
+
+  invitacion: {
+    titulo: 'Todo se puede hacer a medida',
+    texto:
+      'No hace falta que la pieza exista en el catálogo. Los respaldos se hacen del ' +
+      'ancho de tu cama —de 0,80 a 2,00 m, con 1,20 m de alto, sobre bastidor de ' +
+      'madera— y lo mismo vale para espejos, tapices, lámparas y porta macetas: la ' +
+      'medida, el diseño y el hilo se eligen de cero. Si tenés una foto del lugar o ' +
+      'un color que te guste, mandala: ayuda muchísimo.',
+  },
+
+  /** Numerados en la pantalla. El número es el único adorno de la página. */
+  pasos: [
+    {
+      titulo: 'Me escribís',
+      texto:
+        'Un WhatsApp alcanza. Mandame la medida que necesitás o una foto del lugar ' +
+        'donde va la pieza; si no sabés cuánto mide, te digo cómo tomarlo en un minuto.',
+    },
+    {
+      titulo: 'Elegís diseño e hilo',
+      texto:
+        'Te muestro los tres diseños —Líneas, Cuadrillé y Nido— con fotos de piezas ' +
+        'ya hechas, y los hilos: Kraft rústico, algodón suave, yute campestre, ' +
+        'polipropileno para lugares húmedos.',
+    },
+    {
+      titulo: 'Te paso precio y fecha',
+      texto:
+        'Con la medida y el diseño definidos te digo cuánto sale y para cuándo está, ' +
+        'por escrito y antes de que pagues nada. Por transferencia o efectivo hay ' +
+        'descuento; con tarjeta, cuotas sin interés. Si no te cierra, no pasa nada.',
+    },
+    {
+      titulo: 'La hago y te llega',
+      texto:
+        'Tu pieza se arma nudo a nudo, de a una. Te mando fotos del avance mientras ' +
+        'se hace, y coordinamos la entrega o el envío a tu zona.',
+    },
+  ],
+
+  cierre: 'Escribime aunque sea para preguntar: de este lado hay una persona con tiempo para contestarte.',
 } as const

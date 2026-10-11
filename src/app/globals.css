@@ -544,6 +544,126 @@ a:hover .at-sello-puntada {
   animation: at-shimmer 3.4s var(--ease-soft-alma) infinite;
 }
 
+/* -----------------------------------------------------------------------------
+   EL LOGO, APARECIENDO DE A POCO
+
+   Dos reglas, y las dos existen por el mismo problema: el navegador CONGELA
+   las animaciones en una pestana que no esta a la vista. Una entrada que
+   arranca en opacidad 0 deja el logo INVISIBLE -no "sin animar": invisible- a
+   quien abre la tienda en una pestana de fondo y vuelve despues. Ya paso una
+   vez en este proyecto, con el sello que se dibujaba.
+
+   Asi que:
+
+   1. La entrada NO toca la opacidad. Arranca en opacidad 1 y solo crece de
+      escala. Congelada en el cuadro cero, el logo se ve entero, apenas mas
+      chico. Ese es el peor caso posible y es aceptable.
+
+   2. El brillo que lo recorre va ENCIMA, en un pseudo-elemento aparte. El logo
+      no depende de el para verse: si queda congelado, lo unico que pasa es que
+      hay un reflejo quieto sobre una imagen que esta completa.
+
+   Con prefers-reduced-motion el bloque global de mas abajo apaga las dos.
+   -------------------------------------------------------------------------- */
+@keyframes at-logo-entrada {
+  from {
+    transform: scale(0.93);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.at-logo {
+  position: relative;
+  display: inline-flex;
+  isolation: isolate;
+  /* Sin `both`: el fill-mode es justamente lo que dejaba el estado inicial
+     pegado cuando la animacion no llegaba a correr. */
+  animation: at-logo-entrada 900ms var(--ease-soft-alma);
+}
+
+/* El brillo aparece cuando empieza a moverse y se va con el. Una sola pasada:
+   un reflejo que no para de recorrer un logo es un banner, no una marca. */
+@keyframes at-logo-brillo {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate3d(-110%, 0, 0);
+  }
+  35%,
+  65% {
+    opacity: 1;
+  }
+  99% {
+    transform: translate3d(110%, 0, 0);
+  }
+}
+
+.at-logo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 36%,
+    color-mix(in oklab, white 55%, transparent) 50%,
+    transparent 64%
+  );
+  animation: at-logo-brillo 2.8s var(--ease-soft-alma) 1;
+}
+
+/* Al pasar el mouse vuelve a recorrerlo: confirma que es algo vivo sin que
+   haya que esperar a recargar. */
+.at-logo:hover::after {
+  animation: at-logo-brillo 1.6s var(--ease-soft-alma) 1;
+}
+
+/* -----------------------------------------------------------------------------
+   EL ADELANTO DE LA PORTADA
+
+   Tres piezas de verdad, apiladas, entrando una detras de otra.
+
+   La entrada mueve y rota, pero NO toca la opacidad: en una pestana de fondo
+   el navegador congela la animacion, y una entrada que arranca invisible deja
+   el hero a medias para quien abre la tienda y vuelve despues. Es la misma
+   leccion que dejo el logo.
+
+   Despues de entrar, cada pieza flota muy despacio y desfasada. Es lo que hace
+   que la portada parezca viva sin que nada pida atencion.
+   -------------------------------------------------------------------------- */
+@keyframes at-adelanto-entra {
+  from {
+    transform: translate3d(0, 28px, 0) rotate(var(--giro, 0deg)) scale(0.96);
+  }
+  to {
+    transform: translate3d(0, 0, 0) rotate(var(--giro, 0deg)) scale(1);
+  }
+}
+
+@keyframes at-adelanto-flota {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--giro, 0deg));
+  }
+  50% {
+    transform: translate3d(0, -7px, 0) rotate(var(--giro, 0deg));
+  }
+}
+
+.at-adelanto {
+  animation:
+    at-adelanto-entra 900ms var(--ease-soft-alma) backwards,
+    at-adelanto-flota 7s var(--ease-soft-alma) 900ms infinite;
+  animation-delay: var(--demora, 0ms), calc(var(--demora, 0ms) + 900ms);
+}
+
+.at-adelanto:hover {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

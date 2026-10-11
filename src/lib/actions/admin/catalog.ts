@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createClient, requireAdmin } from '@/lib/supabase/server'
 import { slugify } from '@/lib/utils'
+import { redondearA99 } from '@/lib/redondeo'
 
 /**
  * Gestion del catálogo.
@@ -381,6 +382,154 @@ export async function deleteProduct(productId: string): Promise<AdminResult> {
 }
 
 /* =============================================================================
+   DEJAR LOS PRECIOS TERMINADOS EN 99, EN TANDA
+   ========================================================================== */
+
+/**
+ * Redondea los precios de lista del catálogo para que terminen en 99.
+ *
+ * CÓMO SE REPARTE EL TRABAJO
+ * La regla vive en `src/lib/redondeo.ts` y está probada ahí: el piso que
+ * protege a las piezas con precio provisorio, el redondeo a la centena más
+ * cercana, qué hacer si ya termina en 99. Acá se lee el catálogo, se aplica esa
+ * regla, y la lista resultante se escribe de una sola vez con
+ * `admin_aplicar_precios()`, que lo hace todo o nada.
+ *
+ * QUÉ SE CUENTA Y SE DEVUELVE
+ * Tres números, porque una tanda que saltea cosas en silencio se lee como "ya
+ * está todo hecho":
+ *
+ *   - `cambiadas`: las que quedaron terminadas en 99.
+ *   - `salteadas`: las que están por debajo del piso o ya terminaban en 99.
+ *   - `enConflicto`: las que no se pueden tocar porque bajar el precio de lista
+ *     lo dejaría por debajo de su precio promocional. Se informan con nombre,
+ *     porque son las únicas que hay que resolver a mano.
+ */
+const redondeoMasivo = z.object({
+  categoryId: z.string().uuid().nullish(),
+  /** Si también se redondean los precios propios de cada combinación. */
+  incluirCombinaciones: z.boolean().default(true),
+})
+
+export async function redondearPreciosMasivo(input: unknown): Promise<
+  AdminResult<{
+    cambiadas: number
+    combinaciones: number
+    salteadas: number
+    enConflicto: string[]
+  }>
+> {
+  await requireAdmin()
+
+  const parsed = redondeoMasivo.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Revisá los datos.' }
+  }
+
+  const { categoryId, incluirCombinaciones } = parsed.data
+  const supabase = await createClient()
+
+  let consulta = supabase
+    .from('products')
+    .select('id, name, base_price, sale_price, category_id')
+    .is('deleted_at', null)
+
+  if (categoryId) consulta = consulta.eq('category_id', categoryId)
+
+  const { data: piezas, error: errorLectura } = await consulta
+
+  if (errorLectura || !piezas) {
+    return { ok: false, error: 'No pudimos leer los precios.' }
+  }
+
+  const productos: { id: string; precio: number; oferta?: number }[] = []
+  const enConflicto: string[] = []
+  let salteadas = 0
+
+  for (const pieza of piezas) {
+    const base = redondearA99(pieza.base_price)
+
+    if (!base) {
+      salteadas += 1
+      continue
+    }
+
+    // La oferta se redondea junto con el precio de lista. Si se moviera sólo
+    // el de lista, podría quedar por debajo de la oferta y la base rechaza la
+    // fila entera.
+    const oferta = pieza.sale_price == null ? null : redondearA99(pieza.sale_price)
+    const ofertaFinal = oferta ? oferta.precio : (pieza.sale_price ?? null)
+
+    if (ofertaFinal != null && Number(ofertaFinal) >= base.precio) {
+      // Pasa cuando el precio de lista y la oferta están a menos de cien pesos
+      // uno del otro: los dos caen en la misma centena. No hay redondeo posible
+      // que mantenga la oferta por debajo, así que lo decide una persona.
+      enConflicto.push(pieza.name)
+      continue
+    }
+
+    productos.push({
+      id: pieza.id,
+      precio: base.precio,
+      ...(oferta ? { oferta: oferta.precio } : {}),
+    })
+  }
+
+  const variantes: { id: string; precio: number }[] = []
+
+  if (incluirCombinaciones) {
+    const idsEnAlcance = piezas.map((p) => p.id)
+
+    const { data: combinaciones } = await supabase
+      .from('product_variants')
+      .select('id, price_override, product_id')
+      .in('product_id', idsEnAlcance)
+      .not('price_override', 'is', null)
+
+    for (const combinacion of combinaciones ?? []) {
+      const nuevo = redondearA99(combinacion.price_override)
+      if (!nuevo) {
+        salteadas += 1
+        continue
+      }
+      variantes.push({ id: combinacion.id, precio: nuevo.precio })
+    }
+  }
+
+  if (productos.length === 0 && variantes.length === 0) {
+    return {
+      ok: true,
+      cambiadas: 0,
+      combinaciones: 0,
+      salteadas,
+      enConflicto,
+    }
+  }
+
+  const { data: resultado, error } = await supabase.rpc('admin_aplicar_precios', {
+    p_productos: productos,
+    p_variantes: variantes,
+  })
+
+  if (error) {
+    return { ok: false, error: 'No pudimos aplicar los precios nuevos.' }
+  }
+
+  const aplicado = (resultado ?? {}) as { productos?: number; variantes?: number }
+
+  revalidatePath('/admin/productos')
+  await refreshStorefront()
+
+  return {
+    ok: true,
+    cambiadas: aplicado.productos ?? 0,
+    combinaciones: aplicado.variantes ?? 0,
+    salteadas,
+    enConflicto,
+  }
+}
+
+/* =============================================================================
    DESCUENTO POR CONTADO, EN TANDA
    ========================================================================== */
 
@@ -458,6 +607,8 @@ const categorySchema = z.object({
   name: z.string().trim().min(2, 'La categoría necesita un nombre.').max(80),
   slug: z.string().trim().max(80).optional(),
   description: z.string().trim().max(500).optional(),
+  /** La presentacion de la pagina. Larga a proposito: no la lee ningun robot. */
+  intro: z.string().trim().max(2000).optional(),
   parentId: z.string().uuid().nullish(),
   position: z.number().int().nonnegative().optional(),
   isVisible: z.boolean(),
@@ -478,6 +629,7 @@ export async function saveCategory(input: unknown): Promise<AdminResult> {
     name: data.name,
     slug: data.slug || slugify(data.name),
     description: data.description || null,
+    intro: data.intro || null,
     parent_id: data.parentId ?? null,
     position: data.position ?? 0,
     is_visible: data.isVisible,

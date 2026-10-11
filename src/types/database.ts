@@ -126,7 +126,10 @@ export type Category = {
   parent_id: string | null
   name: string
   slug: string
+  /** Descripcion corta, para buscadores y redes. */
   description: string | null
+  /** La presentacion que se lee al entrar a la categoria (migracion 0022). */
+  intro: string | null
   image_path: string | null
   position: number
   is_visible: boolean
@@ -817,6 +820,14 @@ export type Database = {
           created: number
           deactivated: number
         }
+      }
+      /** Escribe una tanda de precios ya calculados, todo o nada (migracion 0021). */
+      admin_aplicar_precios: {
+        Args: {
+          p_productos: { id: string; precio: number; oferta?: number }[]
+          p_variantes: { id: string; precio: number }[]
+        }
+        Returns: { productos: number; variantes: number }
       }
     }
     Enums: {

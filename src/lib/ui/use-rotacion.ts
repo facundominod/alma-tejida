@@ -22,6 +22,12 @@ import * as React from 'react'
  * 3. **No arranca con `prefers-reduced-motion`.** Para quien marcó esa
  *    preferencia, una imagen que cambia sola no es un detalle de diseño: es
  *    lo que le pidió al sistema que no pasara.
+ *
+ * 4. **Se puede adelantar a mano, y entonces el reloj vuelve a cero.** Sin
+ *    eso, pasar el dedo para ver la foto siguiente podía quedar a 200 ms del
+ *    cambio automático: dos avances encimados y la sensación de que la tarjeta
+ *    hace lo que quiere. Quien toca manda, y el automático espera su turno
+ *    completo desde ese momento.
  */
 export function useRotacion(
   cantidad: number,
@@ -35,6 +41,8 @@ export function useRotacion(
   const [indice, setIndice] = React.useState(0)
   const ref = React.useRef<HTMLDivElement>(null)
   const [visible, setVisible] = React.useState(false)
+  // Cambia en cada avance manual, y eso reinicia el temporizador.
+  const [reinicios, setReinicios] = React.useState(0)
 
   // Sólo gira lo que está en pantalla.
   React.useEffect(() => {
@@ -71,18 +79,41 @@ export function useRotacion(
       }, intervaloMs)
     }
 
-    const espera = window.setTimeout(arrancar, retrasoMs)
+    // El desfase inicial es para que veinte tarjetas no cambien al unísono.
+    // Después de un toque ya no corresponde: quien tocó espera el intervalo
+    // completo y nada más.
+    const espera = window.setTimeout(arrancar, reinicios === 0 ? retrasoMs : 0)
 
     return () => {
       window.clearTimeout(espera)
       if (intervalo !== undefined) window.clearInterval(intervalo)
     }
-  }, [activo, cantidad, visible, intervaloMs, retrasoMs])
+  }, [activo, cantidad, visible, intervaloMs, retrasoMs, reinicios])
 
   // Si cambia la cantidad (filtros del catálogo), el índice puede quedar fuera
   // de rango. Se corrige durante el render, no en un efecto: en un efecto se
   // vería un frame con la imagen equivocada.
   const seguro = cantidad > 0 ? indice % cantidad : 0
 
-  return { indice: seguro, ref, setIndice }
+  /** Avanza o retrocede a mano y reinicia el reloj del automático. */
+  const avanzar = React.useCallback(
+    (paso: number) => {
+      if (cantidad < 2) return
+      setIndice((i) => (i + paso + cantidad) % cantidad)
+      setReinicios((r) => r + 1)
+    },
+    [cantidad],
+  )
+
+  /** Va a una foto concreta y reinicia el reloj. */
+  const irA = React.useCallback(
+    (destino: number) => {
+      if (cantidad < 1) return
+      setIndice(((destino % cantidad) + cantidad) % cantidad)
+      setReinicios((r) => r + 1)
+    },
+    [cantidad],
+  )
+
+  return { indice: seguro, ref, setIndice, avanzar, irA }
 }

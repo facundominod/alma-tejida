@@ -63,6 +63,11 @@ export function SiteFooter({
               </Link>
             </li>
             <li>
+              <Link href="/materiales" className="text-ink-muted hover:text-clay-700">
+                Materiales
+              </Link>
+            </li>
+            <li>
               <Link href="/cuenta/pedidos" className="text-ink-muted hover:text-clay-700">
                 Mis pedidos
               </Link>

@@ -13,11 +13,17 @@ export function BrandMark({
   logoUrl,
   storeName = 'Alma Tejida',
   size = 'md',
+  animado = false,
   className,
 }: {
   logoUrl?: string | null
   storeName?: string
   size?: 'sm' | 'md' | 'lg'
+  /**
+   * Entrada y brillo. Sólo en el encabezado: el mismo logo animándose también
+   * en el pie, a dos pantallas de scroll, es movimiento que nadie pidió.
+   */
+  animado?: boolean
   className?: string
 }) {
   const scale = {
@@ -42,7 +48,7 @@ export function BrandMark({
   }[size]
 
   if (logoUrl) {
-    return (
+    const imagen = (
       <Image
         src={logoUrl}
         alt={storeName}
@@ -68,6 +74,11 @@ export function BrandMark({
         priority
       />
     )
+
+    // El brillo necesita un pseudo-elemento, y una <img> no tiene dónde
+    // ponerlo: va en una envoltura. Sin animación no se envuelve nada, para no
+    // agregar un nodo que no hace falta.
+    return animado ? <span className="at-logo">{imagen}</span> : imagen
   }
 
   return (

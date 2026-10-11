@@ -25,6 +25,9 @@ type NavLink = { href: string; label: string }
 const BASE_LINKS: NavLink[] = [
   { href: '/tienda', label: 'Tienda' },
   { href: '/ofertas', label: 'Ofertas' },
+  // Antes de Contacto a propósito: quien está decidiendo pasa por los
+  // materiales y recién después escribe, no al revés.
+  { href: '/materiales', label: 'Materiales' },
   { href: '/contacto', label: 'Contacto' },
 ]
 
@@ -38,6 +41,7 @@ const BASE_LINKS: NavLink[] = [
 const SECONDARY_LINKS: NavLink[] = [
   { href: '/novedades', label: 'Novedades' },
   { href: '/ofertas', label: 'Ofertas' },
+  { href: '/materiales', label: 'Materiales' },
   { href: '/contacto', label: 'Contacto' },
 ]
 
@@ -142,7 +146,7 @@ export function SiteHeader({
         </button>
 
         <Link href="/" className="shrink-0" aria-label={`${storeName} — Inicio`}>
-          <BrandMark logoUrl={logoUrl} storeName={storeName} size="md" />
+          <BrandMark logoUrl={logoUrl} storeName={storeName} size="md" animado />
         </Link>
 
         {/* Navegación en desktop */}

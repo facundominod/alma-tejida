@@ -3,7 +3,7 @@ import 'server-only'
 import { cache } from 'react'
 import { safeQuery } from '@/lib/queries/safe'
 import { createPublicClient } from '@/lib/supabase/public'
-import type { Category, Promotion, StoreSettings } from '@/types/database'
+import type { Category, ProductThumb, Promotion, StoreSettings } from '@/types/database'
 
 /**
  * Lecturas publicas de la tienda.
@@ -88,6 +88,65 @@ export const getTopCategories = cache(async (): Promise<Category[]> => {
   const all = await getCategories()
   return all.filter((c) => c.parent_id === null)
 })
+
+/**
+ * Unas fotos de cada categoría, para la portada.
+ *
+ * EL PROBLEMA QUE RESUELVE
+ * El bloque "Por dónde empezar" mostraba la foto de la categoría, y ninguna
+ * categoría tiene foto cargada: eran ocho cuadrados en blanco con un nombre
+ * debajo. Peor que no tener el bloque, porque parecía algo roto.
+ *
+ * En vez de pedirle a Silvana que consiga y suba una foto por categoría —otra
+ * tarea, y además una foto que no es ninguna pieza de verdad—, se arma un
+ * mosaico con las piezas que ya tiene cargadas. Se llena solo: cada vez que
+ * sube una pieza nueva, la portada se actualiza.
+ *
+ * Si la categoría define su propia `image_path`, esa manda: el mosaico es el
+ * respaldo, no un reemplazo.
+ *
+ * UNA SOLA CONSULTA
+ * Se traen las portadas de las piezas publicadas y se agrupan acá. Con una
+ * consulta por categoría serían ocho viajes a São Paulo para dibujar un bloque
+ * que está arriba de todo y bloquea el primer dibujado.
+ */
+export const getCategoryCollages = cache(
+  async (porCategoria = 4): Promise<Record<string, ProductThumb[]>> => {
+    return safeQuery(async () => {
+      const supabase = createPublicClient()
+
+      const { data } = await supabase
+        .from('v_catalog_products')
+        .select('category_id, cover_path, cover_thumb, cover_blur, cover_alt, name')
+        .eq('status', 'published')
+        .not('category_id', 'is', null)
+        .not('cover_path', 'is', null)
+        .order('is_featured', { ascending: false })
+        .order('published_at', { ascending: false })
+        .limit(200)
+
+      const porId: Record<string, ProductThumb[]> = {}
+
+      for (const fila of data ?? []) {
+        const id = fila.category_id
+        if (!id) continue
+
+        const actuales = porId[id] ?? []
+        if (actuales.length >= porCategoria) continue
+
+        actuales.push({
+          path: fila.cover_path,
+          thumb: fila.cover_thumb,
+          blur: fila.cover_blur,
+          alt: fila.cover_alt ?? fila.name,
+        })
+        porId[id] = actuales
+      }
+
+      return porId
+    }, {})
+  },
+)
 
 export const getCategoryBySlug = cache(
   async (slug: string): Promise<Category | null> => {

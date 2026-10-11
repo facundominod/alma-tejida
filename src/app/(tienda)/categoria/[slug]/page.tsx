@@ -72,8 +72,25 @@ export default async function CategoriaPage({ params }: PageProps<'/categoria/[s
           </div>
         )}
 
-        {category.description && (
-          <p className="max-w-2xl text-ink-muted">{category.description}</p>
+        {/* LA RESEÑA DE LA CATEGORÍA
+            Es lo primero que se lee al entrar, y tiene su propio campo: antes
+            compartía el de la descripción para buscadores y por eso eran todas
+            de una línea.
+
+            Va en una caja con un filete al costado y no como un párrafo
+            suelto: así se lee como una presentación de quien hace las piezas y
+            no como una descripción automática. El ancho se corta en 65
+            caracteres de línea para que se pueda leer de verdad. */}
+        {category.intro ? (
+          <div className="border-l-2 border-clay-200 pl-4 md:pl-5">
+            <p className="max-w-[65ch] whitespace-pre-line text-[1.0625rem] leading-relaxed text-ink-muted">
+              {category.intro}
+            </p>
+          </div>
+        ) : (
+          category.description && (
+            <p className="max-w-2xl text-ink-muted">{category.description}</p>
+          )
         )}
 
         <p className="mt-3 text-sm text-ink-muted">

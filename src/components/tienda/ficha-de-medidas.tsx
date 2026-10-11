@@ -13,7 +13,7 @@ type ConValores = ProductAttribute & { values: ProductAttributeValue[] }
  * se lee, se aprieta.
  *
  * Por eso esta ficha muestra sólo las características de tipo **Medida**. El
- * color y el tipo de lana se siguen eligiendo arriba y no se repiten acá:
+ * color y el tipo de hilo se siguen eligiendo arriba y no se repiten acá:
  * una tabla que mezcla "1,40 m" con "Crudo" no es una ficha de medidas, es la
  * misma lista dos veces.
  *

@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import type * as React from 'react'
+import * as React from 'react'
 import Link from 'next/link'
 import { ImageOff } from 'lucide-react'
 import { Badge, StarRating } from '@/components/ui/primitives'
@@ -204,7 +204,29 @@ export function ProductGrid({
  *
  * Cada tarjeta arranca desfasada 420 ms por su posición, con tope de ocho: sin
  * eso, veinte piezas cambian de foto al unísono y el catálogo parpadea.
+ *
+ * SE PUEDE PASAR EL DEDO
+ * Esperar el cambio automático para ver el reverso de una pieza es esperar sin
+ * motivo. Un gesto horizontal pasa a la foto siguiente y reinicia el reloj del
+ * automático.
+ *
+ * Dos cosas que hay que resolver para que eso no moleste:
+ *
+ *   - `touch-action: pan-y` deja pasar el scroll vertical y se queda sólo con
+ *     el movimiento horizontal. Sin eso, deslizar la lista hacia abajo con el
+ *     dedo encima de una foto cambiaba la foto.
+ *
+ *   - La tarjeta ENTERA es un enlace, así que al levantar el dedo el navegador
+ *     navega. Si hubo gesto, se cancela ese click. Sin eso, mirar la segunda
+ *     foto te metía dentro de la pieza.
+ *
+ * Los puntos de abajo quedan como indicadores y no como botones: son un
+ * elemento interactivo dentro de un enlace, que no es HTML válido y además
+ * pelearía con el propio enlace.
  */
+/** Mínimo para considerarlo un gesto y no un dedo que tembló al tocar. */
+const MINIMO_DE_GESTO = 32
+
 function GaleriaDeTarjeta({
   product,
   sizes,
@@ -240,18 +262,63 @@ function GaleriaDeTarjeta({
       Boolean(f.src),
     )
 
-  const { indice, ref } = useRotacion(urls.length, {
+  const { indice, ref, avanzar } = useRotacion(urls.length, {
     intervaloMs: 3600,
     retrasoMs: Math.min(turno, 8) * 420,
   })
 
+  const gesto = React.useRef<{ x: number; y: number } | null>(null)
+  const huboGesto = React.useRef(false)
+
+  function alEmpezar(e: React.PointerEvent) {
+    if (urls.length < 2) return
+    gesto.current = { x: e.clientX, y: e.clientY }
+    huboGesto.current = false
+  }
+
+  function alTerminar(e: React.PointerEvent) {
+    const inicio = gesto.current
+    gesto.current = null
+    if (!inicio || urls.length < 2) return
+
+    const dx = e.clientX - inicio.x
+    const dy = e.clientY - inicio.y
+
+    // Más horizontal que vertical: si no, era alguien scrolleando.
+    if (Math.abs(dx) < MINIMO_DE_GESTO || Math.abs(dx) <= Math.abs(dy)) return
+
+    huboGesto.current = true
+    avanzar(dx < 0 ? 1 : -1)
+  }
+
   return (
     <div
       ref={ref}
+      onPointerDown={alEmpezar}
+      onPointerUp={alTerminar}
+      onPointerCancel={() => {
+        gesto.current = null
+      }}
+      // Se cancela en la fase de captura, antes de que el click llegue al
+      // enlace que envuelve la tarjeta.
+      onClickCapture={(e) => {
+        if (!huboGesto.current) return
+        e.preventDefault()
+        e.stopPropagation()
+        huboGesto.current = false
+      }}
+      // Deja el scroll vertical en manos del navegador y se queda con el
+      // movimiento horizontal.
+      style={{ touchAction: 'pan-y' }}
       className="relative aspect-[4/5] overflow-hidden rounded-lg bg-surface-muted"
     >
       {urls.length > 0 ? (
-        urls.map((foto, i) => (
+        /* El acercamiento al pasar el mouse vive en esta capa y no en cada
+           foto: el transform de las fotos lo usa el cruce entre una y otra, y
+           dos transforms peleando por el mismo elemento daba saltos. Envuelve
+           sólo las fotos, así las etiquetas de arriba no se agrandan con el. */
+        <div className="absolute inset-0 transition-transform duration-[var(--at-dur-slow)] ease-[var(--ease-out-alma)] group-hover:scale-[1.04] motion-reduce:group-hover:scale-100">
+          {urls.map((foto, i) => (
           <Image
             key={foto.src}
             src={foto.src}
@@ -267,14 +334,17 @@ function GaleriaDeTarjeta({
             {...blurProps(foto.blur)}
             className={cn(
               'object-cover',
+              // La foto que entra se asienta: llega apenas más grande y baja a
+              // su tamaño mientras aparece. Un corte de opacidad solo se ve
+              // como un parpadeo; esto se lee como girar la pieza en la mano.
               'transition-[opacity,transform] duration-[var(--at-dur-slow)] ease-[var(--ease-out-alma)]',
-              'group-hover:scale-[1.04] motion-reduce:group-hover:scale-100',
-              i === indice ? 'opacity-100' : 'opacity-0',
-              apagada && 'opacity-75',
-              apagada && i !== indice && 'opacity-0',
+              'motion-reduce:transition-opacity',
+              i === indice ? 'scale-100 opacity-100' : 'scale-[1.03] opacity-0',
+              apagada && i === indice && 'opacity-75',
             )}
-          />
-        ))
+            />
+          ))}
+        </div>
       ) : (
         <div className="grid h-full place-items-center text-linen-300">
           <ImageOff className="size-8" strokeWidth={1.3} />

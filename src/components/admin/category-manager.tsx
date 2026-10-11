@@ -58,12 +58,10 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={() => setEditing('new')}>
-          <Plus />
-          Nueva categoría
-        </Button>
-      </div>
+      <AltaRapida
+        alCrear={() => router.refresh()}
+        alPedirMas={() => setEditing('new')}
+      />
 
       <FormError>{error}</FormError>
 
@@ -121,6 +119,93 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
   )
 }
 
+/**
+ * Crear una categoría escribiendo el nombre y nada más.
+ *
+ * El formulario completo pide nombre, dirección, reseña, categoría madre,
+ * posición y visibilidad. Está bien que exista —todo eso se edita— pero para
+ * CREAR es demasiado: seis campos para decir "Espejos". Y era la única puerta.
+ *
+ * Acá alcanza el nombre. La dirección sale del nombre, la posición va al final
+ * y nace visible. Lo demás se completa después, y la fila de la lista avisa si
+ * le falta la reseña.
+ */
+function AltaRapida({
+  alCrear,
+  alPedirMas,
+}: {
+  alCrear: () => void
+  alPedirMas: () => void
+}) {
+  const [nombre, setNombre] = React.useState('')
+  const [pendiente, setPendiente] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+
+  async function crear() {
+    const limpio = nombre.trim()
+    if (!limpio || pendiente) return
+
+    setPendiente(true)
+    setError(null)
+
+    const result = await saveCategory({ name: limpio, isVisible: true })
+
+    setPendiente(false)
+
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+
+    setNombre('')
+    alCrear()
+  }
+
+  return (
+    <div className="space-y-2 rounded-xl border border-border-soft bg-surface p-3.5">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="min-w-0 flex-1">
+          <Field label="Categoría nueva" hint="Alcanza el nombre. El resto se edita después.">
+            {(props) => (
+              <Input
+                {...props}
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                // Enter crea: es lo que uno hace sin pensarlo después de
+                // escribir el nombre, y tener que buscar el botón con el mouse
+                // es lo que hace que cargar cinco categorías cueste.
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    void crear()
+                  }
+                }}
+                placeholder="Espejos"
+                maxLength={80}
+              />
+            )}
+          </Field>
+        </div>
+
+        <Button onClick={crear} disabled={pendiente || !nombre.trim()}>
+          {pendiente ? <Ovillo /> : <Plus />}
+          Agregar
+        </Button>
+      </div>
+
+      {error && <FormError>{error}</FormError>}
+
+      <button
+        type="button"
+        onClick={alPedirMas}
+        className="text-xs text-ink-muted underline-offset-2 hover:text-ink hover:underline"
+      >
+        Cargar una con reseña, foto y orden desde el principio
+      </button>
+    </div>
+  )
+}
+
 function CategoryRow({
   category,
   pending,
@@ -148,6 +233,18 @@ function CategoryRow({
           )}
         </div>
         <p className="truncate text-xs text-ink-subtle">/categoria/{category.slug}</p>
+        {/* La reseña es lo que se lee al entrar a la categoría. Sin ella la
+            página abre directo en las piezas, sin presentación, y no hay forma
+            de notarlo sin visitarla. */}
+        {!category.intro?.trim() && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="mt-1 text-xs text-warning underline-offset-2 hover:underline"
+          >
+            Sin reseña — escribí la presentación de esta categoría
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-1">
@@ -231,6 +328,7 @@ function CategoryForm({
       name: String(form.get('name') ?? ''),
       slug: String(form.get('slug') ?? '') || undefined,
       description: String(form.get('description') ?? ''),
+      intro: String(form.get('intro') ?? ''),
       parentId: String(form.get('parentId') ?? '') || null,
       position: Number(form.get('position') ?? 0),
       isVisible: form.get('isVisible') === 'on',
@@ -270,7 +368,31 @@ function CategoryForm({
         </Field>
       </div>
 
-      <Field label="Descripción" hint="Se muestra arriba del listado de la categoría.">
+      {/* DOS TEXTOS, NO UNO.
+          La reseña es lo que lee una persona al entrar; la descripción es lo
+          que lee Google. Antes era el mismo campo, y escribir bien una
+          arruinaba la otra: una presentación de cuatro frases es una
+          descripción malísima para un buscador. */}
+      <Field
+        label="Reseña de la categoría"
+        hint="Lo que se lee al entrar, arriba de las piezas. Contá de qué están hechas, qué medidas hay y por qué vale la pena quedarse mirando."
+      >
+        {(props) => (
+          <Textarea
+            {...props}
+            name="intro"
+            defaultValue={category?.intro ?? ''}
+            rows={5}
+            maxLength={2000}
+            placeholder="Hilo kraft y algodón anudados a mano sobre un bastidor de madera…"
+          />
+        )}
+      </Field>
+
+      <Field
+        label="Descripción corta"
+        hint="Para Google y para cuando se comparte el enlace. Una línea."
+      >
         {(props) => (
           <Textarea
             {...props}

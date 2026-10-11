@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
  * El ovillo que gira.
  *
  * Reemplaza al spinner genérico que venía con los iconos. Un círculo girando
- * no dice nada; un ovillo de lana desenrollándose dice qué clase de lugar es
+ * no dice nada; un ovillo de hilo desenrollándose dice qué clase de lugar es
  * éste, y lo dice en el único momento en que alguien está obligado a mirar la
  * pantalla sin hacer nada.
  *
@@ -15,14 +15,14 @@ import { cn } from '@/lib/utils'
  * - `OvilloConAgujas` va en las esperas de página completa, donde hay lugar
  *   para el dibujo entero.
  *
- * El color sale de la paleta de la casa —sage para la lana, wood para las
+ * El color sale de la paleta de la casa —sage para el hilo, wood para las
  * agujas—. Un verde saturado sería el único color estridente de toda la
  * tienda.
  *
  * Las dos respetan `prefers-reduced-motion`: ver globals.css.
  */
 
-/** Las vueltas de lana. Se dibujan igual en los dos tamaños. */
+/** Las vueltas de hilo. Se dibujan igual en los dos tamaños. */
 function Vueltas() {
   return (
     <g stroke="var(--color-sage-600)" strokeWidth="1.5" fill="none" opacity="0.75">

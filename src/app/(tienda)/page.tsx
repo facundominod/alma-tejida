@@ -3,29 +3,41 @@ import Link from 'next/link'
 import { ArrowRight, Hand, Heart, Package } from 'lucide-react'
 import { FrasesQueGiran } from '@/components/tienda/frases-que-giran'
 import { ProductGrid } from '@/components/tienda/product-card'
+import { AdelantoDePiezas } from '@/components/tienda/adelanto-de-piezas'
+import { MosaicoDeCategoria } from '@/components/tienda/mosaico-de-categoria'
 import { PromoCarousel } from '@/components/tienda/promo-carousel'
 import { Button } from '@/components/ui/button'
 import { EmptyState, SectionHeading, ThreadDivider } from '@/components/ui/primitives'
 import { IMAGE_SIZES, storageUrl } from '@/lib/images'
 import { COPY, PORTADA } from '@/lib/labels'
+import { PISO_PARA_REDONDEAR } from '@/lib/redondeo'
 import {
   getFeaturedProducts,
   getLastUnitsProducts,
   getNewProducts,
 } from '@/lib/queries/catalog'
-import { getHeroPromotions, getStoreSettings, getTopCategories } from '@/lib/queries/store'
+import {
+  getCategoryCollages,
+  getHeroPromotions,
+  getStoreSettings,
+  getTopCategories,
+} from '@/lib/queries/store'
 
 // Estatica con revalidación. Cuando el administrador publica algo, la Server
 // Action inválida el tag y la home se actualiza al instante, sin esperar el
 // TTL y sin volver a desplegar.
 export const revalidate = 300
 
+/** Un icono por bloque del adelanto, en el mismo orden. */
+const ICONOS_DEL_ADELANTO = [Hand, Heart, Package]
+
 export default async function HomePage() {
-  const [settings, promotions, categories, featured, novedades, últimas] =
+  const [settings, promotions, categories, collages, featured, novedades, últimas] =
     await Promise.all([
       getStoreSettings(),
       getHeroPromotions(),
       getTopCategories(),
+      getCategoryCollages(),
       getFeaturedProducts(8),
       getNewProducts(4),
       getLastUnitsProducts(4),
@@ -46,6 +58,25 @@ export default async function HomePage() {
     valor?.trim() ? valor : respaldo
   const heroImage = hero.image_url ? storageUrl(hero.image_url, 'brand') : null
   const hasCatalog = featured.length > 0 || novedades.length > 0
+  /**
+   * Las tres piezas que se adelantan en la portada.
+   *
+   * Las que ya tienen precio de verdad van primero. Hay piezas cargadas en $1
+   * mientras se definen los precios, y la portada es el peor lugar para que
+   * salgan: es la primera pantalla y la que decide si alguien sigue mirando.
+   * En cuanto tengan su precio, entran solas al orden normal.
+   */
+  const adelanto = [...featured, ...novedades, ...últimas]
+    .filter((p, i, todas) => todas.findIndex((o) => o.id === p.id) === i)
+    .sort(
+      (a, b) =>
+        Number(Number(b.final_price ?? 0) >= PISO_PARA_REDONDEAR) -
+        Number(Number(a.final_price ?? 0) >= PISO_PARA_REDONDEAR),
+    )
+    .slice(0, 3)
+    // Se dan vuelta porque la última del arreglo es la que queda ARRIBA de la
+    // pila, y es la única que muestra nombre y precio. La mejor va adelante.
+    .reverse()
 
   return (
     <>
@@ -58,7 +89,7 @@ export default async function HomePage() {
           <div className="at-organic relative overflow-hidden bg-clay-100">
             <div className="at-alto-hero relative grid md:min-h-[520px] md:grid-cols-2">
               {/* Texto */}
-              <div className="relative z-10 flex flex-col justify-center gap-5 px-6 py-12 md:px-12 md:py-16">
+              <div className="relative z-10 flex flex-col justify-center gap-4 px-6 py-10 sm:gap-5 md:px-12 md:py-16">
                 {/* La frase de la tienda primero, después las de la casa. */}
                 <FrasesQueGiran
                   frases={[settings.tagline, ...PORTADA.frases].filter(Boolean)}
@@ -69,8 +100,14 @@ export default async function HomePage() {
                   {texto(hero.title, PORTADA.titulo)}
                 </h1>
 
-                <p className="max-w-md text-[1.0625rem] leading-relaxed text-clay-800/85">
-                  {texto(hero.subtitle, PORTADA.subtitulo)}
+                <p className="max-w-md text-[0.9375rem] leading-relaxed text-clay-800/85 sm:text-[1.0625rem]">
+                  {texto(hero.subtitle, PORTADA.subtitulo)}{' '}
+                  {/* Sólo cuando hay alto para él, y sólo si la tienda no
+                      escribió su propio subtítulo: si lo escribió, manda el
+                      suyo entero y no se le agrega nada. */}
+                  {!hero.subtitle?.trim() && (
+                    <span className="hidden sm:inline">{PORTADA.subtituloDetalle}</span>
+                  )}
                 </p>
 
                 <div className="flex flex-wrap gap-3 pt-1">
@@ -90,15 +127,15 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              {/* Fotografía protagonista */}
-              {/* Sin foto cargada, en celular esta celda serían 220px de
+              {/* Fotografía protagonista, o el adelanto de piezas.
+                  Sin ninguna de las dos, en celular esta celda serían 220px de
                   textura vacía justo donde tiene que estar el producto: se
                   oculta. En desktop se conserva para que la grilla de dos
                   columnas no colapse. */}
               <div
                 className={
-                  heroImage
-                    ? 'relative min-h-[200px] md:min-h-full'
+                  heroImage || adelanto.length > 0
+                    ? 'relative min-h-[260px] md:min-h-full'
                     : 'relative hidden md:block md:min-h-full'
                 }
               >
@@ -112,11 +149,18 @@ export default async function HomePage() {
                     className="object-cover"
                   />
                 ) : (
-                  <div className="at-weave absolute inset-0 bg-clay-200/45" />
+                  /* La foto de portada manda si está cargada. Si no, el lugar
+                     más caro de la pantalla lo ocupan las piezas. */
+                  <AdelantoDePiezas piezas={adelanto} />
                 )}
                 {/* En móvil el texto queda encima de la foto: este velo
                     garantiza el contraste sin apagar la fotografía. */}
-                <div className="absolute inset-0 bg-gradient-to-t from-clay-100 via-clay-100/35 to-transparent md:bg-gradient-to-r md:from-clay-100 md:via-clay-100/20 md:to-transparent" />
+                {/* El velo garantiza el contraste del texto cuando hay foto
+                    de fondo. Con el adelanto no va: taparía las piezas y
+                    además les comería el click. */}
+                {heroImage && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-clay-100 via-clay-100/35 to-transparent md:bg-gradient-to-r md:from-clay-100 md:via-clay-100/20 md:to-transparent" />
+                )}
               </div>
             </div>
           </div>
@@ -148,33 +192,24 @@ export default async function HomePage() {
           </div>
 
           <div className="scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 md:grid md:grid-cols-4 md:overflow-visible md:px-8 lg:gap-6">
-            {categories.slice(0, 8).map((category) => {
-              const image = storageUrl(category.image_path)
-              return (
-                <Link
-                  key={category.id}
-                  href={`/categoria/${category.slug}`}
-                  className="group w-[44vw] shrink-0 snap-start sm:w-[30vw] md:w-auto"
-                >
-                  <div className="at-organic relative aspect-square overflow-hidden bg-surface-muted">
-                    {image ? (
-                      <Image
-                        src={image}
-                        alt=""
-                        fill
-                        sizes={IMAGE_SIZES.category}
-                        className="object-cover transition-transform duration-[var(--at-dur-base)] ease-[var(--ease-out-alma)] group-hover:scale-[1.04] motion-reduce:group-hover:scale-100"
-                      />
-                    ) : (
-                      <div className="at-weave h-full w-full" />
-                    )}
-                  </div>
-                  <p className="pt-2.5 text-center font-display text-[1.0625rem] text-linen-900">
-                    <span className="at-thread-underline">{category.name}</span>
-                  </p>
-                </Link>
-              )
-            })}
+            {categories.slice(0, 8).map((category) => (
+              <Link
+                key={category.id}
+                href={`/categoria/${category.slug}`}
+                className="group w-[44vw] shrink-0 snap-start sm:w-[30vw] md:w-auto"
+              >
+                <div className="at-organic relative aspect-square overflow-hidden bg-surface-muted">
+                  <MosaicoDeCategoria
+                    fotos={collages[category.id] ?? []}
+                    imagenPropia={category.image_path}
+                    nombre={category.name}
+                  />
+                </div>
+                <p className="pt-2.5 text-center font-display text-[1.0625rem] text-linen-900">
+                  <span className="at-thread-underline">{category.name}</span>
+                </p>
+              </Link>
+            ))}
           </div>
         </section>
       )}
@@ -250,34 +285,21 @@ export default async function HomePage() {
       {/* COMO TRABAJAMOS — tres ideas, sin promesas que no podamos cumplir */}
       <section className="at-container pb-6 pt-8">
         <div className="grid gap-8 md:grid-cols-3 md:gap-10">
-          {[
-            {
-              icon: Hand,
-              title: 'Una por una',
-              text: 'No hay dos iguales, y las diferencias no son fallas: son la prueba de que la hizo alguien.',
-            },
-            {
-              icon: Heart,
-              title: 'Lana de verdad',
-              text: 'Elegida de a ovillo, para que la pieza siga entera dentro de diez años.',
-            },
-            {
-              icon: Package,
-              title: 'Lo hablamos',
-              text: 'Hacés el pedido y el resto lo arreglamos por WhatsApp, a tu tiempo.',
-            },
-          ].map((item) => (
-            <div key={item.title} className="flex gap-4">
-              <item.icon
-                className="mt-0.5 size-6 shrink-0 text-clay-400"
-                strokeWidth={1.5}
-              />
+          {/* El texto vive en PORTADA.adelanto, con el resto de la copia de la
+              portada. Acá quedan sólo los iconos, que son decisión de esta
+              pantalla y no texto que alguien vaya a querer editar. */}
+          {PORTADA.adelanto.map((item, i) => {
+            const Icono = ICONOS_DEL_ADELANTO[i] ?? Hand
+            return (
+            <div key={item.titulo} className="flex gap-4">
+              <Icono className="mt-0.5 size-6 shrink-0 text-clay-400" strokeWidth={1.5} />
               <div className="space-y-1">
-                <p className="font-display text-lg text-linen-900">{item.title}</p>
-                <p className="text-sm leading-relaxed text-ink-muted">{item.text}</p>
+                <p className="font-display text-lg text-linen-900">{item.titulo}</p>
+                <p className="text-sm leading-relaxed text-ink-muted">{item.texto}</p>
               </div>
             </div>
-          ))}
+          )
+          })}
         </div>
       </section>
     </>

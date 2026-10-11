@@ -34,7 +34,7 @@
  *
  * Son unos 600 KB en lugar de 250. Sigue siendo seis veces menos que los 4 MB
  * del original, o sea que la subida sigue siendo rápida, y la textura de la
- * lana llega entera.
+ * fibra llega entera.
  */
 const LADO_MAXIMO = 2200
 
