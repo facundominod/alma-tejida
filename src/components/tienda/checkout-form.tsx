@@ -127,6 +127,11 @@ export function CheckoutForm({
   // número que la clienta vino viendo desde la ficha.
   const estimatedTotal = cart.totalAPagar + deliveryCost
 
+  // Qué medios hay REALMENTE en este pedido. La nota del pie habla sólo de los
+  // que se van a usar: datos de transferencia a quien no transfiere es ruido.
+  const hayContado = cart.lines.some((l) => l.medioDePago !== 'tarjeta')
+  const hayTarjeta = cart.lines.some((l) => l.medioDePago === 'tarjeta')
+
   React.useEffect(() => {
     if (cart.ready && cart.lines.length > 0) {
       void trackEvent('checkout_started', { metadata: { items: cart.count } })
@@ -500,21 +505,29 @@ export function CheckoutForm({
 
           <div className="space-y-1.5 rounded-lg bg-surface-muted p-3.5 text-xs leading-relaxed text-ink-muted">
             <p className="font-medium text-ink">Como sigue</p>
-            <p>
-              Al confirmar generamos tu número de pedido y reservamos las piezas. El pago
-              es por transferencia
-              {paymentAlias ? (
-                <>
-                  {' '}
-                  al alias <strong className="text-ink">{paymentAlias}</strong>
-                  {paymentHolder ? ` (${paymentHolder})` : ''}
-                  {paymentBank ? ` · ${paymentBank}` : ''}
-                </>
-              ) : (
-                ', y te pasamos los datos al contactarte'
-              )}
-              .
-            </p>
+            <p>Al confirmar generamos tu número de pedido y reservamos las piezas.</p>
+            {/* Los datos de transferencia sólo si hay alguna pieza que se vaya a
+                pagar así. Antes esta nota decía "el pago es por transferencia"
+                sin más, y desde que se puede elegir tarjeta eso contradice lo
+                que la persona acaba de marcar tres renglones más arriba. */}
+            {hayContado && (
+              <p>
+                Para lo que pagás por transferencia
+                {paymentAlias ? (
+                  <>
+                    , el alias es <strong className="text-ink">{paymentAlias}</strong>
+                    {paymentHolder ? ` (${paymentHolder})` : ''}
+                    {paymentBank ? ` · ${paymentBank}` : ''}
+                  </>
+                ) : (
+                  ' te pasamos los datos al contactarte'
+                )}
+                .
+              </p>
+            )}
+            {hayTarjeta && (
+              <p>Lo que va con tarjeta lo coordinamos al contactarte.</p>
+            )}
             {whatsappNumber && (
               <p>Después coordinamos todo por WhatsApp con {storeName}.</p>
             )}
