@@ -31,11 +31,17 @@ export function GuiaDePrecios({
   attributes,
   variants,
   combinations,
+  sinEncabezado = false,
 }: {
   attributes: ConValores[]
   variants: VariantView[]
   /** variant_id -> { attribute_id: value_id } */
   combinations: Record<string, Record<string, string>>
+  /**
+   * El título lo pone el bloque plegable que la envuelve. Sin esto, la ficha
+   * mostraría el mismo título dos veces: una en la solapa y otra adentro.
+   */
+  sinEncabezado?: boolean
 }) {
   const ancho = attributes.find((a) => a.name.toLowerCase().startsWith('ancho'))
   const diseno = attributes.find((a) => /dise/i.test(a.name))
@@ -71,9 +77,11 @@ export function GuiaDePrecios({
 
   return (
     <section className="mx-auto mt-14 max-w-3xl" aria-labelledby="precios">
-      <h2 id="precios" className="mb-1 font-display text-2xl">
+      {!sinEncabezado && (
+        <h2 id="precios" className="mb-1 font-display text-2xl">
         Precios
       </h2>
+      )}
       <p className="mb-6 text-sm text-ink-muted">
         Según el ancho y el dibujo del tejido.
       </p>

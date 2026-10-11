@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { AdminNav } from '@/components/admin/admin-nav'
+import { AdminNav, PieDelPanel } from '@/components/admin/admin-nav'
 import { getUnreadCount } from '@/lib/queries/admin'
 import { getStoreSettings } from '@/lib/queries/store'
 import { getCurrentProfile } from '@/lib/supabase/server'
@@ -37,9 +37,16 @@ export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {
         userName={profile.full_name ?? profile.email ?? 'Administración'}
       />
 
-      {/* pb-16 deja lugar a las pestanas inferiores en móvil */}
-      <main id="contenido" className="min-w-0 flex-1 pb-16 md:pb-0">
-        {children}
+      {/* `min-w-0` es lo que impide que una tabla ancha estire el flex y saque
+          la pantalla del ancho del teléfono. `pb-16` deja lugar a las pestañas
+          de abajo, que son fijas. */}
+      <main id="contenido" className="flex min-w-0 flex-1 flex-col pb-16 md:pb-0">
+        <div className="min-w-0 flex-1">{children}</div>
+
+        {/* Al final del scroll: el resto de las secciones, ver la tienda y
+            cerrar sesión. En el teléfono no había ninguna otra forma de
+            llegar a ellas. */}
+        <PieDelPanel userName={profile.full_name ?? profile.email ?? 'Administración'} />
       </main>
     </div>
   )

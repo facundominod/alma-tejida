@@ -268,62 +268,64 @@ export const COPY = {
 
 export const PORTADA = {
   /**
-   * EL TÍTULO ES UNA AFIRMACIÓN, NO UNA NEGACIÓN.
+   * EL AMOR Y EL NUDO EN EL MISMO RESPIRO.
    *
-   * El anterior decía "Nada de esto lo hizo una máquina": definía la tienda por
-   * lo que NO es, y le contestaba a una fábrica que nadie había nombrado. Este
-   * pone a la persona adelante y dice el oficio.
+   * Silvana pidió que la portada dijera que cada nudo está hecho con amor. La
+   * diferencia entre que eso suene verdadero o suene a imán de heladera es
+   * dónde cae: pegado al nudo —al trabajo— funciona; colgado al final, como
+   * una posdata, es la taza de regalo.
    */
-  titulo: 'Cada nudo lo hago yo.',
+  titulo: 'Cada nudo, hecho con amor.',
 
   /**
-   * Largo a propósito. Es la única pantalla que todos ven, y tiene que
-   * contestar las cuatro preguntas de quien llega: qué se vende, de qué está
-   * hecho, si entra en su medida, y cuándo lo tiene. A estos precios, no
-   * contestarlas acá es perder a la mitad.
+   * Contesta las cuatro preguntas de quien llega: qué se vende, de qué está
+   * hecho, si entra en su medida y cuándo lo tiene. A estos precios, no
+   * contestarlas en la única pantalla que todos ven es perder a la mitad.
    */
   subtitulo:
-    'Soy Silvana, de Córdoba. Anudo a mano respaldos de 0,80 a 2,00 m de ancho, ' +
-    'espejos, tapices y lámparas. Elegís medida y diseño, te digo cuánto tarda, ' +
-    'y llega listo para colgar.',
+    'Soy Silvana, de Córdoba. Anudo a mano, en hilo Kraft áspero sobre madera: ' +
+    'respaldos de 0,80 a 2,00 m de ancho, espejos, tapices y lámparas.',
 
-  /**
-   * El detalle de materiales, que se suma al subtítulo desde la primera
-   * pantalla que da el alto.
-   *
-   * En un iPhone SE —568 px de alto— el subtítulo completo empujaba el botón
-   * 54 px por debajo del pliegue, y el botón arriba del pliegue es el punto
-   * 125. No se pierde nada: los hilos los dicen las frases que giran arriba del
-   * título, y tienen su propia página.
-   */
-  subtituloDetalle: 'Con hilo Kraft, algodón o yute sobre bastidor de madera.',
+  /** El detalle que se suma desde la primera pantalla que da el alto. */
+  subtituloDetalle: 'Elegís medida y diseño, y te digo cuánto tarda.',
 
   /** Invita a encargar, no a mirar. */
   boton: 'Pedí tu medida',
 
   /**
-   * La primera la pone la tienda desde su configuración; éstas siguen.
-   * Se muestran en orden y vuelven a empezar.
-   *
-   * Ninguna pasa de cinco palabras y ninguna dice lana, ovillo ni telar: acá no
-   * se teje en telar, se anuda. Los hilos son Kraft, algodón, yute y
-   * polipropileno.
+   * Las que giran arriba del título. Máximo cinco palabras cada una, y
+   * ninguna dice lana, ovillo ni telar: acá no se teje en telar, se anuda.
    */
   frases: [
-    'Nudo por nudo, a mano',
-    'Tu medida, mis nudos',
-    'Hilo Kraft, algodón y yute',
+    'Macramé y encordado, a mano',
+    'Textura de papel madera',
     'Líneas, Cuadrillé o Nido',
-    'Te cuento cuánto tarda',
+    'Te mando fotos del avance',
+    'Llega listo para colgar',
   ],
 
   /**
-   * Los tres bloques que van debajo del hero y adelantan lo que hay más abajo.
+   * La bienvenida, más abajo en la portada.
    *
-   * El del medio decía "Lana de verdad · Elegida de a ovillo". Era falso: en
-   * esta tienda no entra un gramo de lana. Ahora dice los hilos que se usan de
-   * verdad, con el mismo argumento de durabilidad que justificaba el bloque.
+   * Sale del texto que escribió Silvana, cortado a menos de 90 palabras: el
+   * suyo tenía 150 y decía "hecho a mano" tres veces. Lo que se conserva es lo
+   * que sólo puede decir ella; lo que se fue es lo que podría firmar cualquier
+   * feria artesanal del país.
    */
+  bienvenida: {
+    titulo: 'Bienvenidos a Alma Tejida',
+    parrafos: [
+      'Anudo de a una pieza por vez. Ninguna sale igual a la anterior: la tensión ' +
+        'la pone mi mano, y de cerca se nota.',
+      'Kraft color tierra, yute irregular, algodón suave, madera a la vista. El ' +
+        'bastidor es lo que mantiene la pieza derecha contra la pared, años después.',
+      'Mirá el catálogo sin apuro y escribime por la que te quede sonando. Si ' +
+        'querés cambiar una medida o un color, lo vemos antes de empezar.',
+    ],
+    remate: 'Alma Tejida: nudo a nudo, hecho con amor.',
+  },
+
+  /** Los tres bloques cortos que van debajo del hero. */
   adelanto: [
     {
       titulo: 'Una por una',
@@ -354,10 +356,12 @@ export const PORTADA = {
    va a querer corregir, y buscarlo entre el maquetado es garantía de que no se
    corrija nunca.
 
-   CADA HILO TERMINA EN PIEZAS CONCRETAS, CON ENLACE.
-   Nadie elige un hilo en abstracto. Se entra a leer qué es el yute y se sale
-   mirando los espejos de kraft y yute. Las que todavía no tienen categoría
-   propia van sin enlace: un enlace a una búsqueda vacía es peor que ninguno.
+   SÓLO LAS CARACTERÍSTICAS DE CADA HILO.
+   Antes cada uno terminaba con la lista de piezas que se hacen con él. Se
+   sacó a pedido de Silvana: la lista obligaba a mantener sincronizadas dos
+   cosas —el catálogo real y esta página— y la primera vez que dejaran de
+   coincidir, esta página estaría mintiendo. Lo que no cambia es de qué está
+   hecho cada hilo.
 
    LOS COLORES SON LOS DE LA PALETA, NO INVENTADOS.
    La paleta tiene clay, linen, sage y wood. Kraft va en wood —el papel madera—,
@@ -389,13 +393,6 @@ export const MATERIALES = {
         'que leerse desde la puerta.',
       muestra: 'bg-wood-400/30',
       acento: 'text-wood-500',
-      paraQue: [
-        { texto: 'Respaldos a medida', href: '/categoria/respaldos' },
-        { texto: 'Espejos Kraft', href: '/categoria/espejos' },
-        { texto: 'Tapices', href: '/categoria/tapices' },
-        { texto: 'Bandejas', href: null },
-        { texto: 'Sujeta cortinas', href: null },
-      ],
     },
     {
       nombre: 'Hilo de algodón',
@@ -407,13 +404,6 @@ export const MATERIALES = {
         'elegí algodón.',
       muestra: 'bg-linen-200',
       acento: 'text-linen-700',
-      paraQue: [
-        { texto: 'Espejos', href: '/categoria/espejos' },
-        { texto: 'Tapices con flecos', href: '/categoria/tapices' },
-        { texto: 'Lámparas', href: null },
-        { texto: 'Porta macetas', href: null },
-        { texto: 'Atrapa sueños', href: null },
-      ],
     },
     {
       nombre: 'Hilo de yute',
@@ -425,12 +415,6 @@ export const MATERIALES = {
         'espacios que ya tienen madera, fibra y verde.',
       muestra: 'bg-clay-200',
       acento: 'text-clay-700',
-      paraQue: [
-        { texto: 'Espejos Kraft y Yute', href: '/categoria/espejos' },
-        { texto: 'Tapices', href: '/categoria/tapices' },
-        { texto: 'Porta macetas', href: null },
-        { texto: 'Camas colgantes', href: null },
-      ],
     },
     {
       nombre: 'Hilo de polipropileno',
@@ -442,12 +426,6 @@ export const MATERIALES = {
         'sol, vapor o manos todos los días.',
       muestra: 'bg-sage-100',
       acento: 'text-sage-600',
-      paraQue: [
-        { texto: 'Camas colgantes', href: null },
-        { texto: 'Porta macetas de galería', href: null },
-        { texto: 'Tapices para exterior', href: '/categoria/tapices' },
-        { texto: 'Lo que haya que limpiar seguido', href: null },
-      ],
     },
   ],
 

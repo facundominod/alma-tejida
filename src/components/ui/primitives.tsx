@@ -97,7 +97,12 @@ export function Price({
         {formatPrice(finalNum)}
       </span>
       {hasDiscount && (
-        <span className={cn('tabular text-ink-subtle line-through', sizes.old)}>
+        /* `at-tachado` y no `line-through`: el del navegador es una recta de
+           1px en el medio exacto del número y se lee como un error
+           tipográfico. Este es un hilo apenas torcido que además se dibuja de
+           izquierda a derecha, y el ojo termina el trazo cayendo justo en el
+           precio nuevo. Ver globals.css. */
+        <span className={cn('at-tachado tabular text-ink-subtle', sizes.old)}>
           <span className="sr-only">Precio anterior: </span>
           {formatPrice(listNum)}
         </span>

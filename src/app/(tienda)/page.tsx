@@ -282,6 +282,32 @@ export default async function HomePage() {
 
       <ThreadDivider className="pt-20" />
 
+      {/* BIENVENIDA
+          Lo que Silvana quiere decir, en el lugar donde se puede leer sin
+          apuro. En el hero no entraba: ahí hay que contestar qué se vende y
+          cuánto tarda, no contar de dónde viene la pieza. */}
+      <section className="at-container pt-14 md:pt-20">
+        <div className="relative mx-auto max-w-2xl overflow-hidden rounded-xl border border-border-soft bg-surface px-6 py-9 text-center md:px-10 md:py-12">
+          <div className="at-weave pointer-events-none absolute inset-0" />
+          <div className="relative space-y-4">
+            <h2 className="font-display text-2xl text-linen-900 md:text-3xl">
+              {PORTADA.bienvenida.titulo}
+            </h2>
+            {PORTADA.bienvenida.parrafos.map((parrafo) => (
+              <p
+                key={parrafo.slice(0, 24)}
+                className="mx-auto max-w-prose leading-relaxed text-ink-muted"
+              >
+                {parrafo}
+              </p>
+            ))}
+            <p className="pt-1 font-display text-[1.0625rem] text-clay-700">
+              {PORTADA.bienvenida.remate}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* COMO TRABAJAMOS — tres ideas, sin promesas que no podamos cumplir */}
       <section className="at-container pb-6 pt-8">
         <div className="grid gap-8 md:grid-cols-3 md:gap-10">

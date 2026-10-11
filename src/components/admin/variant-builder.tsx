@@ -9,6 +9,7 @@ import { Field, FormError, Input, Select } from '@/components/ui/field'
 import { Badge, Overline } from '@/components/ui/primitives'
 import { saveProductStructure } from '@/lib/actions/admin/catalog'
 import { cn, formatPrice } from '@/lib/utils'
+import { formatearParaEditar, parsearPrecio } from '@/lib/parsear-precio'
 import type { AttributeType } from '@/types/database'
 
 /**
@@ -242,7 +243,9 @@ export function VariantBuilder({
         id: variant.id ?? null,
         options: variant.options,
         sku: variant.sku.trim() || null,
-        price_override: variant.price_override.trim() || null,
+        // parsearPrecio() y no el texto crudo: "215.000" escrito a mano
+        // llegaba como la cadena "215.000" y la base la leia como 215.
+        price_override: parsearPrecio(variant.price_override),
         is_active: variant.is_active,
       })),
     })
@@ -397,7 +400,7 @@ export function VariantBuilder({
               {variants.map((variant) => {
                 const label = labelFor(variant.options) || 'Combinación'
                 const effective = variant.price_override.trim()
-                  ? Number(variant.price_override)
+                  ? (parsearPrecio(variant.price_override) ?? basePrice)
                   : basePrice
 
                 return (
@@ -449,14 +452,24 @@ export function VariantBuilder({
                         aria-label={`SKU de ${label}`}
                         className="h-10 text-sm"
                       />
+                      {/* Texto y no `type="number"`: escribir "215.000" en un
+                          campo numérico guardaba 215, y escribirlo con coma
+                          directamente trababa el formulario. Lo interpreta
+                          parsearPrecio(), que sabe que acá la coma es el
+                          decimal. */}
                       <Input
                         value={variant.price_override}
                         onChange={(e) =>
                           updateVariant(variant.key, { price_override: e.target.value })
                         }
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
+                        onBlur={() => {
+                          const n = parsearPrecio(variant.price_override)
+                          updateVariant(variant.key, {
+                            price_override: formatearParaEditar(n),
+                          })
+                        }}
+                        type="text"
+                        inputMode="decimal"
                         placeholder={`Precio propio (${formatPrice(basePrice)})`}
                         aria-label={`Precio de ${label}`}
                         className="tabular h-10 text-sm"

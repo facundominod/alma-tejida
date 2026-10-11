@@ -116,8 +116,28 @@ export async function saveProduct(
   }
 
   if (data.id) {
-    const { error } = await supabase.from('products').update(row).eq('id', data.id)
-    if (error) return { ok: false, error: 'No pudimos guardar los cambios.' }
+    // `.select('id')` no es decorativo: sin el, un UPDATE que RLS filtra
+    // afecta CERO filas y devuelve exito. El formulario decia "Guardado" y no
+    // se habia guardado nada, que es la peor forma de fallar.
+    const { data: tocadas, error } = await supabase
+      .from('products')
+      .update(row)
+      .eq('id', data.id)
+      .select('id')
+
+    if (error) {
+      // El mensaje de la base va adelante. Esta pantalla la ve sólo la
+      // administradora, y "No pudimos guardar los cambios" sin más obliga a
+      // adivinar: un CHECK roto y un permiso faltante se ven idénticos.
+      return { ok: false, error: `No pudimos guardar los cambios. ${error.message}` }
+    }
+
+    if (!tocadas || tocadas.length === 0) {
+      return {
+        ok: false,
+        error: 'No se guardó nada: la pieza no existe o no tenés permiso para editarla.',
+      }
+    }
 
     await refreshStorefront(slug)
     return { ok: true, productId: data.id, slug }
@@ -129,7 +149,9 @@ export async function saveProduct(
     .select('id, slug')
     .single()
 
-  if (error || !created) return { ok: false, error: 'No pudimos crear la pieza.' }
+  if (error || !created) {
+    return { ok: false, error: `No pudimos crear la pieza. ${error?.message ?? ''}`.trim() }
+  }
 
   await refreshStorefront(created.slug)
   return { ok: true, productId: created.id, slug: created.slug }

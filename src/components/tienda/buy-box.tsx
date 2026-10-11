@@ -2,7 +2,12 @@
 
 import { AnimatePresence, motion } from 'motion/react'
 import * as React from 'react'
-import { Check, MessageCircle, ShoppingBag } from 'lucide-react'
+import {
+  Check,
+  MessageCircle,
+  MessageCircleQuestion,
+  ShoppingBag,
+} from 'lucide-react'
 import { QuantityStepper } from '@/components/tienda/cart-sheet'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/primitives'
@@ -232,22 +237,29 @@ export function BuyBox({
         </span>
       </div>
 
-      {/* ACCIONES */}
-      <div className="space-y-3">
-        {canBuy && (
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-ink-muted">Cantidad</span>
-            <QuantityStepper
-              value={quantity}
-              max={Math.min(maxQuantity, 99)}
-              onChange={setQuantity}
-              label={product.name}
-              size="md"
-            />
-          </div>
-        )}
+      {/* ACCIONES, TODAS JUNTAS
+          Cantidad y "agregar" comparten renglón en cuanto hay ancho: son el
+          mismo gesto partido en dos, y separados en dos filas empujaban las
+          consultas fuera de la pantalla. Las dos formas de preguntar van
+          abajo, del mismo tamaño, porque son alternativas entre sí: por
+          WhatsApp si querés respuesta ya, acá si podés esperar. */}
+      <div className="space-y-2.5">
+        <div className="flex flex-wrap items-stretch gap-2.5">
+          {canBuy && (
+            <div className="flex shrink-0 items-center gap-2 rounded-lg border border-border-soft px-3">
+              <span className="text-xs text-ink-subtle">Cant.</span>
+              <QuantityStepper
+                value={quantity}
+                max={Math.min(maxQuantity, 99)}
+                onChange={setQuantity}
+                label={product.name}
+                size="md"
+              />
+            </div>
+          )}
 
-        <Button size="lg" block onClick={handleAdd} disabled={!canBuy}>
+          <div className="min-w-[200px] flex-1">
+            <Button size="lg" block onClick={handleAdd} disabled={!canBuy}>
           <AnimatePresence mode="wait" initial={false}>
             {justAdded ? (
               <motion.span
@@ -274,23 +286,35 @@ export function BuyBox({
                 {canBuy ? 'Agregar al carrito' : 'Sin stock'}
               </motion.span>
             )}
-          </AnimatePresence>
-        </Button>
+            </AnimatePresence>
+            </Button>
+          </div>
+        </div>
 
-        {whatsapp && (
-          <Button
-            asChild
-            variant="whatsapp"
-            size="lg"
-            block
-            onClick={() => void trackEvent('whatsapp_click', { productId: product.id })}
-          >
-            <a href={whatsapp} target="_blank" rel="noopener noreferrer">
-              <MessageCircle />
-              Consultar por WhatsApp
+        <div className="flex flex-wrap gap-2.5">
+          {whatsapp && (
+            <Button
+              asChild
+              variant="whatsapp"
+              className="min-w-[150px] flex-1"
+              onClick={() => void trackEvent('whatsapp_click', { productId: product.id })}
+            >
+              <a href={whatsapp} target="_blank" rel="noopener noreferrer">
+                <MessageCircle />
+                Consultar por WhatsApp
+              </a>
+            </Button>
+          )}
+
+          {/* Lleva al bloque de preguntas, que ahora se puede usar sin cuenta.
+              Es la alternativa para quien no quiere dar su teléfono. */}
+          <Button asChild variant="secondary" className="min-w-[150px] flex-1">
+            <a href="#preguntas">
+              <MessageCircleQuestion />
+              Preguntar acá
             </a>
           </Button>
-        )}
+        </div>
       </div>
     </div>
   )

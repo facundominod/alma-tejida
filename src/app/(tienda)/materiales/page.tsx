@@ -11,10 +11,11 @@ import { whatsappLink } from '@/lib/utils'
 /**
  * Los hilos con los que está hecha cada pieza.
  *
- * POR QUÉ ESTA PÁGINA VENDE Y NO SÓLO INFORMA
- * Porque nadie elige un hilo en abstracto. Cada uno termina con las PIEZAS
- * concretas que salen mejor con él, y cada una enlaza al catálogo: se entra a
- * leer qué es el yute y se sale mirando los espejos de kraft y yute.
+ * SÓLO LAS CARACTERÍSTICAS
+ * Cada hilo dice de qué está hecho y cómo se comporta, y nada más. Antes
+ * terminaba con la lista de piezas que se hacen con él: obligaba a mantener
+ * sincronizado el catálogo con esta página, y el día que dejaran de coincidir
+ * esta página estaría mintiendo.
  *
  * La muestra de arriba de cada tarjeta es un fondo teñido, no una foto. No hay
  * fotos de material cargadas, y poner la foto de una pieza sería mentir sobre
@@ -78,27 +79,6 @@ export default async function MaterialesPage() {
                 {hilo.texto}
               </p>
 
-              <div className="mt-4 border-t border-border-soft pt-4">
-                <Overline>Para qué lo usamos</Overline>
-                <ul className="mt-2 flex flex-wrap gap-1.5">
-                  {hilo.paraQue.map((uso) => (
-                    <li key={uso.texto}>
-                      {uso.href ? (
-                        <Link
-                          href={uso.href}
-                          className="at-tap inline-flex min-h-[34px] items-center rounded-lg border border-border-soft px-2.5 text-[0.8125rem] text-ink-muted transition-colors hover:border-clay-300 hover:text-clay-700"
-                        >
-                          {uso.texto}
-                        </Link>
-                      ) : (
-                        <span className="inline-flex min-h-[34px] items-center rounded-lg border border-border-soft px-2.5 text-[0.8125rem] text-ink-subtle">
-                          {uso.texto}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
             </div>
           </article>
         ))}

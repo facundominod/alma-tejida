@@ -26,7 +26,12 @@ type WithProduct<T> = T & { products: { name: string; slug: string } | null }
 export function QuestionCard({ question }: { question: WithProduct<Question> }) {
   const router = useRouter()
   const [answer, setAnswer] = React.useState(question.answer ?? '')
-  const [publish, setPublish] = React.useState(question.status === 'published')
+  const [publicarPregunta, setPublicarPregunta] = React.useState(
+    question.status === 'published',
+  )
+  const [publicarRespuesta, setPublicarRespuesta] = React.useState(
+    question.answer_is_public,
+  )
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [saved, setSaved] = React.useState(false)
@@ -38,7 +43,8 @@ export function QuestionCard({ question }: { question: WithProduct<Question> }) 
     const result = await answerQuestion({
       questionId: question.id,
       answer,
-      publish,
+      publicarPregunta,
+      publicarRespuesta,
     })
 
     setPending(false)
@@ -108,13 +114,44 @@ export function QuestionCard({ question }: { question: WithProduct<Question> }) 
         aria-label="Respuesta"
       />
 
-      <Checkbox
-        name={`publicar-${question.id}`}
-        label="Publicar esta pregunta y su respuesta"
-        description="Si le sirve a más gente, dejala visible en la ficha del producto."
-        checked={publish}
-        onChange={(e) => setPublish(e.target.checked)}
-      />
+      {/* DOS DECISIONES, NO UNA.
+          Antes era una sola casilla: o todo privado o todo público. Y hay
+          respuestas con un precio especial o una fecha concreta que sólo le
+          sirven a quien preguntó, aunque la pregunta valga la pena mostrarla. */}
+      <div className="space-y-2.5 rounded-lg bg-surface-muted/60 p-3">
+        <Checkbox
+          name={`publicar-pregunta-${question.id}`}
+          label="Mostrar la pregunta en la ficha"
+          description="Le sirve a quien esté por preguntar lo mismo."
+          checked={publicarPregunta}
+          onChange={(e) => {
+            setPublicarPregunta(e.target.checked)
+            // La respuesta se lee colgada de su pregunta: sin la pregunta
+            // visible, publicar la respuesta no significa nada.
+            if (!e.target.checked) setPublicarRespuesta(false)
+          }}
+        />
+
+        <Checkbox
+          name={`publicar-respuesta-${question.id}`}
+          label="Mostrar también tu respuesta"
+          description={
+            publicarPregunta
+              ? 'Sin esto, la pregunta aparece como "respondida en privado".'
+              : 'Primero hay que mostrar la pregunta.'
+          }
+          checked={publicarRespuesta}
+          disabled={!publicarPregunta}
+          onChange={(e) => setPublicarRespuesta(e.target.checked)}
+        />
+
+        {question.author_contact && (
+          <p className="pt-0.5 text-xs text-ink-muted">
+            Dejó este contacto para que le respondas directo:{' '}
+            <span className="font-medium text-ink">{question.author_contact}</span>
+          </p>
+        )}
+      </div>
 
       <FormError>{error}</FormError>
 

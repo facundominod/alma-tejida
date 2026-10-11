@@ -22,54 +22,77 @@ const questionSchema = z.object({
     .trim()
     .min(5, 'Contanos un poco más, así podemos responderte bien.')
     .max(1000, 'La pregunta es demasiado larga.'),
+  /** Opcional: si no lo deja, la pregunta sale sin firma. */
+  authorName: z.string().trim().max(80).optional(),
+  /**
+   * WhatsApp o correo. Es la ÚNICA forma de contestarle en privado a alguien
+   * que no tiene cuenta, así que si no lo deja, la respuesta sólo le llega si
+   * la pregunta se publica. El formulario lo dice.
+   */
+  authorContact: z.string().trim().max(160).optional(),
+  /** El token que el navegador ya guarda para el carrito. Sirve para el tope. */
+  visitante: z.string().trim().max(80).optional(),
 })
 
+/**
+ * Dejar una pregunta sobre una pieza.
+ *
+ * SIN CUENTA.
+ * Antes hacía falta registrarse. Nadie crea una cuenta para preguntar si un
+ * respaldo entra en su cama: se va. Y el pedido ya se podía hacer sin cuenta,
+ * así que la pregunta —el paso anterior, el más barato— era el único con esa
+ * traba.
+ *
+ * Va por `preguntar()` y no por un insert: la función pone ella el estado
+ * —ninguna pregunta nace publicada— y aplica dos topes, uno por visitante y
+ * otro para toda la tienda. Ver la migración 0023.
+ */
 export async function askQuestion(input: unknown): Promise<ActionResult> {
   const parsed = questionSchema.safeParse(input)
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Revisá la pregunta.' }
   }
 
-  const profile = await getCurrentProfile()
-  if (!profile) {
-    return { ok: false, error: 'Necesitás una cuenta para preguntar.' }
-  }
+  const { productId, body, authorName, authorContact, visitante } = parsed.data
 
+  // Si inició sesión, la pregunta queda atada a su cuenta y la ve en "Mis
+  // preguntas". Si no, se usa el cliente público: la función no necesita que
+  // nadie esté identificado.
   const supabase = await createClient()
+  const profile = await getCurrentProfile()
 
-  // 5 preguntas por hora por persona: suficiente para cualquiera que este
-  // comprando de verdad, insuficiente para inundar la bandeja del admin.
-  const { data: allowed } = await supabase.rpc('check_rate_limit', {
-    p_key: `question:${profile.id}`,
-    p_max: 5,
-    p_window_seconds: 3600,
-  })
-
-  if (allowed === false) {
-    return {
-      ok: false,
-      error: 'Ya enviaste varias preguntas. Probá de nuevo en un rato.',
-    }
-  }
-
-  const { error } = await supabase.from('questions').insert({
-    product_id: parsed.data.productId,
-    user_id: profile.id,
-    author_name: profile.full_name,
-    body: parsed.data.body,
-    status: 'pending',
+  const { error } = await supabase.rpc('preguntar', {
+    p_product_id: productId,
+    p_body: body,
+    p_author_name: authorName || profile?.full_name || null,
+    p_author_contact: authorContact || null,
+    p_visitante: visitante || null,
   })
 
   if (error) {
+    const mensaje = error.message ?? ''
+    if (mensaje.includes('DEMASIADAS_PREGUNTAS')) {
+      return {
+        ok: false,
+        error: 'Ya mandaste varias preguntas. Probá de nuevo en un rato.',
+      }
+    }
+    if (mensaje.includes('PIEZA_INEXISTENTE')) {
+      return { ok: false, error: 'Esa pieza ya no está disponible.' }
+    }
+    if (mensaje.includes('PREGUNTA_INVALIDA')) {
+      return { ok: false, error: 'Revisá la pregunta: es muy corta o muy larga.' }
+    }
     return { ok: false, error: 'No pudimos enviar la pregunta. Intentá de nuevo.' }
   }
 
-  // La pregunta queda privada hasta que el admin la publique, pero quien
-  // pregunto tiene que verla en la ficha.
-  const { data: product } = await supabase
+  // La pregunta queda privada hasta que la publiquen, pero quien tiene cuenta
+  // la ve en la ficha.
+  const admin = createAdminClient()
+  const { data: product } = await admin
     .from('products')
     .select('slug')
-    .eq('id', parsed.data.productId)
+    .eq('id', productId)
     .maybeSingle()
 
   if (product?.slug) revalidatePath(`/producto/${product.slug}`)

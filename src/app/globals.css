@@ -664,6 +664,82 @@ a:hover .at-sello-puntada {
   animation-play-state: paused;
 }
 
+/* -----------------------------------------------------------------------------
+   PROMOCIONES SIN FOTO, Y PRECIOS TACHADOS
+
+   Una promocion sin foto cargada quedaba como un rectangulo de color con texto
+   encima. "Dia de la Madre" se veia igual de apagado que cualquier aviso. La
+   solucion no es poner una foto cualquiera: es que el PORCENTAJE sea la obra
+   grafica.
+   -------------------------------------------------------------------------- */
+
+/* El cordon que se traza detras de la cifra. Una sola vez, al entrar. */
+@keyframes at-nudo-trazo {
+  from {
+    stroke-dashoffset: 520;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.at-nudo {
+  stroke-dasharray: 520;
+  animation: at-nudo-trazo 1200ms var(--ease-out-alma) both;
+}
+
+/* La cifra respira. Nueve segundos: a menos se nota y molesta. */
+@keyframes at-deriva {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -7px, 0);
+  }
+}
+
+.at-deriva {
+  animation: at-deriva 9s var(--ease-soft-alma) infinite alternate;
+}
+
+/* -----------------------------------------------------------------------------
+   EL PRECIO TACHADO, HECHO A MANO
+
+   Un `line-through` del navegador es una linea recta de 1px en el medio exacto:
+   se lee como un error tipografico. Esto es un hilo de 2px apenas torcido, que
+   ademas se DIBUJA al entrar, de izquierda a derecha. El ojo sigue el trazo y
+   cae justo en el precio nuevo.
+   -------------------------------------------------------------------------- */
+@keyframes at-tachar {
+  from {
+    transform: rotate(-1.2deg) scaleX(0);
+  }
+  to {
+    transform: rotate(-1.2deg) scaleX(1);
+  }
+}
+
+.at-tachado {
+  position: relative;
+  /* El tachado reemplaza al line-through: si quedaran los dos, serian dos
+     lineas sobre el mismo numero. */
+  text-decoration: none;
+}
+
+.at-tachado::after {
+  content: '';
+  position: absolute;
+  left: -0.06em;
+  right: -0.06em;
+  top: 56%;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  transform-origin: left center;
+  animation: at-tachar 420ms var(--ease-out-alma) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

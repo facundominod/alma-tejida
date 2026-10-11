@@ -8,7 +8,7 @@ import type {
   ProductAttribute,
   ProductAttributeValue,
   ProductMedia,
-  Question,
+  PublicQuestion,
   Review,
   VariantOptionValue,
   VariantView,
@@ -319,17 +319,24 @@ export async function getRelatedProducts(
    RLS ya filtra: publicas + las propias. Está consulta no tiene que saberlo.
    ========================================================================== */
 
-export async function getProductQuestions(productId: string): Promise<Question[]> {
+/**
+ * Las preguntas que se ven en la ficha.
+ *
+ * Sale de `v_public_questions` y no de la tabla porque RLS filtra FILAS y no
+ * columnas: leyendo la tabla, una pregunta publicada arrastraría su respuesta
+ * aunque se haya decidido dejarla en privado. La vista vacía esa columna.
+ */
+export async function getProductQuestions(productId: string): Promise<PublicQuestion[]> {
   return safeQuery(async () => {
     const supabase = createPublicClient()
     const { data } = await supabase
-      .from('questions')
+      .from('v_public_questions')
       .select('*')
       .eq('product_id', productId)
       .order('created_at', { ascending: false })
       .limit(20)
 
-    return (data ?? []) as Question[]
+    return (data ?? []) as PublicQuestion[]
   }, [])
 }
 

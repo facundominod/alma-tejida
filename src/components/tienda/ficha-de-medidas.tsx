@@ -20,7 +20,17 @@ type ConValores = ProductAttribute & { values: ProductAttributeValue[] }
  * Es un `<dl>` y no una tabla a propósito: son pares nombre–valor, no filas y
  * columnas, y un lector de pantalla los anuncia emparejados.
  */
-export function FichaDeMedidas({ attributes }: { attributes: ConValores[] }) {
+export function FichaDeMedidas({
+  attributes,
+  sinEncabezado = false,
+}: {
+  attributes: ConValores[]
+  /**
+   * El título lo pone el bloque plegable que la envuelve. Sin esto, la ficha
+   * mostraría el mismo título dos veces: una en la solapa y otra adentro.
+   */
+  sinEncabezado?: boolean
+}) {
   const medidas = attributes
     .filter((a) => a.type === 'measure' && a.values.length > 0)
     .sort((a, b) => a.position - b.position)
@@ -28,10 +38,12 @@ export function FichaDeMedidas({ attributes }: { attributes: ConValores[] }) {
   if (medidas.length === 0) return null
 
   return (
-    <section className="mx-auto mt-12 max-w-3xl" aria-labelledby="medidas">
-      <h2 id="medidas" className="mb-4 font-display text-2xl">
-        Medidas
-      </h2>
+    <section className={sinEncabezado ? '' : 'mx-auto mt-12 max-w-3xl'} aria-label="Medidas">
+      {!sinEncabezado && (
+        <h2 id="medidas" className="mb-4 font-display text-2xl">
+          Medidas
+        </h2>
+      )}
 
       <dl className="divide-y divide-border-soft border-y border-border-soft">
         {medidas.map((medida) => (

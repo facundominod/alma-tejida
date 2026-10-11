@@ -45,9 +45,19 @@ const SECTIONS = [
 ]
 
 /** Las cuatro que se usan a diario, para la barra inferior del celular. */
-const MOBILE_TABS = SECTIONS.filter((s) =>
-  ['/admin', '/admin/pedidos', '/admin/stock', '/admin/productos'].includes(s.href),
-)
+/**
+ * Las cuatro que van en la barra de abajo en el teléfono.
+ *
+ * Cuatro y no nueve: con nueve, cada pestaña mide 35 px de ancho y no se le
+ * puede apuntar con el dedo. Las otras cinco viven en el pie del panel, que
+ * está al final del scroll de cada pantalla.
+ */
+const PESTANAS_DEL_TELEFONO = ['/admin', '/admin/pedidos', '/admin/stock', '/admin/productos']
+
+const MOBILE_TABS = SECTIONS.filter((s) => PESTANAS_DEL_TELEFONO.includes(s.href))
+
+/** Las que no entran abajo. Antes no se llegaba a ninguna desde el teléfono. */
+const SECCIONES_DEL_PIE = SECTIONS.filter((s) => !PESTANAS_DEL_TELEFONO.includes(s.href))
 
 export function AdminNav({
   storeName,
@@ -168,6 +178,71 @@ export function AdminNav({
         </ul>
       </nav>
     </>
+  )
+}
+
+/**
+ * El pie del panel, al final del scroll.
+ *
+ * EL PROBLEMA QUE RESUELVE, QUE ERA MÁS GRANDE DE LO QUE PARECÍA
+ * En el teléfono la barra de abajo tiene cuatro pestañas —Inicio, Pedidos,
+ * Stock y Productos— y no habia ninguna otra puerta. Categorías,
+ * Promociones, Preguntas, Reseñas y Configuración NO SE PODÍAN ABRIR desde un
+ * teléfono: existían, estaban terminadas, y no había forma de llegar.
+ * Tampoco había dónde cerrar sesión.
+ *
+ * Va al final del contenido y no en un menú desplegable porque es donde uno
+ * llega naturalmente: se termina de leer la pantalla y ahí está el resto.
+ *
+ * En escritorio no se muestra: la barra lateral ya tiene las nueve secciones,
+ * "Ver la tienda" y "Cerrar sesión" a la vista todo el tiempo.
+ */
+export function PieDelPanel({ userName }: { userName: string }) {
+  return (
+    <div className="mt-10 border-t border-border-soft bg-background px-4 py-6 md:hidden">
+      <p className="px-1 pb-3 text-xs uppercase tracking-[0.12em] text-ink-subtle">
+        Más del panel
+      </p>
+
+      <ul className="grid grid-cols-2 gap-1.5">
+        {SECCIONES_DEL_PIE.map((section) => {
+          const Icon = section.icon
+          return (
+            <li key={section.href}>
+              <Link
+                href={section.href}
+                className="at-tap flex min-h-[46px] items-center gap-2.5 rounded-lg border border-border-soft px-3 text-sm text-ink-muted"
+              >
+                <Icon className="size-[18px] shrink-0" strokeWidth={1.8} />
+                {section.label}
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+
+      <div className="mt-4 space-y-1 border-t border-border-soft pt-4">
+        <p className="truncate px-1 pb-1 text-xs text-ink-subtle">{userName}</p>
+
+        <Link
+          href="/"
+          className="at-tap flex min-h-[46px] items-center gap-3 rounded-lg px-1 text-sm text-ink-muted"
+        >
+          <Store className="size-[18px]" strokeWidth={1.8} />
+          Ver la tienda
+        </Link>
+
+        <form action={signOut}>
+          <button
+            type="submit"
+            className="at-tap flex min-h-[46px] w-full items-center gap-3 rounded-lg px-1 text-sm text-ink-muted"
+          >
+            <LogOut className="size-[18px]" strokeWidth={1.8} />
+            Cerrar sesión
+          </button>
+        </form>
+      </div>
+    </div>
   )
 }
 

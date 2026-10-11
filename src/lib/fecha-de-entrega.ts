@@ -11,26 +11,20 @@
  *    fecha contando días corridos es prometer de más. Se cuentan días
  *    hábiles de lunes a sábado.
  *
- * 2. **Da un rango, no un día exacto.** Una pieza hecha a mano no sale el
- *    martes a las tres. El rango va del día calculado a cuatro días después,
- *    y se dice "cerca de". Prometer una fecha exacta es la forma más rápida
- *    de quedar mal con alguien que te compró con ilusión.
+ * 2. **Dice los días hábiles que se cargaron, sin inventar un margen.**
+ *    Antes le sumaba cuatro días "por las dudas", y una pieza cargada con 5
+ *    días terminaba anunciada como "5 a 11 días". Ese margen no lo pidió
+ *    nadie: el plazo que carga Silvana ES el plazo, y si ella necesita aire
+ *    lo pone en el número. Un rango inventado encima de su número le saca el
+ *    control de lo que promete.
  *
  * 3. **Se calcula en el servidor y se muestra tal cual.** Si se calculara en
  *    el navegador, la fecha dependería del reloj del teléfono —y además la
  *    página cacheada mostraría la fecha del día en que se generó—.
  *
- * 4. **EL CATÁLOGO Y LA FICHA DICEN LO MISMO.** Antes no: la tarjeta decía
- *    "A pedido · ~10 días" y la ficha, con los domingos salteados y el rango
- *    de cuatro días, terminaba prometiendo entre 11 y 16 días. Dos números
- *    distintos para el mismo encargo, y el segundo aparecía recién al entrar.
- *
- *    Ahora los dos salen de acá. `rangoEnDias()` da el rango en días
- *    calendario SIN mirar el reloj —por eso puede usarse en la tarjeta, que es
- *    un componente de cliente, sin que el servidor y el navegador calculen
- *    distinto al cruzar la medianoche—, y `calcularEntrega()` pone las fechas
- *    en la ficha. Las fechas caen siempre dentro del rango: hay una prueba que
- *    lo fija.
+ * 4. **EL CATÁLOGO Y LA FICHA DICEN LO MISMO.** La tarjeta anuncia los días
+ *    hábiles y la ficha los convierte en una fecha. Son el mismo número dicho
+ *    de dos maneras, no dos promesas distintas.
  */
 
 const DIAS = [
@@ -58,12 +52,6 @@ const MESES = [
   'diciembre',
 ] as const
 
-/**
- * Los días que se le suman al final para dar un rango y no una fecha exacta.
- * Una pieza hecha a mano no sale el martes a las tres.
- */
-const MARGEN_DE_DIAS = 4
-
 /** Suma días de taller: salta los domingos. */
 function sumarDiasDeTaller(desde: Date, dias: number): Date {
   const fecha = new Date(desde)
@@ -83,95 +71,40 @@ function enPalabras(fecha: Date): string {
 
 export type Entrega = {
   /** "lunes 27 de octubre" */
-  desde: string
-  /** "viernes 31 de octubre" */
-  hasta: string
-  /** Lo que se muestra: "entre el lunes 27 y el viernes 31 de octubre" */
+  fecha: string
+  /** Lo que se muestra: "alrededor del lunes 27 de octubre" */
   texto: string
-  /** Días de taller que se usaron para el cálculo. */
+  /** Días hábiles que se usaron para el cálculo. */
   dias: number
 }
 
 export function calcularEntrega(diasDeTaller: number, hoy = new Date()): Entrega | null {
   if (!Number.isFinite(diasDeTaller) || diasDeTaller <= 0) return null
 
-  const desde = sumarDiasDeTaller(hoy, diasDeTaller)
-  const hasta = sumarDiasDeTaller(desde, MARGEN_DE_DIAS)
-
-  const mismoMes = desde.getMonth() === hasta.getMonth()
+  const dia = sumarDiasDeTaller(hoy, diasDeTaller)
 
   return {
-    desde: enPalabras(desde),
-    hasta: enPalabras(hasta),
-    // Si los dos caen en el mismo mes, no hace falta repetirlo.
-    texto: mismoMes
-      ? `entre el ${DIAS[desde.getDay()]} ${desde.getDate()} y el ${enPalabras(hasta)}`
-      : `entre el ${enPalabras(desde)} y el ${enPalabras(hasta)}`,
+    fecha: enPalabras(dia),
+    // "alrededor del" y no "el": es una pieza hecha a mano, no un envío de
+    // depósito. La holgura va en la palabra, no en un rango que estira el
+    // número que cargó Silvana.
+    texto: `alrededor del ${enPalabras(dia)}`,
     dias: diasDeTaller,
   }
 }
 
 /**
- * Cuántos días calendario puede tardar, sin mirar el reloj.
+ * La etiqueta corta del catálogo: "5 días hábiles".
  *
- * Saltear los domingos hace que el plazo en días corridos dependa del día en
- * que se encarga, pero esa variación es de UN día nada más —medido sobre los
- * siete días de arranque posibles—. Así que el rango se puede dar como función
- * pura del plazo, y eso es lo que permite mostrarlo en la tarjeta del catálogo
- * sin que el servidor y el navegador calculen distinto.
- *
- * El mínimo es el primer día posible; el máximo, el último día del rango de
- * entrega. Entre esos dos números cae siempre la fecha que muestra la ficha.
+ * Es el MISMO número que después la ficha convierte en fecha. Antes acá salía
+ * un rango —"5 a 11 días"— porque el cálculo le sumaba cuatro días de margen
+ * y la variación del día de arranque. Nadie pidió ese margen, y estiraba a más
+ * del doble un plazo que Silvana había puesto en cinco.
  */
-export function rangoEnDias(diasDeTaller: number): { min: number; max: number } | null {
-  if (!Number.isFinite(diasDeTaller) || diasDeTaller <= 0) return null
+export function etiquetaDeEntrega(diasHabiles: number | null | undefined): string | null {
+  if (diasHabiles == null) return null
+  if (!Number.isFinite(diasHabiles) || diasHabiles <= 0) return null
 
-  const dias = Math.round(diasDeTaller)
-
-  // Se prueban los SIETE días de arranque posibles con la misma función que
-  // usa la ficha, y se toman el mínimo y el máximo.
-  //
-  // Primero intenté una fórmula cerrada —"cada seis días se saltea un
-  // domingo"— y daba mal: los domingos salteados dependen del total (plazo más
-  // margen), no del plazo solo, así que un encargo de 3 días arrancado un
-  // sábado se iba un día por encima del tope anunciado. Lo descubrió la prueba
-  // que compara los dos números.
-  //
-  // Contar con la función de verdad no puede desviarse: si cambia la regla de
-  // los domingos o el margen, el rango la sigue sola.
-  //
-  // La fecha de referencia es fija y arbitraria —el 4/10/2026 fue domingo—, así
-  // que esto NO mira el reloj y se puede usar en un componente de cliente.
-  let min = Infinity
-  let max = 0
-
-  for (let diaDeArranque = 0; diaDeArranque < 7; diaDeArranque += 1) {
-    const arranque = new Date(2026, 9, 4 + diaDeArranque)
-    const inicio = sumarDiasDeTaller(arranque, dias)
-    const fin = sumarDiasDeTaller(inicio, MARGEN_DE_DIAS)
-
-    const enDias = (fecha: Date) =>
-      Math.round((fecha.getTime() - arranque.getTime()) / 86_400_000)
-
-    min = Math.min(min, enDias(inicio))
-    max = Math.max(max, enDias(fin))
-  }
-
-  return { min, max }
-}
-
-/**
- * La etiqueta corta del catálogo: "11 a 17 días".
- *
- * Es el MISMO plazo que después detalla la ficha con fechas. Si acá dijera
- * "~10 días" —como decía antes— la ficha lo contradiría en la pantalla
- * siguiente, que es exactamente el tipo de detalle que hace dudar del resto.
- */
-export function etiquetaDeEntrega(diasDeTaller: number | null | undefined): string | null {
-  if (diasDeTaller == null) return null
-
-  const rango = rangoEnDias(diasDeTaller)
-  if (!rango) return null
-
-  return `${rango.min} a ${rango.max} días`
+  const dias = Math.round(diasHabiles)
+  return dias === 1 ? '1 día hábil' : `${dias} días hábiles`
 }

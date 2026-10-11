@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { BloqueDeLaFicha } from '@/components/tienda/bloques-de-la-ficha'
 import { FichaDeMedidas } from '@/components/tienda/ficha-de-medidas'
 import { GuiaDePrecios } from '@/components/tienda/guia-de-precios'
 import { ProductGrid } from '@/components/tienda/product-card'
@@ -145,47 +146,82 @@ export default async function ProductoPage({ params }: PageProps<'/producto/[slu
           whatsappNumber={settings.whatsapp_number}
         />
 
-        {description && (
-          <section className="mx-auto mt-16 max-w-3xl">
-            <h2 className="mb-4 font-display text-2xl">Sobre esta pieza</h2>
-            {/* Texto plano, saltos de línea respetados. Nunca HTML crudo. */}
-            <div className="whitespace-pre-line text-[1.0625rem] leading-relaxed text-ink-muted">
-              {description}
-            </div>
-          </section>
-        )}
+        {/* TODO LO DEMÁS, PLEGADO.
+            Antes la descripción, la lista de precios, las medidas, las
+            preguntas y las reseñas venían abiertas una abajo de la otra:
+            media docena de pantallas entre el botón de comprar y las piezas
+            relacionadas. Quien ya decidió scrollea todo eso sin leer nada.
 
-        {/* La lista de precios, para COMPARAR. El selector de arriba sirve
-            para comprar; esta tabla sirve para decidir. Sale de las mismas
-            variantes, asi que no hay dos listas que mantener. */}
-        <GuiaDePrecios
-          attributes={attributes}
-          variants={variants}
-          combinations={combinations}
-        />
+            La descripción arranca abierta porque es lo que se lee siempre;
+            el resto se abre si hace falta. El contenido está en el HTML
+            aunque esté plegado: el buscador lo indexa igual. */}
+        <div className="mx-auto mt-10 max-w-3xl">
+          {description && (
+            <BloqueDeLaFicha titulo="Sobre esta pieza" abierto>
+              {/* Texto plano, saltos de línea respetados. Nunca HTML crudo. */}
+              <div className="whitespace-pre-line leading-relaxed text-ink-muted">
+                {description}
+              </div>
+            </BloqueDeLaFicha>
+          )}
 
-        {/* Las medidas, escritas y debajo de la descripcion: lo que alguien
-            vuelve a mirar cuando ya decidio que le gusta y ahora compara con
-            su propia cama. */}
-        <FichaDeMedidas attributes={attributes} />
+          {/* La lista de precios, para COMPARAR. El selector de arriba sirve
+              para comprar; esta tabla sirve para decidir. */}
+          {Object.keys(combinations).length > 1 && (
+            <BloqueDeLaFicha
+              titulo="Precios por medida"
+              resumen={`${Object.keys(combinations).length} combinaciones`}
+            >
+              <GuiaDePrecios
+                attributes={attributes}
+                variants={variants}
+                combinations={combinations}
+                sinEncabezado
+              />
+            </BloqueDeLaFicha>
+          )}
 
-        <ThreadDivider className="my-16" />
+          {attributes.length > 0 && (
+            <BloqueDeLaFicha titulo="Medidas">
+              <FichaDeMedidas attributes={attributes} sinEncabezado />
+            </BloqueDeLaFicha>
+          )}
 
-        <div className="mx-auto max-w-3xl space-y-16">
-          <ProductQuestions
-            productId={product.id}
-            productName={product.name}
-            questions={questions}
-            whatsappNumber={settings.whatsapp_number}
-          />
+          <BloqueDeLaFicha
+            id="preguntas"
+            titulo="Preguntas"
+            resumen={
+              questions.length > 0
+                ? `${questions.length} respondidas`
+                : 'Preguntá sin cuenta'
+            }
+            abierto={questions.length > 0}
+          >
+            <ProductQuestions
+              productId={product.id}
+              productName={product.name}
+              questions={questions}
+              whatsappNumber={settings.whatsapp_number}
+              sinEncabezado
+            />
+          </BloqueDeLaFicha>
 
-          <div id="resenas" className="scroll-mt-24">
+          <BloqueDeLaFicha
+            id="resenas"
+            titulo="Reseñas"
+            resumen={
+              product.rating_count > 0
+                ? `${product.rating_count} · ${product.rating_avg.toFixed(1)} de 5`
+                : 'Todavía ninguna'
+            }
+          >
             <ProductReviews
               reviews={reviews}
               ratingAvg={product.rating_avg}
               ratingCount={product.rating_count}
+              sinEncabezado
             />
-          </div>
+          </BloqueDeLaFicha>
         </div>
 
         {related.length > 0 && (

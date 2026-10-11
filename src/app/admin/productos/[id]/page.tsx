@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { formatearParaEditar } from '@/lib/parsear-precio'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { AdminHeader } from '@/components/admin/admin-nav'
@@ -62,7 +63,12 @@ export default async function EditarProductoPage({
         .map((combo) => [combo.attribute_id, combo.value_id]),
     ),
     sku: variant.sku ?? '',
-    price_override: variant.price_override?.toString() ?? '',
+    // Formateado para editar: "215000" crudo en el campo invita a que
+    // alguien lo "arregle" escribiendo 215.000, que es justo lo que antes
+    // guardaba 215.
+    price_override: formatearParaEditar(
+      variant.price_override != null ? Number(variant.price_override) : null,
+    ),
     is_active: variant.is_active,
     stock: variant.stock,
     reserved: variant.reserved,

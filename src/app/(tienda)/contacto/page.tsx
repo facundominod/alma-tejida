@@ -104,7 +104,7 @@ export default async function ContactoPage() {
           <div className="text-center">
             <Overline>Cómo trabajamos</Overline>
             <h2 className="mt-1 font-display text-2xl text-linen-900">
-              De la idea a la pared
+              De la idea al producto
             </h2>
           </div>
 

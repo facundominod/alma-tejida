@@ -8,6 +8,7 @@ import * as React from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Overline } from '@/components/ui/primitives'
 import { storageUrl } from '@/lib/images'
+import { CifraDeDescuento } from '@/components/tienda/cifra-de-descuento'
 import { CuentaRegresiva } from '@/components/tienda/cuenta-regresiva'
 import { cn } from '@/lib/utils'
 import type { Promotion } from '@/types/database'
@@ -139,9 +140,13 @@ function PromoSlide({
   const image = storageUrl(promo.image_path)
   const href = promo.cta_href ?? '/ofertas'
 
-  // El brillo que recorre la cinta se reserva para las promociones con fecha
-  // de fin. Si lo llevaran todas, dejaría de significar "esto se termina".
+  // El brillo se reserva para las promociones con fecha de corte. Si lo
+  // llevaran todas, dejaria de significar "esto se termina".
   const fugaz = promo.ends_at != null
+
+  // Dos tonos alternados: tres promociones sin foto seguidas, todas del mismo
+  // color, se leen como una sola repetida.
+  const kraft = index % 2 === 0
 
   return (
     <div
@@ -153,68 +158,101 @@ function PromoSlide({
       <Link
         href={href}
         className={cn(
-          'group relative flex min-h-[160px] items-center overflow-hidden rounded-xl bg-clay-100 md:min-h-[220px]',
+          'group relative block overflow-hidden rounded-xl',
+          image ? 'bg-clay-100' : kraft ? 'bg-clay-100' : 'bg-sage-100',
           fugaz && !image && 'at-cinta-fugaz',
         )}
       >
         {image && (
-          <Image
-            src={image}
-            alt=""
-            fill
-            sizes="(max-width: 1280px) 100vw, 1280px"
-            className="object-cover transition-transform duration-500 ease-[var(--ease-out-alma)] group-hover:scale-[1.02] motion-reduce:group-hover:scale-100"
-          />
+          <>
+            <Image
+              src={image}
+              alt=""
+              fill
+              sizes="(max-width: 1280px) 100vw, 1280px"
+              className="object-cover transition-transform duration-500 ease-[var(--ease-out-alma)] group-hover:scale-[1.02] motion-reduce:group-hover:scale-100"
+            />
+            {/* Degradado: garantiza contraste del texto sobre cualquier foto */}
+            <div className="absolute inset-0 bg-gradient-to-r from-linen-900/80 via-linen-900/45 to-transparent" />
+          </>
         )}
 
-        {/* Degradado: garantiza contraste del texto sobre cualquier foto */}
-        <div
-          className={cn(
-            'relative z-10 flex w-full flex-col gap-2 px-6 py-8 md:max-w-lg md:px-10 md:py-12',
-            image && 'bg-gradient-to-r from-linen-900/75 via-linen-900/45 to-transparent',
-          )}
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <Overline className={image ? 'text-white/75' : 'text-clay-600'}>
-              {promo.discount_type === 'percent'
-                ? `${Number(promo.discount_value)}% de descuento`
-                : 'Promoción'}
-            </Overline>
-            {/* El reloj sólo aparece si la promoción TIENE fecha de fin. Una
-                promoción abierta con un reloj al lado sería una urgencia
-                inventada, y eso se nota. */}
-            <CuentaRegresiva
-              termina={promo.ends_at}
-              className={image ? 'bg-white/20 text-white' : undefined}
+        {/* Sin foto, la textura en capas. Nunca un color plano: es lo que
+            hacia que una promocion sin foto pareciera un aviso a medio cargar. */}
+        {!image && (
+          <>
+            <div
+              className={cn(
+                'absolute inset-0',
+                kraft
+                  ? 'bg-[radial-gradient(120%_90%_at_15%_0%,var(--color-clay-100),var(--color-clay-200)_55%,var(--color-clay-300))]'
+                  : 'bg-[radial-gradient(120%_90%_at_15%_0%,var(--color-sage-100),var(--color-linen-200)_55%,var(--color-linen-300))]',
+              )}
             />
-          </div>
-          <p
-            className={cn(
-              'font-display text-2xl leading-tight md:text-3xl',
-              image ? 'text-white' : 'text-clay-800',
-            )}
-          >
-            {promo.title}
-          </p>
-          {promo.description && (
+            <div className="at-weave absolute inset-0 opacity-70" />
+          </>
+        )}
+
+        {/* La reja: texto a la izquierda, cifra a la derecha. En celular la
+            cifra va primero, porque es el gancho. */}
+        <div className="relative z-10 grid min-h-[230px] gap-4 px-6 py-8 md:min-h-[280px] md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-8 md:px-10 md:py-12">
+          <div className="order-last flex flex-col gap-2 md:order-first">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* El overline ya no repite el descuento: eso lo grita la cifra.
+                  Acá va la vigencia, que es el dato que falta. */}
+              <Overline className={image ? 'text-white/75' : 'text-clay-600'}>
+                {promo.ends_at ? 'Por tiempo limitado' : 'Oferta vigente'}
+              </Overline>
+              <CuentaRegresiva
+                termina={promo.ends_at}
+                className={image ? 'bg-white/20 text-white' : undefined}
+              />
+            </div>
+
             <p
               className={cn(
-                'max-w-sm text-sm md:text-base',
-                image ? 'text-white/85' : 'text-clay-700',
+                'font-display text-2xl leading-tight md:text-3xl',
+                image ? 'text-white' : 'text-clay-800',
               )}
             >
-              {promo.description}
+              {promo.title}
             </p>
-          )}
-          <span
+
+            {promo.description && (
+              <p
+                className={cn(
+                  'max-w-sm text-sm md:text-base',
+                  image ? 'text-white/85' : 'text-clay-700',
+                )}
+              >
+                {promo.description}
+              </p>
+            )}
+
+            <span
+              className={cn(
+                'mt-1 inline-flex w-fit items-center gap-1.5 text-sm font-medium',
+                image ? 'text-white' : 'text-clay-700',
+              )}
+            >
+              {promo.cta_label ?? 'Ver piezas'}
+              <ChevronRight className="size-4 transition-transform duration-[var(--at-dur-fast)] group-hover:translate-x-0.5" />
+            </span>
+          </div>
+
+          {/* La cifra. Con foto va mas chica y sobria: ahi la foto es la que
+              tiene que mirarse, y dos protagonistas no son ninguno. */}
+          <div
             className={cn(
-              'mt-1 inline-flex w-fit items-center gap-1.5 text-sm font-medium',
-              image ? 'text-white' : 'text-clay-700',
+              'order-first md:order-last',
+              image ? 'hidden md:grid md:justify-end' : '',
             )}
           >
-            {promo.cta_label ?? 'Ver piezas'}
-            <ChevronRight className="size-4 transition-transform duration-[var(--at-dur-fast)] group-hover:translate-x-0.5" />
-          </span>
+            <CifraDeDescuento
+              promo={promo}
+              className={image ? 'text-white/90' : kraft ? 'text-clay-700' : 'text-sage-600'}
+            />
+          </div>
         </div>
       </Link>
     </div>

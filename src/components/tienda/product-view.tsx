@@ -54,7 +54,7 @@ export function ProductView({
   }, [product.id, product.category_id])
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-14">
+    <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
       <div className="lg:sticky lg:top-24 lg:self-start">
         <ProductGallery
           media={media}
@@ -64,8 +64,8 @@ export function ProductView({
         />
       </div>
 
-      <div className="space-y-6">
-        <div className="space-y-3">
+      <div className="space-y-5">
+        <div className="space-y-2.5">
           {/* Migas: orientan y ayudan al buscador a entender la estructura */}
           {product.category_name && product.category_slug && (
             <nav aria-label="Ruta" className="flex items-center gap-1 text-sm">
@@ -82,7 +82,15 @@ export function ProductView({
             </nav>
           )}
 
-          <div className="flex flex-wrap gap-2">
+          {/* TODO LO QUE HAY QUE SABER, EN UNA FILA DE FICHAS.
+              Antes eran unas etiquetas arriba y, debajo, un recuadro entero
+              dedicado a la fecha de entrega. Dos bloques para datos de una
+              línea cada uno, y la ficha empezaba a scrollear antes del precio.
+
+              La fecha completa sigue estando: va en la ficha del plazo, en
+              chico, en la misma línea. Nadie necesita un recuadro para leer
+              una fecha. */}
+          <div className="flex flex-wrap items-center gap-1.5">
             {product.availability_mode === 'unique_piece' && (
               <Badge tone="primary">Pieza única</Badge>
             )}
@@ -93,24 +101,19 @@ export function ProductView({
             {(product.discount_percent ?? 0) > 0 && (
               <Badge tone="sale">{product.discount_percent}% OFF</Badge>
             )}
-          </div>
-
-          {/* La fecha, no el plazo.
-              "~15 dias" obliga a abrir el calendario y contar. Esto responde
-              la pregunta que la persona se esta haciendo de verdad, que es si
-              llega para el cumpleanios. */}
-          {entrega && (
-            <p className="mt-3 flex items-start gap-2 rounded-lg bg-surface-muted px-3 py-2.5 text-sm text-ink-muted">
-              <CalendarDays className="mt-0.5 size-4 shrink-0 text-clay-500" />
-              <span>
-                Si lo encargás hoy, lo tenés{' '}
-                <strong className="font-medium text-ink">{entrega.texto}</strong>.{' '}
-                <span className="text-ink-subtle">
-                  Son {entrega.dias} días de taller, sin contar domingos.
+            {product.promotion_title && (
+              <Badge tone="sale">{product.promotion_title}</Badge>
+            )}
+            {entrega && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-muted px-2.5 py-1 text-xs text-ink-muted">
+                <CalendarDays className="size-3.5 shrink-0 text-clay-500" />
+                <span>
+                  {entrega.dias} {entrega.dias === 1 ? 'día hábil' : 'días hábiles'}
+                  <span className="text-ink-subtle"> · {entrega.texto}</span>
                 </span>
               </span>
-            </p>
-          )}
+            )}
+          </div>
 
           <h1 className="text-display-md">{product.name}</h1>
 

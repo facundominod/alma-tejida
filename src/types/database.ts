@@ -369,13 +369,37 @@ export type Question = {
   product_id: string
   user_id: string | null
   author_name: string | null
+  /** WhatsApp o correo de quien pregunto sin cuenta (migracion 0023). */
+  author_contact: string | null
   body: string
   answer: string | null
   answered_at: string | null
   answered_by: string | null
   status: QuestionStatus
+  /** Si la RESPUESTA se ve en la ficha. Se decide aparte de publicar la pregunta. */
+  answer_is_public: boolean
   created_at: string
   updated_at: string
+}
+
+/**
+ * Una pregunta tal como se ve en la ficha (vista v_public_questions).
+ *
+ * No tiene `user_id` ni `author_contact`: son datos de quien pregunto y no
+ * salen de la tabla. Y `answer` llega en nulo cuando la respuesta se dejo en
+ * privado, aunque la pregunta este publicada.
+ */
+export type PublicQuestion = {
+  id: string
+  product_id: string
+  author_name: string | null
+  body: string
+  answer: string | null
+  answered_at: string | null
+  /** Si ya fue contestada, aunque la respuesta no se vea. */
+  fue_respondida: boolean
+  answer_is_public: boolean
+  created_at: string
 }
 
 export type Review = {
@@ -694,6 +718,7 @@ export type Database = {
       v_catalog_products: View<CatalogProduct>
       v_product_variants: View<VariantView>
       v_active_promotions: View<Promotion>
+      v_public_questions: View<PublicQuestion>
     }
     Functions: {
       effective_price: {
@@ -820,6 +845,17 @@ export type Database = {
           created: number
           deactivated: number
         }
+      }
+      /** Deja una pregunta sin necesidad de cuenta (migracion 0023). */
+      preguntar: {
+        Args: {
+          p_product_id: string
+          p_body: string
+          p_author_name?: string | null
+          p_author_contact?: string | null
+          p_visitante?: string | null
+        }
+        Returns: { ok: boolean }
       }
       /** Escribe una tanda de precios ya calculados, todo o nada (migracion 0021). */
       admin_aplicar_precios: {

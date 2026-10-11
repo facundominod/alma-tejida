@@ -9,7 +9,7 @@ import { PrecioConPago } from '@/components/tienda/precio-con-pago'
 import { blurProps, IMAGE_SIZES, storageUrl } from '@/lib/images'
 import { availabilityView } from '@/lib/labels'
 import { useRotacion } from '@/lib/ui/use-rotacion'
-import { cn, isNew } from '@/lib/utils'
+import { cn, formatPrice, isNew } from '@/lib/utils'
 import type { CatalogProduct, ProductThumb } from '@/types/database'
 
 /**
@@ -24,6 +24,7 @@ export function ProductCard({
   sizes = IMAGE_SIZES.card,
   /** Desfase del giro de fotos, para que la grilla no cambie toda junta. */
   turno = 0,
+  modo,
   className,
 }: {
   product: CatalogProduct
@@ -31,6 +32,12 @@ export function ProductCard({
   priority?: boolean
   sizes?: string
   turno?: number
+  /**
+   * En /ofertas la tarjeta dice cuánta PLATA se ahorra, debajo del precio.
+   * "20 %" obliga a hacer una cuenta para saber si conviene; "$43.000" ya es
+   * la respuesta.
+   */
+  modo?: 'oferta'
   className?: string
 }) {
   const availability = availabilityView({
@@ -42,6 +49,7 @@ export function ProductCard({
   })
 
   const discount = product.discount_percent ?? 0
+  const ahorro = Math.round(Number(product.discount_amount ?? 0))
   const fresh = isNew(product.published_at)
 
   // "3 colores · 2 medidas" — la única mención a variantes en la tarjeta
@@ -107,6 +115,16 @@ export function ProductCard({
               cuotas={product.card_installments}
               desde={product.has_price_range}
             />
+            {/* Entra después del tachado: el ojo sigue el trazo sobre el
+                precio viejo y aterriza en cuánto se ahorra. */}
+            {modo === 'oferta' && ahorro > 0 && (
+              <p
+                className="at-pop text-[0.8125rem] font-medium leading-snug text-sale"
+                style={{ animationDelay: '420ms' }}
+              >
+                Ahorrás {formatPrice(ahorro)}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-0.5 text-xs">
@@ -147,10 +165,13 @@ export function ProductCard({
 export function ProductGrid({
   products,
   priorityCount = 4,
+  modo,
   className,
 }: {
   products: CatalogProduct[]
   priorityCount?: number
+  /** "oferta" agrega a cada tarjeta cuánta PLATA se ahorra. Ver ProductCard. */
+  modo?: 'oferta'
   className?: string
 }) {
   return (
@@ -177,6 +198,7 @@ export function ProductGrid({
             product={product}
             priority={index < priorityCount}
             turno={index}
+            modo={modo}
           />
         </div>
       ))}

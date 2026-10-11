@@ -195,7 +195,10 @@ export async function getProofUrl(
 const answerSchema = z.object({
   questionId: z.string().uuid(),
   answer: z.string().trim().min(1, 'Escribí una respuesta.').max(2000),
-  publish: z.boolean(),
+  /** Si la PREGUNTA se ve en la ficha. */
+  publicarPregunta: z.boolean(),
+  /** Si la RESPUESTA se ve en la ficha. Es una decisión aparte. */
+  publicarRespuesta: z.boolean(),
 })
 
 export async function answerQuestion(input: unknown): Promise<AdminResult> {
@@ -208,14 +211,23 @@ export async function answerQuestion(input: unknown): Promise<AdminResult> {
 
   const supabase = await createClient()
 
-  // Publicar es una decisión aparte de responder: hay respuestas que solo le
-  // sirven a quien pregunto (punto 76).
+  // TRES decisiones, no una: responder, publicar la pregunta y publicar la
+  // respuesta. Antes eran una sola casilla, y había que elegir entre dejar
+  // todo privado o publicar también una respuesta con un precio especial o una
+  // fecha concreta que sólo le servía a quien preguntó.
+  //
+  // Publicar la respuesta sin publicar la pregunta no tiene sentido —la
+  // respuesta se lee colgada de su pregunta—, así que esa combinación se
+  // corrige acá en vez de rechazarse: lo que importa es que no se filtre nada.
+  const publicarRespuesta = parsed.data.publicarRespuesta && parsed.data.publicarPregunta
+
   const { data, error } = await supabase
     .from('questions')
     .update({
       answer: parsed.data.answer,
       answered_at: new Date().toISOString(),
-      status: parsed.data.publish ? 'published' : 'answered',
+      answer_is_public: publicarRespuesta,
+      status: parsed.data.publicarPregunta ? 'published' : 'answered',
     })
     .eq('id', parsed.data.questionId)
     .select('product_id')

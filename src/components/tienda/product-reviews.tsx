@@ -17,10 +17,16 @@ export function ProductReviews({
   reviews,
   ratingAvg,
   ratingCount,
+  sinEncabezado = false,
 }: {
   reviews: Array<Review & { author: string }>
   ratingAvg: number
   ratingCount: number
+  /**
+   * El título lo pone el bloque plegable que la envuelve. Sin esto, la ficha
+   * mostraría el mismo título dos veces: una en la solapa y otra adentro.
+   */
+  sinEncabezado?: boolean
 }) {
   const approved = reviews.filter((r) => r.status === 'approved')
   const mine = reviews.filter((r) => r.status === 'pending')
@@ -33,10 +39,12 @@ export function ProductReviews({
   }))
 
   return (
-    <section aria-labelledby="titulo-resenas">
-      <h2 id="titulo-resenas" className="mb-5 font-display text-2xl">
-        Reseñas
-      </h2>
+    <section aria-label="Reseñas">
+      {!sinEncabezado && (
+        <h2 id="titulo-resenas" className="mb-5 font-display text-2xl">
+          Reseñas
+        </h2>
+      )}
 
       {ratingCount > 0 && (
         <div className="mb-8 flex flex-col gap-6 rounded-xl border border-border-soft bg-surface p-5 sm:flex-row sm:items-center">

@@ -6,6 +6,8 @@ import { Check, Eye } from 'lucide-react'
 import { Ovillo } from '@/components/ui/ovillo'
 import { Button } from '@/components/ui/button'
 import { Checkbox, Field, FormError, Input, Select, Textarea } from '@/components/ui/field'
+import { CampoDePrecio } from '@/components/admin/campo-de-precio'
+import { formatearParaEditar, parsearPrecio } from '@/lib/parsear-precio'
 import { Overline } from '@/components/ui/primitives'
 import { saveProduct } from '@/lib/actions/admin/catalog'
 import { STOCK_DISPLAY_LABEL } from '@/lib/labels'
@@ -55,8 +57,15 @@ export function ProductForm({
 
   // Precio y costo se llevan en estado para poder mostrar el margen mientras
   // se escribe. El resto del formulario va sin control: no hace falta.
-  const [precio, setPrecio] = React.useState(String(product?.base_price ?? ''))
-  const [costo, setCosto] = React.useState(String(product?.base_cost ?? ''))
+  const [precio, setPrecio] = React.useState<number | null>(
+    product?.base_price != null ? Number(product.base_price) : null,
+  )
+  const [costo, setCosto] = React.useState<number | null>(
+    product?.base_cost != null ? Number(product.base_cost) : null,
+  )
+  const [precioPromo, setPrecioPromo] = React.useState<number | null>(
+    product?.sale_price != null ? Number(product.sale_price) : null,
+  )
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -75,9 +84,9 @@ export function ProductForm({
       categoryId: String(form.get('categoryId') ?? '') || null,
       shortDescription: String(form.get('shortDescription') ?? ''),
       description: String(form.get('description') ?? ''),
-      basePrice: number('basePrice') ?? 0,
-      baseCost: number('baseCost'),
-      salePrice: hasSale ? number('salePrice') : null,
+      basePrice: precio ?? 0,
+      baseCost: costo,
+      salePrice: hasSale ? precioPromo : null,
       // Nulo a propósito cuando no tiene uno propio: así hereda el de la
       // tienda para siempre, en vez de quedar congelado en el valor de hoy.
       cashDiscountPercent: descuentoPropio ? (Number(descuento) || 0) : null,
@@ -177,16 +186,12 @@ export function ProductForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Precio normal" required>
             {(props) => (
-              <Input
+              <CampoDePrecio
                 {...props}
                 name="basePrice"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                step={1}
-                value={precio}
-                onChange={(e) => setPrecio(e.target.value)}
-                className="tabular"
+                required
+                valor={precio}
+                alCambiar={setPrecio}
               />
             )}
           </Field>
@@ -196,16 +201,11 @@ export function ProductForm({
             hint="Opcional. No sale nunca a la tienda."
           >
             {(props) => (
-              <Input
+              <CampoDePrecio
                 {...props}
                 name="baseCost"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                step={1}
-                value={costo}
-                onChange={(e) => setCosto(e.target.value)}
-                className="tabular"
+                valor={costo}
+                alCambiar={setCosto}
               />
             )}
           </Field>
@@ -235,14 +235,12 @@ export function ProductForm({
           <div className="grid gap-4 rounded-lg bg-surface-muted/60 p-3.5 sm:grid-cols-3">
             <Field label="Precio promocional" required>
               {(props) => (
-                <Input
+                <CampoDePrecio
                   {...props}
                   name="salePrice"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  defaultValue={product?.sale_price ?? ''}
-                  className="tabular"
+                  required
+                  valor={precioPromo}
+                  alCambiar={setPrecioPromo}
                 />
               )}
             </Field>
@@ -475,7 +473,7 @@ function PagoDeLaPieza({
   porDefecto,
   cuotas,
 }: {
-  precio: string
+  precio: number | null
   propio: boolean
   alCambiarPropio: (v: boolean) => void
   descuento: string
@@ -494,7 +492,12 @@ function PagoDeLaPieza({
 
   function escribirPrecio(valor: string) {
     setBorrador(valor)
-    const pct = porcentajeDesdePrecio({ precioTarjeta: precio, precioContado: valor })
+    // El precio escrito pasa por el mismo lector que el resto: acá también
+    // alguien va a escribir "120.000".
+    const pct = porcentajeDesdePrecio({
+      precioTarjeta: precio,
+      precioContado: parsearPrecio(valor),
+    })
     if (pct != null) alCambiarDescuento(String(pct))
   }
 
@@ -540,14 +543,13 @@ function PagoDeLaPieza({
             {(props) => (
               <Input
                 {...props}
-                type="number"
-                inputMode="numeric"
-                min={0}
-                step={100}
-                value={borrador ?? (p.contado || '')}
+                type="text"
+                inputMode="decimal"
+                value={borrador ?? (p.contado ? formatearParaEditar(p.contado) : '')}
                 onChange={(e) => escribirPrecio(e.target.value)}
                 onBlur={() => setBorrador(null)}
                 className="tabular"
+                placeholder="120.000"
               />
             )}
           </Field>
@@ -588,11 +590,17 @@ function PagoDeLaPieza({
   )
 }
 
-function MargenEnVivo({ precio, costo }: { precio: string; costo: string }) {
-  const p = Number(precio)
-  const c = Number(costo)
+function MargenEnVivo({
+  precio,
+  costo,
+}: {
+  precio: number | null
+  costo: number | null
+}) {
+  const p = precio ?? 0
+  const c = costo ?? 0
 
-  if (!Number.isFinite(p) || !Number.isFinite(c) || p <= 0 || c <= 0) return null
+  if (p <= 0 || c <= 0) return null
 
   const ganancia = p - c
   const margen = (ganancia / p) * 100
