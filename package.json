@@ -19,6 +19,7 @@
     "lint": "eslint",
     "measure": "node scripts/medir-bundle.mjs",
     "pretest:e2e": "next build",
+    "respaldos": "node scripts/cargar-respaldos.mjs",
     "seed": "tsx supabase/seed/seed.ts",
     "seed:clean": "tsx supabase/seed/seed.ts clean",
     "sql:armar": "node scripts/armar-sql.mjs",

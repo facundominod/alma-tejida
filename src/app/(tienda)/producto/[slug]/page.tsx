@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { FichaDeMedidas } from '@/components/tienda/ficha-de-medidas'
+import { GuiaDePrecios } from '@/components/tienda/guia-de-precios'
 import { ProductGrid } from '@/components/tienda/product-card'
 import { ProductQuestions } from '@/components/tienda/product-questions'
 import { ProductReviews } from '@/components/tienda/product-reviews'
@@ -147,6 +148,15 @@ export default async function ProductoPage({ params }: PageProps<'/producto/[slu
             </div>
           </section>
         )}
+
+        {/* La lista de precios, para COMPARAR. El selector de arriba sirve
+            para comprar; esta tabla sirve para decidir. Sale de las mismas
+            variantes, asi que no hay dos listas que mantener. */}
+        <GuiaDePrecios
+          attributes={attributes}
+          variants={variants}
+          combinations={combinations}
+        />
 
         {/* Las medidas, escritas y debajo de la descripcion: lo que alguien
             vuelve a mirar cuando ya decidio que le gusta y ahora compara con
