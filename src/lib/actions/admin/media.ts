@@ -4,6 +4,7 @@ import 'server-only'
 
 import { revalidatePath } from 'next/cache'
 import sharp from 'sharp'
+import { conMarcaDeAgua } from '@/lib/marca-de-agua'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAdmin } from '@/lib/supabase/server'
@@ -85,6 +86,13 @@ export async function uploadProductImage(formData: FormData): Promise<MediaResul
     // fotos verticales de celular salen acostadas.
     const pipeline = () => sharp(input).rotate()
 
+    // La marca se pone DESPUES de reducir y ANTES de comprimir a webp, sobre
+    // cada tamaño por separado. Ponerla antes de reducir la dejaría
+    // ilegible en la miniatura; ponerla despues de comprimir obligaría a
+    // comprimir dos veces la misma imagen.
+    //
+    // La miniatura tambien la lleva: es la que se ve en el catalogo y la que
+    // alguien copia con el boton derecho sin entrar a la pieza.
     const [main, thumb, micro] = await Promise.all([
       pipeline()
         .resize({
@@ -93,8 +101,13 @@ export async function uploadProductImage(formData: FormData): Promise<MediaResul
           fit: 'inside',
           withoutEnlargement: true,
         })
-        .webp({ quality: IMAGE_DERIVATIVES.main.quality })
-        .toBuffer({ resolveWithObject: true }),
+        .toBuffer()
+        .then(conMarcaDeAgua)
+        .then((conMarca) =>
+          sharp(conMarca)
+            .webp({ quality: IMAGE_DERIVATIVES.main.quality })
+            .toBuffer({ resolveWithObject: true }),
+        ),
       pipeline()
         .resize({
           width: IMAGE_DERIVATIVES.thumb.maxSide,
@@ -102,8 +115,13 @@ export async function uploadProductImage(formData: FormData): Promise<MediaResul
           fit: 'inside',
           withoutEnlargement: true,
         })
-        .webp({ quality: IMAGE_DERIVATIVES.thumb.quality })
-        .toBuffer(),
+        .toBuffer()
+        .then(conMarcaDeAgua)
+        .then((conMarca) =>
+          sharp(conMarca).webp({ quality: IMAGE_DERIVATIVES.thumb.quality }).toBuffer(),
+        ),
+      // La micro son 24px de ancho: es el borron que se ve mientras carga la
+      // foto de verdad. Una marca ahi no se leeria ni ocupando todo.
       pipeline()
         .resize({ width: IMAGE_DERIVATIVES.micro.maxSide })
         .webp({ quality: IMAGE_DERIVATIVES.micro.quality })

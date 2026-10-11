@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import Image from 'next/image'
 import * as React from 'react'
 import { ChevronLeft, ChevronRight, Expand, ImageOff, Play, X } from 'lucide-react'
+import { useVentanaVisible } from '@/lib/ui/use-ventana-visible'
 import { blurProps, IMAGE_SIZES, imageAlt, storageUrl } from '@/lib/images'
 import { trackEvent } from '@/lib/analytics/track'
 import { cn } from '@/lib/utils'
@@ -330,12 +331,19 @@ function Lightbox({
     }
   }, [onClose])
 
+  const cajaVisible = useVentanaVisible()
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
+      // Con zoom, `fixed inset-0` apunta a la ventana de maquetado y el borde
+      // de arriba -con el boton de cerrar- queda afuera de lo que se ve.
+      // `cajaVisible` lo reubica sobre la ventana real. Sin zoom es null y
+      // manda el `inset-0` de siempre.
+      style={cajaVisible ?? undefined}
       className="fixed inset-0 z-50 grid place-items-center bg-linen-900/92 p-4"
       role="dialog"
       aria-modal="true"

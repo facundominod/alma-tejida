@@ -353,6 +353,55 @@
 }
 
 /* =============================================================================
+   EL SELLO, CON LA PUNTADA VIVA
+
+   QUE SE INTENTO PRIMERO Y POR QUE NO SIRVE
+   El logo trazandose al cargar: la corona dibujandose, las hojas brotando,
+   la puntada al final. Se veia precioso y estaba mal.
+
+   Toda animacion de entrada empieza con el elemento oculto. Cuando una
+   pestania esta en segundo plano el navegador CONGELA la animacion en su
+   primer fotograma, y ese fotograma dice "invisible". Resultado medido:
+   abrir la tienda en una pestania de fondo y no ver la marca. Ni sacando
+   `fill-mode` ni moviendo los retrasos adentro de los fotogramas se arregla:
+   mientras la animacion esta activa, aunque detenida en 0%, manda el 0%.
+
+   Un adorno puede no ocurrir. Un logo no puede faltar.
+
+   LO QUE SE HACE EN CAMBIO
+   El sello esta SIEMPRE entero. Lo unico que se mueve es la puntada del
+   medio: su patron de guiones se desplaza despacio, como un hilo que alguien
+   va tirando. Si la animacion se congela, queda una puntada quieta, que es
+   exactamente lo que habia antes. Nada puede faltar porque nada depende de
+   que la animacion corra.
+
+   Seis segundos por vuelta y en `linear`: lo suficientemente lento como para
+   que se note recien si uno se queda mirando, que es cuando un detalle asi
+   suma en vez de distraer.
+   ========================================================================== */
+
+@keyframes at-puntada-viva {
+  from {
+    stroke-dashoffset: 36;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.at-sello-puntada {
+  stroke-dasharray: 24 12;
+  animation: at-puntada-viva 6s linear infinite;
+}
+
+/* Al pasar el mouse por la marca, el hilo se apura un poco. Es el unico
+   lugar donde la tienda responde a algo que no es un click. */
+.at-sello:hover .at-sello-puntada,
+a:hover .at-sello-puntada {
+  animation-duration: 2.2s;
+}
+
+/* =============================================================================
    ALTO REAL DE LA VENTANA
 
    `vh` miente en los celulares. Se calcula contra la ventana MAS GRANDE
@@ -471,10 +520,13 @@
   }
 
   /* El loader de hilo pasa a ser un punto que pulsa suavemente */
+  /* Apagarlas alcanza: el estado en reposo de todas es el estado final.
+     El sello queda entero y la puntada quieta. */
   .at-loader-thread,
   .at-ovillo,
   .at-hebra,
-  .at-entrada {
+  .at-entrada,
+  .at-sello-puntada {
     animation: none !important;
   }
 }

@@ -4,6 +4,8 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import {
+  ChevronLeft,
+  ChevronRight,
   Camera,
   ImagePlus,
   Play,
@@ -17,6 +19,7 @@ import { FormError, Input } from '@/components/ui/field'
 import { Badge, Overline } from '@/components/ui/primitives'
 import {
   deleteMedia,
+  reorderMedia,
   setCoverImage,
   updateMediaAlt,
   uploadProductImage,
@@ -74,6 +77,29 @@ export function MediaManager({
   const images = media.filter((item) => item.type === 'image')
   const video = media.find((item) => item.type === 'video')
   const totalBytes = media.reduce((sum, item) => sum + (item.size_bytes ?? 0), 0)
+
+  /**
+   * Mueve una foto un lugar hacia adelante o hacia atras.
+   *
+   * Se manda la lista ENTERA, no "esta va en la posicion 3": asi el servidor
+   * no tiene que adivinar que paso con las demas y dos cambios seguidos no
+   * pueden dejar dos fotos en la misma posicion.
+   *
+   * La primera foto es la portada, asi que mover una al principio tambien
+   * cambia cual se ve en el catalogo. Es lo que uno espera.
+   */
+  async function moverFoto(desde: number, paso: -1 | 1) {
+    const hasta = desde + paso
+    if (hasta < 0 || hasta >= images.length) return
+
+    const orden = images.map((m) => m.id)
+    ;[orden[desde], orden[hasta]] = [orden[hasta], orden[desde]]
+
+    setError(null)
+    const resultado = await reorderMedia(productId, orden)
+    if (!resultado.ok) setError('No pudimos cambiar el orden.')
+    router.refresh()
+  }
 
   async function handleImages(files: FileList | null) {
     if (!files?.length) return
@@ -251,10 +277,13 @@ export function MediaManager({
         </div>
       ) : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {images.map((item) => (
+          {images.map((item, i) => (
             <MediaCard
               key={item.id}
               item={item}
+              primera={i === 0}
+              ultima={i === images.length - 1}
+              onMover={(paso) => moverFoto(i, paso)}
               onChanged={() => router.refresh()}
               onError={setError}
             />
@@ -299,10 +328,16 @@ export function MediaManager({
 
 function MediaCard({
   item,
+  primera,
+  ultima,
+  onMover,
   onChanged,
   onError,
 }: {
   item: MediaItem
+  primera: boolean
+  ultima: boolean
+  onMover: (paso: -1 | 1) => void
   onChanged: () => void
   onError: (message: string) => void
 }) {
@@ -329,7 +364,34 @@ function MediaCard({
           </Badge>
         )}
 
-        <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-linen-900/65 px-2 py-1.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+        {/* SIEMPRE visible.
+            Antes era `opacity-0 group-hover:opacity-100`: en un celular no
+            hay hover, asi que estos botones no existian. Desde el telefono no
+            se podia ni borrar una foto ni cambiar la portada, y el panel esta
+            pensado para usarse desde el telefono (punto 130). */}
+        <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-linen-900/70 px-1.5 py-1.5">
+          {/* Mover: flechas y no arrastrar. Arrastrar en una pantalla tactil
+              pelea con el scroll de la pagina y falla justo cuando la lista
+              es larga, que es cuando hace falta ordenar. */}
+          <button
+            type="button"
+            disabled={busy || primera}
+            onClick={() => onMover(-1)}
+            className="grid size-7 shrink-0 place-items-center rounded text-white/85 transition-colors hover:text-white disabled:opacity-30"
+            aria-label="Mover antes"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <button
+            type="button"
+            disabled={busy || ultima}
+            onClick={() => onMover(1)}
+            className="grid size-7 shrink-0 place-items-center rounded text-white/85 transition-colors hover:text-white disabled:opacity-30"
+            aria-label="Mover despues"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+
           {!item.is_cover && (
             <button
               type="button"
@@ -341,9 +403,9 @@ function MediaCard({
                 if (!result.ok) onError(result.error ?? 'No pudimos cambiar la portada.')
                 else onChanged()
               }}
-              className="text-xs font-medium text-white hover:underline"
+              className="truncate px-1 text-xs font-medium text-white hover:underline"
             >
-              Usar de portada
+              Portada
             </button>
           )}
           <button

@@ -21,9 +21,14 @@ export function BrandMark({
   className?: string
 }) {
   const scale = {
-    sm: { alma: 'text-[1.1rem]', tejida: 'text-[0.6rem]', img: 34 },
-    md: { alma: 'text-[1.45rem]', tejida: 'text-[0.68rem]', img: 44 },
-    lg: { alma: 'text-[2.4rem]', tejida: 'text-[0.95rem]', img: 88 },
+    sm: { alma: 'text-[1.25rem]', tejida: 'text-[0.64rem]', sello: 'size-8', img: 'h-9' },
+    md: {
+      alma: 'text-[1.8rem]',
+      tejida: 'text-[0.78rem]',
+      sello: 'size-11',
+      img: 'h-12 md:h-14',
+    },
+    lg: { alma: 'text-[3rem]', tejida: 'text-[1.1rem]', sello: 'size-20', img: 'h-28 md:h-36' },
   }[size]
 
   if (logoUrl) {
@@ -31,37 +36,115 @@ export function BrandMark({
       <Image
         src={logoUrl}
         alt={storeName}
-        width={scale.img}
-        height={scale.img}
-        className={cn('h-auto w-auto object-contain', className)}
+        // El tamano se fija por ALTURA, no por ancho: el encabezado tiene una
+        // altura dada y el logo tiene que entrar en ella. Fijandolo por ancho,
+        // un sello un poco mas alto que ancho se desborda -paso: 65px de logo
+        // en un encabezado de 57-.
+        //
+        // `width`/`height` son solo la proporcion que next/image necesita para
+        // reservar el espacio; el tamano real lo pone la clase.
+        width={512}
+        height={512}
+        className={cn('w-auto object-contain', scale.img, className)}
         priority
       />
     )
   }
 
   return (
-    <span className={cn('inline-flex flex-col leading-none', className)}>
+    <span className={cn('inline-flex items-center gap-2.5 leading-none', className)}>
       <span className="sr-only">{storeName}</span>
-      <span
-        aria-hidden="true"
-        className={cn(
-          'font-display font-light tracking-[-0.02em] text-clay-700',
-          scale.alma,
-        )}
-        style={{ fontVariationSettings: '"SOFT" 40, "opsz" 32' }}
-      >
-        alma
-      </span>
-      <span
-        aria-hidden="true"
-        className={cn(
-          'font-semibold uppercase tracking-[0.34em] text-linen-600',
-          scale.tejida,
-        )}
-      >
-        tejida
+
+      {/* El sello, dibujandose. Es lo que le da el aire de cosa hecha a mano:
+          una corona que aparece de golpe es un logo; una que se traza parece
+          alguien dibujandola. */}
+      <SelloQueSeDibuja className={cn('shrink-0 text-clay-600', scale.sello)} />
+
+      <span className="inline-flex flex-col leading-none">
+        <span
+          aria-hidden="true"
+          className={cn(
+            'font-display font-light tracking-[-0.02em] text-clay-700',
+            scale.alma,
+          )}
+          style={{ fontVariationSettings: '"SOFT" 40, "opsz" 32' }}
+        >
+          alma
+        </span>
+        <span
+          aria-hidden="true"
+          className={cn(
+            'font-semibold uppercase tracking-[0.34em] text-linen-600',
+            scale.tejida,
+          )}
+        >
+          tejida
+        </span>
       </span>
     </span>
+  )
+}
+
+/**
+ * El sello de la marca, trazandose solo.
+ *
+ * Usa `stroke-dasharray` del largo de cada trazo y anima el desplazamiento
+ * hasta cero: el efecto es el de una linea que se dibuja. Corre UNA vez al
+ * cargar, no en bucle -un logo que se dibuja sin parar deja de ser elegante
+ * a los diez segundos y pasa a ser un reclamo-.
+ *
+ * `vector-effect` mantiene el grosor del trazo al escalar, asi se ve igual de
+ * fino en el encabezado que en la portada.
+ *
+ * Con `prefers-reduced-motion` aparece dibujado, sin trazarse (ver globals.css).
+ */
+function SelloQueSeDibuja({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 200 200"
+      fill="none"
+      className={cn('at-sello', className)}
+      aria-hidden="true"
+      stroke="currentColor"
+      vectorEffect="non-scaling-stroke"
+    >
+      <circle cx="100" cy="100" r="92" strokeWidth="3" className="at-sello-aro" />
+      <circle cx="100" cy="100" r="84" strokeWidth="1.5" className="at-sello-aro-2" />
+
+      <g className="at-sello-ramas" strokeWidth="3" strokeLinecap="round">
+        <path d="M40 150 C 60 130, 70 110, 72 86" />
+        <path d="M160 150 C 140 130, 130 110, 128 86" />
+      </g>
+
+      <g className="at-sello-hojas" strokeWidth="2.4">
+        {[0, 1, 2, 3].map((i) => (
+          <g key={i}>
+            <ellipse
+              cx={54 + i * 6}
+              cy={138 - i * 15}
+              rx="9"
+              ry="4"
+              transform={`rotate(${-38 + i * 4} ${54 + i * 6} ${138 - i * 15})`}
+            />
+            <ellipse
+              cx={146 - i * 6}
+              cy={138 - i * 15}
+              rx="9"
+              ry="4"
+              transform={`rotate(${38 - i * 4} ${146 - i * 6} ${138 - i * 15})`}
+            />
+          </g>
+        ))}
+      </g>
+
+      {/* La puntada del medio: lo ultimo en aparecer, como el remate. */}
+      <path
+        d="M76 100 C 86 88, 96 112, 106 100 S 124 88, 130 100"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        className="at-sello-puntada"
+      />
+    </svg>
   )
 }
 

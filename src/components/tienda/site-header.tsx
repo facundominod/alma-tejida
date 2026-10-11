@@ -125,7 +125,9 @@ export function SiteHeader({
           : 'border-transparent bg-background',
       )}
     >
-      <div className="at-container flex h-14 items-center justify-between gap-3 md:h-18">
+      {/* Mas alto que antes (56/72) para que el sello entre entero y grande:
+          es la marca, y en una tienda hecha a mano la marca es media venta. */}
+      <div className="at-container flex h-16 items-center justify-between gap-3 md:h-20">
         {/* Menú en móvil */}
         <button
           type="button"
