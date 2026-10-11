@@ -189,79 +189,20 @@ export async function uploadProductImage(formData: FormData): Promise<MediaResul
  * TODA la tienda, imágenes incluidas. Por eso el reproductor usa
  * preload="none" (ver docs/03-STORAGE.md).
  */
-export async function uploadProductVideo(formData: FormData): Promise<MediaResult> {
-  await requireAdmin()
-
-  const productId = String(formData.get('productId') ?? '')
-  if (!z.string().uuid().safeParse(productId).success) {
-    return { ok: false, error: 'Producto inválido.' }
-  }
-
-  const file = formData.get('file')
-  if (!(file instanceof File)) return { ok: false, error: 'No llego ningun archivo.' }
-
-  if (file.size > UPLOAD_LIMITS.video.maxBytes) {
-    return { ok: false, error: 'El video supera los 25 MB.' }
-  }
-
-  if (!UPLOAD_LIMITS.video.accept.includes(file.type as 'video/mp4' | 'video/webm')) {
-    return { ok: false, error: 'Solo aceptamos MP4 o WebM.' }
-  }
-
-  const admin = createAdminClient()
-
-  const { count } = await admin
-    .from('product_media')
-    .select('id', { count: 'exact', head: true })
-    .eq('product_id', productId)
-    .eq('type', 'video')
-
-  if ((count ?? 0) >= UPLOAD_LIMITS.video.maxPerProduct) {
-    return { ok: false, error: 'Ya hay un video en esta pieza. Borra el actual primero.' }
-  }
-
-  const mediaId = crypto.randomUUID()
-  const extensión = file.type === 'video/webm' ? 'webm' : 'mp4'
-  const path = `products/${productId}/${mediaId}.${extensión}`
-
-  const { error: uploadError } = await admin.storage
-    .from('catalog')
-    .upload(path, Buffer.from(await file.arrayBuffer()), {
-      contentType: file.type,
-      upsert: true,
-    })
-
-  if (uploadError) return { ok: false, error: 'No pudimos guardar el video.' }
-
-  // El poster: la portada actual del producto, para que el video no muestre
-  // un rectangulo negro antes de reproducirse.
-  const { data: cover } = await admin
-    .from('product_media')
-    .select('thumb_path')
-    .eq('product_id', productId)
-    .eq('type', 'image')
-    .order('is_cover', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  const { error } = await admin.from('product_media').insert({
-    id: mediaId,
-    product_id: productId,
-    type: 'video',
-    storage_path: path,
-    thumb_path: cover?.thumb_path ?? null,
-    size_bytes: file.size,
-    position: 99,
-  })
-
-  if (error) {
-    await admin.storage.from('catalog').remove([path])
-    return { ok: false, error: 'No pudimos registrar el video.' }
-  }
-
-  revalidatePath(`/admin/productos/${productId}`)
-  return { ok: true, mediaId }
-}
+/**
+ * El video YA NO se sube por acá.
+ *
+ * Esta función recibía el archivo dentro de una Server Action, y las
+ * funciones de Netlify cortan la petición alrededor de los 6 MB: un video de
+ * 25 MB no llegaba nunca, por más que `UPLOAD_LIMITS` dijera aceptarlo.
+ * Encima el archivo cruzaba el continente dos veces, porque la función vive
+ * en Ohio y el almacenamiento en São Paulo.
+ *
+ * Ahora el navegador sube directo con un permiso firmado:
+ * `src/lib/actions/admin/subida-directa.ts`. Se borró esta en lugar de
+ * dejarla "por las dudas": una puerta que no funciona y sigue abierta es la
+ * que alguien va a terminar usando.
+ */
 
 export async function deleteMedia(mediaId: string): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin()

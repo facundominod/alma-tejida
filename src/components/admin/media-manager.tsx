@@ -23,8 +23,12 @@ import {
   setCoverImage,
   updateMediaAlt,
   uploadProductImage,
-  uploadProductVideo,
 } from '@/lib/actions/admin/media'
+import {
+  pedirPermisoDeSubida,
+  registrarVideoSubido,
+} from '@/lib/actions/admin/subida-directa'
+import { subirDirecto } from '@/lib/subir-directo'
 import { achicarEnElNavegador } from '@/lib/images/achicar-en-el-navegador'
 import { formatBytes, storageUrl, UPLOAD_LIMITS } from '@/lib/images'
 import { cn } from '@/lib/utils'
@@ -68,6 +72,8 @@ export function MediaManager({
 }) {
   const router = useRouter()
   const [uploading, setUploading] = React.useState(false)
+  /** Porcentaje de la subida directa del video. Null si no hay ninguna. */
+  const [progreso, setProgreso] = React.useState<number | null>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [progress, setProgress] = React.useState({ done: 0, total: 0 })
   const imageInput = React.useRef<HTMLInputElement>(null)
@@ -154,23 +160,64 @@ export function MediaManager({
     router.refresh()
   }
 
+  /**
+   * El video NO pasa por el servidor.
+   *
+   * Antes viajaba dentro de una Server Action: del telefono a la funcion de
+   * Netlify -que vive en Ohio- y de ahi a Supabase, que esta en Sao Paulo.
+   * Las funciones cortan la peticion alrededor de los 6 MB, asi que un video
+   * de 25 MB NO LLEGABA NUNCA por mas que la aplicacion dijera aceptarlos.
+   *
+   * Ahora el servidor solo firma un permiso para una ruta concreta y el
+   * navegador sube directo: un viaje en lugar de dos, sin tope de 6 MB, y con
+   * progreso de verdad. Recien cuando el archivo esta arriba se le avisa al
+   * servidor para que lo registre.
+   */
   async function handleVideo(file: File | undefined) {
     if (!file) return
 
     setError(null)
     setUploading(true)
+    setProgreso(0)
 
-    const formData = new FormData()
-    formData.append('productId', productId)
-    formData.append('file', file)
+    const permiso = await pedirPermisoDeSubida({
+      productId,
+      tipoMime: file.type,
+      tamanioBytes: file.size,
+    })
 
-    const result = await uploadProductVideo(formData)
+    if (!permiso.ok) {
+      setUploading(false)
+      setProgreso(null)
+      if (videoInput.current) videoInput.current.value = ''
+      setError(permiso.error)
+      return
+    }
+
+    const subida = await subirDirecto({
+      bucket: 'catalog',
+      ruta: permiso.ruta,
+      token: permiso.token,
+      archivo: file,
+      alProgresar: setProgreso,
+    })
+
+    if (!subida.ok) {
+      setUploading(false)
+      setProgreso(null)
+      if (videoInput.current) videoInput.current.value = ''
+      setError(subida.error)
+      return
+    }
+
+    const registrado = await registrarVideoSubido({ productId, ruta: permiso.ruta })
 
     setUploading(false)
+    setProgreso(null)
     if (videoInput.current) videoInput.current.value = ''
 
-    if (!result.ok) {
-      setError(result.error)
+    if (!registrado.ok) {
+      setError(registrado.error ?? 'No pudimos registrar el video.')
       return
     }
     router.refresh()
@@ -255,7 +302,11 @@ export function MediaManager({
         <Button asChild variant="ghost" disabled={uploading || Boolean(video)}>
           <label htmlFor="subir-video" className="cursor-pointer">
             <Video />
-            {video ? 'Ya hay un video' : 'Agregar video'}
+            {progreso !== null
+              ? `Subiendo video ${progreso}%`
+              : video
+                ? 'Ya hay un video'
+                : 'Agregar video'}
           </label>
         </Button>
       </div>
