@@ -38,6 +38,8 @@ const productSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(2, 'La pieza necesita un nombre.').max(160),
   slug: z.string().trim().max(160).optional(),
+  /** El que ya tiene la pieza. Si no cambia, no hace falta consultarlo. */
+  slugActual: z.string().trim().max(160).optional(),
   categoryId: z.string().uuid().nullish(),
   shortDescription: z.string().trim().max(300).optional(),
   description: z.string().trim().max(8000).optional(),
@@ -91,7 +93,19 @@ export async function saveProduct(
   }
 
   const supabase = await createClient()
-  const slug = await uniqueSlug(supabase, data.slug || slugify(data.name), data.id)
+
+  // Una consulta menos a São Paulo en cada guardado.
+  //
+  // `uniqueSlug` existe para que dos piezas no compartan direccion, y para eso
+  // tiene que preguntarle a la base. Pero al editar, lo normal es que el slug
+  // no cambie: se toca el precio, el stock, la descripcion. Preguntar si la
+  // pieza choca consigo misma es un viaje de ida y vuelta para confirmar lo
+  // que ya se sabe, y desde Ohio eso se siente.
+  const slugPedido = data.slug || slugify(data.name)
+  const slug =
+    data.id && data.slugActual && slugPedido === data.slugActual
+      ? data.slugActual
+      : await uniqueSlug(supabase, slugPedido, data.id)
 
   const row = {
     name: data.name,

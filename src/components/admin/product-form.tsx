@@ -81,6 +81,7 @@ export function ProductForm({
     const result = await saveProduct({
       id: product?.id,
       name: String(form.get('name') ?? ''),
+      slugActual: product?.slug,
       categoryId: String(form.get('categoryId') ?? '') || null,
       shortDescription: String(form.get('shortDescription') ?? ''),
       description: String(form.get('description') ?? ''),

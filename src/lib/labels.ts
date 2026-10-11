@@ -179,7 +179,7 @@ export function availabilityView(params: {
    necesita saber qué hacer. "Se cortó el hilo" es lindo; "revisá tu conexión"
    es lo que resuelve el problema. Van juntas o no van.
 
-   El vocabulario sale del oficio —nudo, hilo, trama, bastidor, telar— y no de
+   El vocabulario sale del oficio —nudo, hilo, trama, bastidor, fleco— y no de
    un diccionario de sinónimos. Si una frase no la diría alguien que anuda, no
    entra.
 
@@ -204,11 +204,11 @@ export const COPY = {
   emptySearch: (q: string) => `Buscamos en toda la madeja y no apareció «${q}».`,
 
   /* --- Catálogo: todavía no hay NADA cargado ---------------------------- */
-  catalogComingSoon: 'Las primeras piezas todavía están en el telar.',
+  catalogComingSoon: 'Las primeras piezas todavía se están anudando.',
   catalogComingSoonHint: 'En cuanto estén listas, van a aparecer acá.',
   emptyCategory: 'Esta categoría todavía está en el bastidor.',
   emptyCategoryHint: 'Acá no hay piezas por ahora. Mirá el resto del catálogo.',
-  emptyOffers: 'Por ahora el telar está a precio de siempre.',
+  emptyOffers: 'Por ahora todo está a precio de siempre.',
   emptyOffersHint: 'Cuando haya una promoción, va a aparecer acá.',
 
   /* --- Cuenta ------------------------------------------------------------ */
@@ -222,7 +222,7 @@ export const COPY = {
   emptyReviewsHint: 'Las reseñas las escriben quienes ya recibieron su pedido.',
 
   /* --- Cuando algo sale mal ---------------------------------------------- */
-  notFound: 'Esta página se soltó del telar.',
+  notFound: 'Esta página se soltó del nudo.',
   notFoundHint: 'Puede que la pieza ya no esté publicada, o que el enlace tenga algo raro.',
   notFoundAction: 'Volver al inicio',
 
@@ -232,7 +232,7 @@ export const COPY = {
   genericError: 'Se nos enredó la madeja.',
   genericErrorHint: 'Probá de nuevo en un momento.',
 
-  serverError: 'Se nos trabó el telar.',
+  serverError: 'Se nos cortó el hilo.',
   serverErrorHint: 'El problema es nuestro, no tuyo. Dale un minuto y volvé a intentar.',
   serverErrorAction: 'Reintentar',
 
@@ -283,14 +283,15 @@ export const PORTADA = {
    * contestarlas en la única pantalla que todos ven es perder a la mitad.
    */
   subtitulo:
-    'Soy Silvana, de Córdoba. Anudo a mano, en hilo Kraft áspero sobre madera: ' +
-    'respaldos de 0,80 a 2,00 m de ancho, espejos, tapices y lámparas.',
+    'Diseños únicos en macramé y encordados, creados a mano con amor, ' +
+    'dedicación y atención a cada detalle.',
 
   /** El detalle que se suma desde la primera pantalla que da el alto. */
-  subtituloDetalle: 'Elegís medida y diseño, y te digo cuánto tarda.',
+  subtituloDetalle:
+    'Texturas naturales, calidez y esencia artesanal para transformar tus espacios.',
 
-  /** Invita a encargar, no a mirar. */
-  boton: 'Pedí tu medida',
+  /** Lleva al catálogo entero: es lo primero que quiere hacer quien llega. */
+  boton: 'Ver todos nuestros productos',
 
   /**
    * Las que giran arriba del título. Máximo cinco palabras cada una, y
@@ -312,17 +313,29 @@ export const PORTADA = {
    * que sólo puede decir ella; lo que se fue es lo que podría firmar cualquier
    * feria artesanal del país.
    */
+  /**
+   * El texto de Silvana, como lo escribió ella.
+   *
+   * Antes estaba condensado a menos de 90 palabras. Lo pidió completo dos
+   * veces, con sus emojis incluidos: es su voz y es su tienda.
+   */
   bienvenida: {
-    titulo: 'Bienvenidos a Alma Tejida',
+    titulo: '✨ Bienvenidos a Alma Tejida ✨',
+    bajada:
+      'Un espacio donde el arte, la creatividad y la esencia artesanal se ' +
+      'encuentran en cada nudo.',
     parrafos: [
-      'Anudo de a una pieza por vez. Ninguna sale igual a la anterior: la tensión ' +
-        'la pone mi mano, y de cerca se nota.',
-      'Kraft color tierra, yute irregular, algodón suave, madera a la vista. El ' +
-        'bastidor es lo que mantiene la pieza derecha contra la pared, años después.',
-      'Mirá el catálogo sin apuro y escribime por la que te quede sonando. Si ' +
-        'querés cambiar una medida o un color, lo vemos antes de empezar.',
+      'En Alma Tejida creamos piezas únicas de macramé y encordado, elaboradas a ' +
+        'mano con amor, dedicación y atención a cada detalle. Desde respaldos en ' +
+        'hilo Kraft hasta lámparas, espejos y objetos decorativos, cada creación ' +
+        'está pensada para transformar tus espacios en rincones cálidos, naturales ' +
+        'y llenos de personalidad.',
+      'Creemos en la belleza de lo hecho a mano, en los detalles que cuentan ' +
+        'historias y en la magia de crear con nuestras propias manos.',
+      '🌿 Descubrí nuestro catálogo y encontrá esa pieza especial que conecte con ' +
+        'tu estilo y tu hogar.',
     ],
-    remate: 'Alma Tejida: nudo a nudo, hecho con amor.',
+    remate: 'Alma Tejida: arte hecho nudo a nudo, con amor. 🤎',
   },
 
   /** Los tres bloques cortos que van debajo del hero. */

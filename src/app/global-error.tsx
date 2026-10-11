@@ -56,7 +56,7 @@ export default function GlobalError({
               margin: '0 0 0.75rem',
             }}
           >
-            Se nos trabó el telar.
+            Se nos cortó el hilo.
           </h1>
 
           <p style={{ color: '#7a6555', lineHeight: 1.6, margin: '0 0 1.75rem' }}>

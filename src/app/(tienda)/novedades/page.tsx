@@ -9,7 +9,7 @@ import { getNewProducts } from '@/lib/queries/catalog'
 
 export const metadata: Metadata = {
   title: 'Novedades',
-  description: 'Las últimas piezas que salieron del telar de Alma Tejida.',
+  description: 'Las últimas piezas recién hechas en Alma Tejida.',
   alternates: { canonical: '/novedades' },
 }
 
@@ -21,10 +21,10 @@ export default async function NovedadesPage() {
   return (
     <div className="at-container py-8 md:py-12">
       <header className="mb-8 space-y-2">
-        <Overline>Recien salidas del telar</Overline>
+        <Overline>Recién hechas</Overline>
         <h1 className="text-display-lg">Novedades</h1>
         <p className="text-ink-muted">
-          Lo último que salió del telar, de lo más nuevo a lo más viejo.
+          Lo último que salió de mis manos, de lo más nuevo a lo más viejo.
         </p>
       </header>
 

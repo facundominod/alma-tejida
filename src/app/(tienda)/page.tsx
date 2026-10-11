@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { EmptyState, SectionHeading, ThreadDivider } from '@/components/ui/primitives'
 import { IMAGE_SIZES, storageUrl } from '@/lib/images'
 import { COPY, PORTADA } from '@/lib/labels'
-import { PISO_PARA_REDONDEAR } from '@/lib/redondeo'
 import {
   getFeaturedProducts,
   getLastUnitsProducts,
@@ -59,24 +58,23 @@ export default async function HomePage() {
   const heroImage = hero.image_url ? storageUrl(hero.image_url, 'brand') : null
   const hasCatalog = featured.length > 0 || novedades.length > 0
   /**
-   * Las tres piezas que se adelantan en la portada.
+   * Las tres piezas que se muestran en la portada, al azar.
    *
-   * Las que ya tienen precio de verdad van primero. Hay piezas cargadas en $1
-   * mientras se definen los precios, y la portada es el peor lugar para que
-   * salgan: es la primera pantalla y la que decide si alguien sigue mirando.
-   * En cuanto tengan su precio, entran solas al orden normal.
+   * Al azar y no las destacadas: así la portada cambia sola cada vez que se
+   * revalida, sin que nadie tenga que elegir cuáles mostrar. Son decorativas
+   * -no llevan a ningún lado-, así que lo único que importa es que tengan foto.
+   *
+   * El azar se calcula en el servidor y queda fijo hasta la próxima
+   * revalidación: si se sorteara en el navegador, la portada cambiaría al
+   * hidratar y React avisaría de la diferencia.
    */
   const adelanto = [...featured, ...novedades, ...últimas]
     .filter((p, i, todas) => todas.findIndex((o) => o.id === p.id) === i)
-    .sort(
-      (a, b) =>
-        Number(Number(b.final_price ?? 0) >= PISO_PARA_REDONDEAR) -
-        Number(Number(a.final_price ?? 0) >= PISO_PARA_REDONDEAR),
-    )
+    .filter((p) => p.cover_path)
+    .map((pieza) => ({ pieza, orden: Math.random() }))
+    .sort((a, b) => a.orden - b.orden)
+    .map(({ pieza }) => pieza)
     .slice(0, 3)
-    // Se dan vuelta porque la última del arreglo es la que queda ARRIBA de la
-    // pila, y es la única que muestra nombre y precio. La mejor va adelante.
-    .reverse()
 
   return (
     <>
@@ -117,13 +115,12 @@ export default async function HomePage() {
                       <ArrowRight />
                     </Link>
                   </Button>
-                  {categories.length > 0 && (
-                    <Button asChild variant="secondary" size="lg">
-                      <Link href={`/categoria/${categories[0].slug}`}>
-                        {categories[0].name}
-                      </Link>
-                    </Button>
-                  )}
+                  {/* El principal ya lleva al catálogo entero, así que el
+                      segundo ofrece lo otro que alguien quiere al llegar: que
+                      le hagan una a medida. */}
+                  <Button asChild variant="secondary" size="lg">
+                    <Link href="/contacto">Pedí tu medida</Link>
+                  </Button>
                 </div>
               </div>
 
@@ -251,7 +248,7 @@ export default async function HomePage() {
       {novedades.length > 0 && (
         <section className="at-container pt-16 md:pt-24">
           <SectionHeading
-            overline="Recién salidas del telar"
+            overline="Recién hechas"
             title="Novedades"
             action={
               <Button asChild variant="link" size="sm">
@@ -293,6 +290,9 @@ export default async function HomePage() {
             <h2 className="font-display text-2xl text-linen-900 md:text-3xl">
               {PORTADA.bienvenida.titulo}
             </h2>
+            <p className="mx-auto max-w-prose text-[1.0625rem] leading-relaxed text-clay-700">
+              {PORTADA.bienvenida.bajada}
+            </p>
             {PORTADA.bienvenida.parrafos.map((parrafo) => (
               <p
                 key={parrafo.slice(0, 24)}

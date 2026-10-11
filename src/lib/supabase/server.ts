@@ -1,4 +1,5 @@
 import 'server-only'
+import { cache } from 'react'
 
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -51,8 +52,15 @@ export async function getCurrentUser() {
 /**
  * Perfil actual (incluye el rol). El rol se lee SIEMPRE de la base, nunca de
  * un claim del JWT que el cliente pudiera haber manipulado.
+ *
+ * Memorizado POR PEDIDO con `cache()`. Son dos viajes a São Paulo -validar el
+ * token y leer el perfil- y las funciones corren en Ohio, asi que cada uno se
+ * siente. Dentro de un mismo pedido el perfil no puede cambiar, asi que
+ * repetirlos no agrega seguridad: agrega espera.
+ *
+ * No es un cache entre pedidos: `cache()` vive lo que vive el pedido.
  */
-export async function getCurrentProfile() {
+export const getCurrentProfile = cache(async function getCurrentProfile() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -67,7 +75,7 @@ export async function getCurrentProfile() {
     .single()
 
   return data ?? null
-}
+})
 
 export async function isAdmin() {
   const profile = await getCurrentProfile()

@@ -64,7 +64,7 @@ export function MosaicoDeCategoria({
       <div className="at-weave relative grid h-full w-full place-items-center bg-linen-100">
         <div className="flex flex-col items-center gap-1.5 text-linen-400">
           <BrandWatermark className="size-12" />
-          <span className="text-[0.6875rem] uppercase tracking-[0.12em]">En el telar</span>
+          <span className="text-[0.6875rem] uppercase tracking-[0.12em]">En preparación</span>
         </div>
       </div>
     )
