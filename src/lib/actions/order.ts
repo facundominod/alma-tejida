@@ -302,3 +302,76 @@ export async function mergeCartOnLogin(
 
   return { ok: true }
 }
+
+/* =============================================================================
+   COTIZAR EL CARRITO
+   ========================================================================== */
+
+const cotizacionSchema = z.object({
+  lineas: z
+    .array(
+      z.object({
+        variantId: z.string().uuid(),
+        productId: z.string().uuid(),
+        quantity: z.number().int().min(1).max(99),
+        medioDePago: z.enum(['transferencia', 'efectivo', 'tarjeta']),
+      }),
+    )
+    .max(50),
+})
+
+export type LineaCotizada = {
+  variantId: string
+  precioUnitario: number
+  total: number
+  ahorroUnitario: number
+  aplicadas: Array<{ motivo: string; porcentaje: number }>
+}
+
+/**
+ * Qué se cobra por cada línea del carrito, según el motor.
+ *
+ * POR QUE NO SE CALCULA EN EL NAVEGADOR
+ * Porque las reglas dependen de la CANTIDAD y del MEDIO DE PAGO, y viven en la
+ * base. Repetir esa lógica en JavaScript sería una segunda implementación del
+ * precio: el carrito mostraría un número y `create_order` cobraría otro en
+ * cuanto las dos cuentas se separaran, que es cuestión de tiempo.
+ *
+ * Así que el carrito pregunta lo mismo que después cobra. Una llamada por
+ * línea, que son pocas.
+ *
+ * SI FALLA, NO SE ROMPE EL CARRITO
+ * Devuelve la lista vacía y el carrito sigue mostrando el precio que ya tenía
+ * guardado. Un carrito sin el descuento nuevo es molesto; un carrito que no
+ * carga es una venta perdida.
+ */
+export async function cotizarCarrito(input: unknown): Promise<LineaCotizada[]> {
+  const parsed = cotizacionSchema.safeParse(input)
+  if (!parsed.success) return []
+
+  const supabase = await createClient()
+
+  const resultados = await Promise.all(
+    parsed.data.lineas.map(async (linea) => {
+      const { data, error } = await supabase.rpc('precio_con_reglas', {
+        p_product_id: linea.productId,
+        p_variant_id: linea.variantId,
+        p_cantidad: linea.quantity,
+        p_medio_de_pago: linea.medioDePago,
+      })
+
+      const fila = Array.isArray(data) ? data[0] : data
+      if (error || !fila) return null
+
+      return {
+        variantId: linea.variantId,
+        precioUnitario: Number(fila.precio_unitario),
+        total: Number(fila.total),
+        ahorroUnitario: Number(fila.ahorro_unitario),
+        aplicadas: fila.reglas_aplicadas ?? [],
+      }
+    }),
+  )
+
+  return resultados.filter((r): r is LineaCotizada => r !== null)
+}

@@ -22,6 +22,7 @@ import {
   COPY_PAGO,
 } from '@/lib/medios-de-pago'
 import type { CartLine } from '@/lib/cart/cart-store'
+import { usePreciosDelCarrito } from '@/lib/cart/use-precios-del-carrito'
 import type { DeliveryMethod } from '@/types/database'
 
 /**
@@ -99,6 +100,7 @@ export function CheckoutForm({
   storeName: string
 }) {
   const cart = useCart()
+  const { precioDe, total: totalConReglas } = usePreciosDelCarrito(cart.lines)
   const router = useRouter()
   const { email: accountEmail, isLoggedIn } = useAuth()
 
@@ -125,7 +127,7 @@ export function CheckoutForm({
   const deliveryCost = Number(selectedMethod?.price ?? 0)
   // El total es el de los medios de pago ELEGIDOS, no el de lista: es el
   // número que la clienta vino viendo desde la ficha.
-  const estimatedTotal = cart.totalAPagar + deliveryCost
+  const estimatedTotal = totalConReglas + deliveryCost
 
   // Qué medios hay REALMENTE en este pedido. La nota del pie habla sólo de los
   // que se van a usar: datos de transferencia a quien no transfiere es ruido.
@@ -435,7 +437,7 @@ export function CheckoutForm({
                   </p>
                 </div>
                 <p className="tabular shrink-0 text-sm">
-                  {formatPrice(precioDeLinea(line) * line.quantity)}
+                  {formatPrice(precioDe(line) * line.quantity)}
                 </p>
               </li>
             ))}
@@ -446,11 +448,11 @@ export function CheckoutForm({
               <dt className="text-ink-muted">Subtotal</dt>
               <dd className="tabular">{formatPrice(cart.subtotal)}</dd>
             </div>
-            {cart.ahorroPorPago > 0 && (
+            {cart.subtotal - totalConReglas > 0 && (
               <div className="flex justify-between">
                 <dt className="text-ink-muted">Por tu forma de pago</dt>
                 <dd className="tabular font-medium text-sage-600">
-                  −{formatPrice(cart.ahorroPorPago)}
+                  −{formatPrice(Math.max(cart.subtotal - totalConReglas, 0))}
                 </dd>
               </div>
             )}

@@ -11,7 +11,7 @@ import { useCart } from '@/lib/cart/cart-store'
 import { IMAGE_SIZES } from '@/lib/images'
 import { COPY } from '@/lib/labels'
 import { formatPrice, whatsappLink } from '@/lib/utils'
-import { calcularPreciosDePago, precioSegunMedio } from '@/lib/medios-de-pago'
+import { usePreciosDelCarrito } from '@/lib/cart/use-precios-del-carrito'
 import { SelectorDePago } from '@/components/tienda/selector-de-pago'
 
 /**
@@ -23,6 +23,9 @@ import { SelectorDePago } from '@/components/tienda/selector-de-pago'
  */
 export function CartPageView({ whatsappNumber }: { whatsappNumber: string | null }) {
   const cart = useCart()
+  const { precioDe, motivosDe, total: totalConReglas } = usePreciosDelCarrito(
+    cart.lines,
+  )
 
   if (!cart.ready) {
     return <ThreadLoader label="Abriendo tu carrito" />
@@ -119,6 +122,21 @@ export function CartPageView({ whatsappNumber }: { whatsappNumber: string | null
                   alElegir={(medio) => cart.setMedioDePago(line.variantId, medio)}
                   etiqueta={line.name}
                 />
+
+                {/* Los descuentos que entraron, con nombre. "Pagás menos" sin
+                    decir por qué se lee como un error de la tienda. */}
+                {motivosDe(line).length > 1 && (
+                  <ul className="mt-2 flex flex-wrap gap-1.5">
+                    {motivosDe(line).map((m) => (
+                      <li
+                        key={m.motivo}
+                        className="rounded-md bg-sale/10 px-2 py-0.5 text-[0.75rem] font-medium text-sale"
+                      >
+                        {m.motivo} −{m.porcentaje}%
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-3">
@@ -130,19 +148,15 @@ export function CartPageView({ whatsappNumber }: { whatsappNumber: string | null
                   size="md"
                 />
                 {(() => {
-                  // El precio de la línea es el del medio ELEGIDO. Mostrar el de
-                  // tarjeta mientras el botón de transferencia está marcado es
-                  // la contradicción que hace desconfiar de todo el resto.
-                  const p = calcularPreciosDePago({
-                    precioTarjeta: line.price,
-                    porcentajeContado: line.cashDiscountPercent,
-                    cuotas: line.cardInstallments,
-                  })
-                  const unitario = precioSegunMedio(p, line.medioDePago)
+                  // El precio sale del MOTOR, que es el que después cobra. Si
+                  // acá se calculara por separado, el carrito mostraría un
+                  // número y el pedido cobraría otro en cuanto hubiera una
+                  // regla de oferta.
+                  const unitario = precioDe(line)
                   return (
                     <Price
                       final={unitario * line.quantity}
-                      list={unitario < p.tarjeta ? p.tarjeta * line.quantity : null}
+                      list={unitario < line.price ? line.price * line.quantity : null}
                     />
                   )
                 })()}
@@ -171,25 +185,25 @@ export function CartPageView({ whatsappNumber }: { whatsappNumber: string | null
                 </dd>
               </div>
             )}
-            {cart.ahorroPorPago > 0 && (
+            {cart.subtotal - totalConReglas > 0 && (
               <div className="flex justify-between">
                 <dt className="text-ink-muted">Por tu forma de pago</dt>
                 <dd className="tabular font-medium text-sage-600">
-                  −{formatPrice(cart.ahorroPorPago)}
+                  −{formatPrice(Math.max(cart.subtotal - totalConReglas, 0))}
                 </dd>
               </div>
             )}
             <div className="flex items-baseline justify-between border-t border-border-soft pt-3">
               <dt className="font-medium">Total</dt>
               <dd className="tabular text-xl font-semibold">
-                {formatPrice(cart.totalAPagar)}
+                {formatPrice(totalConReglas)}
               </dd>
             </div>
           </dl>
 
-          {cart.ahorroPorPago > 0 && (
+          {cart.subtotal - totalConReglas > 0 && (
             <p className="rounded-lg bg-sage-100 px-3.5 py-2.5 text-sm font-medium text-sage-600">
-              Te estás ahorrando {formatPrice(cart.ahorroPorPago)} por cómo elegiste pagar.
+              Te estás ahorrando {formatPrice(Math.max(cart.subtotal - totalConReglas, 0))}.
             </p>
           )}
 

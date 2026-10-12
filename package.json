@@ -34,7 +34,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "types:generate": "supabase gen types typescript --linked > src/types/database.ts",
-    "verify": "npm run check:secrets && npm run typecheck && npm run lint && npm run test"
+    "verify": "npm run check:secrets && npm run typecheck && npm run lint && npm run test",
+    "iconos": "node scripts/generar-iconos.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
