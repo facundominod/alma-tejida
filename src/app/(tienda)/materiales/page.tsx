@@ -92,16 +92,21 @@ export default async function MaterialesPage() {
         <p className="mx-auto max-w-lg leading-relaxed text-ink-muted">
           {MATERIALES.cierre.texto}
         </p>
-        <div className="flex flex-wrap justify-center gap-3 pt-1">
+        {/* Apilados mientras no haya ancho para los dos.
+            Los botones llevan `whitespace-nowrap` -una etiqueta partida al
+            medio queda peor que un botón ancho-, así que no pueden encogerse:
+            si no entran, se salen. En una pantalla de 320 px éste se salía
+            35 px. */}
+        <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:flex-wrap sm:justify-center">
           {whatsapp && (
-            <Button asChild variant="whatsapp" size="lg">
+            <Button asChild variant="whatsapp" size="lg" className="w-full sm:w-auto">
               <a href={whatsapp} target="_blank" rel="noopener noreferrer">
                 <MessageCircle />
                 {MATERIALES.cierre.boton}
               </a>
             </Button>
           )}
-          <Button asChild variant="secondary" size="lg">
+          <Button asChild variant="secondary" size="lg" className="w-full sm:w-auto">
             <Link href="/tienda">
               Ver las piezas
               <ArrowRight />

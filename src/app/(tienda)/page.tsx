@@ -85,9 +85,29 @@ export default async function HomePage() {
       <section className="relative">
         <div className="at-container pt-6 md:pt-10">
           <div className="at-organic relative overflow-hidden bg-clay-100">
-            <div className="at-alto-hero relative grid md:min-h-[520px] md:grid-cols-2">
-              {/* Texto */}
-              <div className="relative z-10 flex flex-col justify-center gap-4 px-6 py-10 sm:gap-5 md:px-12 md:py-16">
+            {/* `min-w-0` en las dos celdas, y no es decoración.
+                Un hijo de grilla arranca con `min-width: auto`: se niega a
+                encogerse por debajo de su contenido. El título del hero es
+                más ancho que la columna en un teléfono, así que la celda
+                medía 359 px dentro de una tarjeta de 343 y se salía 16 px por
+                la derecha. La tarjeta tiene `overflow-hidden`, así que no
+                hacía scrollear la página -por eso la prueba de desborde pasaba
+                en verde- pero dejaba el texto torcido: 40 px de aire a la
+                izquierda y 24 a la derecha. En una pantalla de 320 px se
+                salía 71 px. */}
+            {/* Dos columnas reción en `lg`, no en `md`.
+                A 768 px -una tablet en vertical- la columna del texto queda
+                con 256 px útiles y el titulo se parte en cuatro renglones de
+                una palabra: "Cada / nudo, / hecho / con amor." Entero arriba
+                y la foto abajo se lee, que es lo que tiene que hacer un
+                título. */}
+            <div className="at-alto-hero relative grid lg:min-h-[520px] lg:grid-cols-2">
+              {/* Texto.
+                  `@container` para que los botones de abajo midan el ancho de
+                  ESTA columna y no el de la pantalla: en tablet la columna
+                  tiene 256 px útiles y un botón entero no entra, aunque la
+                  pantalla tenga 768. */}
+              <div className="@container relative z-10 flex min-w-0 flex-col justify-center gap-4 px-5 py-10 sm:gap-5 sm:px-7 md:px-10 md:py-14 lg:py-16">
                 {/* La frase de la tienda primero, después las de la casa. */}
                 <FrasesQueGiran
                   frases={[settings.tagline, ...PORTADA.frases].filter(Boolean)}
@@ -108,8 +128,8 @@ export default async function HomePage() {
                   )}
                 </p>
 
-                <div className="flex flex-wrap gap-3 pt-1">
-                  <Button asChild size="lg">
+                <div className="flex flex-col gap-3 pt-1 @xs:flex-row @xs:flex-wrap">
+                  <Button asChild size="lg" className="w-full @xs:w-auto">
                     <Link href={texto(hero.cta_href, '/tienda')}>
                       {texto(hero.cta_label, PORTADA.boton)}
                       <ArrowRight />
@@ -118,7 +138,7 @@ export default async function HomePage() {
                   {/* El principal ya lleva al catálogo entero, así que el
                       segundo ofrece lo otro que alguien quiere al llegar: que
                       le hagan una a medida. */}
-                  <Button asChild variant="secondary" size="lg">
+                  <Button asChild variant="secondary" size="lg" className="w-full @xs:w-auto">
                     <Link href="/contacto">Pedí tu medida</Link>
                   </Button>
                 </div>
@@ -132,8 +152,8 @@ export default async function HomePage() {
               <div
                 className={
                   heroImage || adelanto.length > 0
-                    ? 'relative min-h-[260px] md:min-h-full'
-                    : 'relative hidden md:block md:min-h-full'
+                    ? 'relative min-w-0 min-h-[260px] md:min-h-[340px] lg:min-h-full'
+                    : 'relative hidden min-w-0 lg:block lg:min-h-full'
                 }
               >
                 {heroImage ? (
