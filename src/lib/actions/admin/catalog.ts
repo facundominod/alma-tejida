@@ -22,13 +22,48 @@ import { structureSchema } from '@/lib/actions/admin/esquemas'
 
 export type AdminResult<T = object> = ({ ok: true } & T) | { ok: false; error: string }
 
-/** Publicar o cambiar algo tiene que verse en la tienda AL INSTANTE (punto 190). */
+/**
+ * Publicar o cambiar algo tiene que verse en la tienda AL INSTANTE (punto 190).
+ *
+ * POR QUE NO ALCANZA CON `revalidatePath`, QUE ES LO QUE PARECIA
+ * `revalidatePath` le avisa a Next. Pero la pagina no la sirve Next: la sirve
+ * la cache de Netlify, que esta adelante. Medido contra el sitio en linea
+ * despues de cambiar un precio en el panel:
+ *
+ *   Cache-Status: "Netlify Durable"; hit; ttl=-217
+ *   Age: 518
+ *
+ * `ttl` negativo quiere decir que la copia ya vencio, y `hit` que la entrego
+ * igual. La ficha tiene `revalidate = 300`, asi que Netlify sirve la copia
+ * vieja mientras rehace la nueva por detras: el precio nuevo estaba en la
+ * base y la tienda mostraba el anterior. Desde el panel se ve como "cambio el
+ * precio y no impacta", y despues aparece solo, cuando ya nadie esta mirando.
+ *
+ * `purgeCache()` sin argumentos borra la copia de todo el sitio. Es un
+ * martillo, y es el correcto acá: se dispara sólo cuando se guarda algo en el
+ * panel -un puñado de veces por dia- y la alternativa es adivinar las
+ * etiquetas internas que el runtime de Next le pone a cada ruta, que no son
+ * parte de ningun contrato y cambian de version a version.
+ *
+ * Si falla, no se cae el guardado: lo que se guardó ya está guardado, y la
+ * tienda se actualiza igual cuando venzan los 5 minutos.
+ */
 async function refreshStorefront(slug?: string | null) {
   revalidatePath('/', 'page')
   revalidatePath('/tienda', 'page')
   revalidatePath('/ofertas', 'page')
   revalidatePath('/novedades', 'page')
   if (slug) revalidatePath(`/producto/${slug}`, 'page')
+
+  // Sólo corre en Netlify: en local y en las pruebas no hay nada que borrar.
+  if (!process.env.NETLIFY) return
+
+  try {
+    const { purgeCache } = await import('@netlify/functions')
+    await purgeCache()
+  } catch (error) {
+    console.error('No se pudo borrar la caché de Netlify', error)
+  }
 }
 
 /* =============================================================================
