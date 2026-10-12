@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { createClient, requireAdmin } from '@/lib/supabase/server'
 import { slugify } from '@/lib/utils'
 import { redondearA99 } from '@/lib/redondeo'
+import { structureSchema } from '@/lib/actions/admin/esquemas'
 
 /**
  * Gestion del catálogo.
@@ -180,45 +181,24 @@ export async function saveProduct(
  * Guarda características y variantes de una sola vez.
  * La atomicidad la garantiza la función SQL, no esta acción.
  */
-const structureSchema = z.object({
-  productId: z.string().uuid(),
-  attributes: z.array(
-    z.object({
-      key: z.string().min(1),
-      id: z.string().uuid().nullish(),
-      name: z.string().trim().min(1).max(60),
-      type: z.enum(['select', 'text', 'number', 'measure', 'color']),
-      values: z.array(
-        z.object({
-          key: z.string().min(1),
-          id: z.string().uuid().nullish(),
-          value: z.string().trim().min(1).max(80),
-          color_hex: z
-            .string()
-            .regex(/^#[0-9a-fA-F]{6}$/)
-            .nullish(),
-        }),
-      ),
-    }),
-  ),
-  variants: z.array(
-    z.object({
-      id: z.string().uuid().nullish(),
-      options: z.record(z.string(), z.string()),
-      sku: z.string().trim().max(60).nullish(),
-      price_override: z.string().nullish(),
-      low_stock_threshold: z.string().nullish(),
-      is_active: z.boolean().optional(),
-    }),
-  ),
-})
-
 export async function saveProductStructure(input: unknown): Promise<AdminResult> {
   await requireAdmin()
 
   const parsed = structureSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: 'Revisá las características y variantes.' }
+    // Con el campo que falla a la vista.
+    //
+    // "Revisá las características y variantes" tuvo escondido un mes un
+    // desfase entre el formulario y este validador: el panel decia que algo
+    // estaba mal en una pantalla con 42 combinaciones y no decia dónde, y
+    // desde el otro lado se leia como "guardo y no se actualiza". Esta
+    // pantalla la ve sólo la administradora: el detalle no molesta a nadie.
+    const donde = parsed.error.issues
+      .slice(0, 3)
+      .map((i) => `${i.path.join('.')}: ${i.message}`)
+      .join(' · ')
+
+    return { ok: false, error: `Revisá las características y variantes. ${donde}`.trim() }
   }
 
   // Una característica de tipo selección sin valores no sirve para nada
