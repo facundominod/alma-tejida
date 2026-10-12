@@ -31,8 +31,17 @@ const DESTINO = 'src/app'
 /** El crudo de la casa: --color-linen-50. */
 const FONDO = { r: 0xfb, g: 0xf8, b: 0xf4, alpha: 1 }
 
-/** Cuánto del lienzo ocupa el logo. El resto es el margen contra el recorte. */
-const PROPORCION = 0.72
+/**
+ * Cuánto del lienzo ocupa el logo.
+ *
+ * Al 72 % se veía perdido en el escritorio, donde el ícono se muestra entero y
+ * sin recortar: quedaba un sello chiquito flotando en un cuadrado crema.
+ *
+ * Al 88 % llena el ícono y sigue dejando margen para el recorte en círculo de
+ * Android, que se come hasta un 10 % de cada borde en los teléfonos que más
+ * recortan. El logo además ya trae su propio aire dentro del archivo.
+ */
+const PROPORCION = 0.88
 
 const ICONOS = [
   // iPhone, al agregar a la pantalla de inicio.

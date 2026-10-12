@@ -9,6 +9,7 @@ import {
   FolderTree,
   LayoutDashboard,
   LogOut,
+  Menu,
   MessageCircleQuestion,
   Package,
   Settings,
@@ -16,6 +17,7 @@ import {
   Star,
   Store,
   Tag,
+  X,
 } from 'lucide-react'
 import { BrandMark } from '@/components/tienda/brand-mark'
 import { signOut } from '@/lib/actions/auth'
@@ -71,6 +73,23 @@ export function AdminNav({
   userName: string
 }) {
   const pathname = usePathname()
+  const [cajonAbierto, setCajonAbierto] = React.useState(false)
+
+  // Se cierra al cambiar de pantalla: si no, se toca "Categorías", la página
+  // de atrás cambia y el cajón queda tapándola.
+  React.useEffect(() => {
+    setCajonAbierto(false)
+  }, [pathname])
+
+  // Con el cajón abierto la página de atrás no se mueve.
+  React.useEffect(() => {
+    if (!cajonAbierto) return
+    const previo = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previo
+    }
+  }, [cajonAbierto])
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href)
@@ -79,9 +98,25 @@ export function AdminNav({
     <>
       {/* Barra superior en móvil */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border-soft bg-background px-4 md:hidden">
-        <Link href="/admin" aria-label="Administración">
-          <BrandMark logoUrl={logoUrl} storeName={storeName} size="sm" />
-        </Link>
+        <div className="flex items-center gap-1">
+          {/* La puerta a las nueve secciones.
+              Abajo sólo entran cuatro pestañas, y el resto estaba al final del
+              scroll de cada pantalla: había que leer toda la pantalla para
+              llegar a Configuración, o apaisar el teléfono para que apareciera
+              la barra lateral. Acá está arriba, siempre en el mismo lugar. */}
+          <button
+            type="button"
+            onClick={() => setCajonAbierto(true)}
+            className="-ml-2 grid size-11 place-items-center rounded-lg text-ink-muted"
+            aria-label="Abrir el panel"
+            aria-expanded={cajonAbierto}
+          >
+            <Menu className="size-5" />
+          </button>
+          <Link href="/admin" aria-label="Administración">
+            <BrandMark logoUrl={logoUrl} storeName={storeName} size="sm" />
+          </Link>
+        </div>
         <div className="flex items-center gap-1">
           <NotificationsLink count={unreadCount} />
           <Link
@@ -147,6 +182,79 @@ export function AdminNav({
           </form>
         </div>
       </aside>
+
+      {/* El cajón */}
+      {cajonAbierto && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <button
+            type="button"
+            onClick={() => setCajonAbierto(false)}
+            className="absolute inset-0 bg-linen-900/40"
+            aria-label="Cerrar el panel"
+          />
+
+          <div className="absolute inset-y-0 left-0 flex w-[17.5rem] max-w-[85vw] flex-col bg-background shadow-xl">
+            <div className="flex h-14 items-center justify-between border-b border-border-soft px-4">
+              <BrandMark logoUrl={logoUrl} storeName={storeName} size="sm" />
+              <button
+                type="button"
+                onClick={() => setCajonAbierto(false)}
+                className="-mr-2 grid size-11 place-items-center rounded-lg text-ink-muted"
+                aria-label="Cerrar el panel"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <nav className="flex-1 space-y-0.5 overflow-y-auto p-3" aria-label="Administración">
+              {SECTIONS.map((section) => {
+                const active = isActive(section.href, section.exact)
+                const Icon = section.icon
+
+                return (
+                  <Link
+                    key={section.href}
+                    href={section.href}
+                    aria-current={active ? 'page' : undefined}
+                    className={cn(
+                      'flex min-h-[46px] items-center gap-3 rounded-lg px-3 text-sm',
+                      active
+                        ? 'bg-primary-soft font-medium text-clay-700'
+                        : 'text-ink-muted',
+                    )}
+                  >
+                    <Icon className="size-[18px] shrink-0" strokeWidth={active ? 2.1 : 1.8} />
+                    {section.label}
+                  </Link>
+                )
+              })}
+            </nav>
+
+            <div
+              className="space-y-1 border-t border-border-soft p-3"
+              style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+            >
+              <p className="truncate px-3 pb-1 text-xs text-ink-subtle">{userName}</p>
+              <Link
+                href="/"
+                className="flex min-h-[46px] items-center gap-3 rounded-lg px-3 text-sm text-ink-muted"
+              >
+                <Store className="size-[18px]" strokeWidth={1.8} />
+                Ver la tienda
+              </Link>
+              <form action={signOut}>
+                <button
+                  type="submit"
+                  className="flex min-h-[46px] w-full items-center gap-3 rounded-lg px-3 text-sm text-ink-muted"
+                >
+                  <LogOut className="size-[18px]" strokeWidth={1.8} />
+                  Cerrar sesión
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pestanas inferiores en móvil */}
       <nav

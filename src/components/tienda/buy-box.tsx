@@ -259,7 +259,7 @@ export function BuyBox({
             </div>
           )}
 
-          <div className="min-w-[200px] flex-1">
+          <div className="min-w-[160px] flex-1">
             <Button size="lg" block onClick={handleAdd} disabled={!canBuy}>
           <AnimatePresence mode="wait" initial={false}>
             {justAdded ? (
@@ -292,12 +292,16 @@ export function BuyBox({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2.5">
+        {/* Apilados en el teléfono. Los botones llevan `whitespace-nowrap`
+            -no se parte "Consultar por WhatsApp" a la mitad- así que dos de
+            ancho mínimo 150 no entran en una pantalla de 320 y el texto se
+            salía de la caja. A lo ancho completo entra cómodo. */}
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
           {whatsapp && (
             <Button
               asChild
               variant="whatsapp"
-              className="min-w-[150px] flex-1"
+              className="w-full sm:w-auto sm:min-w-[150px] sm:flex-1"
               onClick={() => void trackEvent('whatsapp_click', { productId: product.id })}
             >
               <a href={whatsapp} target="_blank" rel="noopener noreferrer">
@@ -309,7 +313,7 @@ export function BuyBox({
 
           {/* Lleva al bloque de preguntas, que ahora se puede usar sin cuenta.
               Es la alternativa para quien no quiere dar su teléfono. */}
-          <Button asChild variant="secondary" className="min-w-[150px] flex-1">
+          <Button asChild variant="secondary" className="w-full sm:w-auto sm:min-w-[150px] sm:flex-1">
             <a href="#preguntas">
               <MessageCircleQuestion />
               Preguntar acá

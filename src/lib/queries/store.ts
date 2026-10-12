@@ -83,10 +83,41 @@ export const getCategories = cache(async (): Promise<Category[]> => {
   }, [])
 })
 
-/** Solo categorías de primer nivel, para la navegación. */
+/**
+ * Las categorías de primer nivel QUE TIENEN PIEZAS, para la navegación.
+ *
+ * POR QUÉ SE FILTRAN LAS VACÍAS
+ * Una categoría sin piezas es una puerta que da a una pared: se toca "Tapices"
+ * y aparece "todavía no hay nada acá". De ocho categorías, seis estaban
+ * vacías, así que la navegación prometía seis veces más surtido del que hay y
+ * decepcionaba en el clic.
+ *
+ * No se borran ni se ocultan a mano: en cuanto una categoría tenga una pieza
+ * publicada, vuelve sola. Eso es lo que permite cargarlas por adelantado sin
+ * que molesten mientras tanto.
+ */
 export const getTopCategories = cache(async (): Promise<Category[]> => {
-  const all = await getCategories()
-  return all.filter((c) => c.parent_id === null)
+  const todas = await getCategories()
+  const raices = todas.filter((c) => c.parent_id === null)
+
+  const conPiezas = await safeQuery(async () => {
+    const supabase = createPublicClient()
+    const { data } = await supabase
+      .from('v_catalog_products')
+      .select('category_id')
+      .eq('status', 'published')
+      .not('category_id', 'is', null)
+      .limit(500)
+
+    return new Set((data ?? []).map((f) => f.category_id).filter(Boolean) as string[])
+  }, new Set<string>())
+
+  // Si la consulta falla, `conPiezas` viene vacío. En ese caso se muestran
+  // TODAS: una navegación de más es molesta; una tienda sin categorías por
+  // una consulta caída parece rota.
+  if (conPiezas.size === 0) return raices
+
+  return raices.filter((c) => conPiezas.has(c.id))
 })
 
 /**

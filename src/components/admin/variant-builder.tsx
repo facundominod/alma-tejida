@@ -80,6 +80,9 @@ export function VariantBuilder({
   const router = useRouter()
   const [attributes, setAttributes] = React.useState<AttributeDraft[]>(initialAttributes)
   const [variants, setVariants] = React.useState<VariantDraft[]>(initialVariants)
+  const [ajuste, setAjuste] = React.useState('')
+
+  const conPrecioPropio = variants.filter((v) => v.price_override.trim()).length
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [saved, setSaved] = React.useState(false)
@@ -200,6 +203,43 @@ export function VariantBuilder({
 
   function removeVariant(key: string) {
     setVariants((current) => current.filter((variant) => variant.key !== key))
+  }
+
+  /**
+   * Mover de una vez el precio de todas las combinaciones.
+   *
+   * EL PROBLEMA QUE RESUELVE
+   * El respaldo a medida tiene 42 combinaciones y cada una lleva su propio
+   * precio, porque un respaldo de 1,20 no vale lo mismo que uno de 2,00. Eso
+   * significa que cambiar el precio de la pieza no les hace nada: el precio
+   * propio de la combinación le gana siempre, y desde el otro lado se ve como
+   * "cambié el precio y no me lo actualiza".
+   *
+   * Corregir 42 campos a mano no es una opción. Acá se mueven las 42 juntas
+   * por porcentaje, que es como suben los precios de verdad.
+   *
+   * EL REDONDEO ES A LA CENTENA
+   * Un 12 % sobre 215.000 da 240.800. Nadie publica 240.800: se publica
+   * 240.800 redondeado, y la centena es lo que deja los precios con la cara
+   * de un precio sin inventar plata ni regalarla.
+   */
+  function moverPreciosPropios(porcentaje: number) {
+    setVariants((current) =>
+      current.map((variant) => {
+        const actual = parsearPrecio(variant.price_override)
+        // Las que no tienen precio propio siguen a la pieza: no se tocan, o
+        // les estaríamos clavando un precio que antes no tenían.
+        if (actual == null || actual <= 0) return variant
+
+        const nuevo = Math.round((actual * (1 + porcentaje / 100)) / 100) * 100
+        return { ...variant, price_override: formatearParaEditar(nuevo) }
+      }),
+    )
+  }
+
+  /** Dejarlas a todas siguiendo el precio de la pieza. */
+  function borrarPreciosPropios() {
+    setVariants((current) => current.map((v) => ({ ...v, price_override: '' })))
   }
 
   function updateVariant(key: string, patch: Partial<VariantDraft>) {
@@ -391,6 +431,61 @@ export function VariantBuilder({
               Generar combinaciones
             </Button>
           </div>
+
+          {conPrecioPropio > 0 && (
+            <div className="space-y-2.5 rounded-lg border border-border-soft bg-surface-muted/60 p-3.5">
+              <p className="text-sm text-ink-muted">
+                <span className="font-medium text-ink">
+                  {conPrecioPropio} de {variants.length} combinaciones tienen su propio
+                  precio.
+                </span>{' '}
+                A esas, cambiar el precio de la pieza no les hace nada: manda el precio
+                propio. Movelas todas juntas desde acá.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  value={ajuste}
+                  onChange={(e) => setAjuste(e.target.value)}
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="%"
+                  aria-label="Porcentaje para mover los precios propios"
+                  className="tabular h-10 w-20 text-sm"
+                />
+                <Button
+                  size="sm"
+                  variant="soft"
+                  disabled={!parsearPrecio(ajuste)}
+                  onClick={() => {
+                    const n = parsearPrecio(ajuste)
+                    if (n) moverPreciosPropios(n)
+                  }}
+                >
+                  Subir
+                </Button>
+                <Button
+                  size="sm"
+                  variant="soft"
+                  disabled={!parsearPrecio(ajuste)}
+                  onClick={() => {
+                    const n = parsearPrecio(ajuste)
+                    if (n) moverPreciosPropios(-n)
+                  }}
+                >
+                  Bajar
+                </Button>
+                <Button size="sm" variant="ghost" onClick={borrarPreciosPropios}>
+                  Que sigan a la pieza
+                </Button>
+              </div>
+
+              <p className="text-xs text-ink-subtle">
+                Se redondea a la centena. Mirá los precios abajo y recién después
+                guardá: hasta que no toques Guardar no se cambia nada.
+              </p>
+            </div>
+          )}
 
           {variants.length === 0 ? (
             <p className="rounded-lg bg-surface-muted px-3.5 py-3 text-sm text-ink-muted">
