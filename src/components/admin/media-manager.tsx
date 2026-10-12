@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { intentar } from '@/lib/actions/intentar'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import {
@@ -104,7 +105,7 @@ export function MediaManager({
     ;[orden[desde], orden[hasta]] = [orden[hasta], orden[desde]]
 
     setError(null)
-    const resultado = await reorderMedia(productId, orden)
+    const resultado = await intentar(() => reorderMedia(productId, orden))
     if (!resultado.ok) setError('No pudimos cambiar el orden.')
     router.refresh()
   }
@@ -182,11 +183,11 @@ export function MediaManager({
     setUploading(true)
     setProgreso(0)
 
-    const permiso = await pedirPermisoDeSubida({
+    const permiso = await intentar(() => pedirPermisoDeSubida({
       productId,
       tipoMime: file.type,
       tamanioBytes: file.size,
-    })
+    }))
 
     if (!permiso.ok) {
       setUploading(false)
@@ -212,7 +213,7 @@ export function MediaManager({
       return
     }
 
-    const registrado = await registrarVideoSubido({ productId, ruta: permiso.ruta })
+    const registrado = await intentar(() => registrarVideoSubido({ productId, ruta: permiso.ruta }))
 
     setUploading(false)
     setProgreso(null)
@@ -361,7 +362,7 @@ export function MediaManager({
                 <button
                   type="button"
                   onClick={async () => {
-                    const result = await deleteMedia(video.id)
+                    const result = await intentar(() => deleteMedia(video.id))
                     if (!result.ok) setError(result.error ?? 'No pudimos borrar el video.')
                     else router.refresh()
                   }}
@@ -476,7 +477,7 @@ function MediaCard({
             disabled={busy}
             onClick={async () => {
               setBusy(true)
-              const result = await deleteMedia(item.id)
+              const result = await intentar(() => deleteMedia(item.id))
               setBusy(false)
               if (!result.ok) onError(result.error ?? 'No pudimos borrar la imagen.')
               else onChanged()

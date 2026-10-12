@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { intentar } from '@/lib/actions/intentar'
 import * as React from 'react'
 import { Archive, Copy, Eye, EyeOff, MoreVertical, Trash2 } from 'lucide-react'
 import { Ovillo } from '@/components/ui/ovillo'
@@ -127,7 +128,7 @@ export function ProductActions({
             disabled={pending !== null}
             onClick={() =>
               run('duplicate', async () => {
-                const result = await duplicateProduct(productId)
+                const result = await intentar(() => duplicateProduct(productId))
                 if (result.ok) router.push(`/admin/productos/${result.productId}`)
                 return result
               })
@@ -173,7 +174,7 @@ export function ProductActions({
                   disabled={pending !== null}
                   onClick={() =>
                     run('delete', async () => {
-                      const result = await deleteProduct(productId)
+                      const result = await intentar(() => deleteProduct(productId))
                       if (result.ok) router.push('/admin/productos')
                       return result
                     })

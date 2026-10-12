@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { intentar } from '@/lib/actions/intentar'
 import Link from 'next/link'
 import * as React from 'react'
 import { AlertTriangle, Check, ImageOff, Minus, Plus, Search, Undo2, X } from 'lucide-react'
@@ -61,12 +62,12 @@ export function StockBoard({
     setBusy(row.variant_id)
     setError(null)
 
-    const result = await adjustStock({
+    const result = await intentar(() => adjustStock({
       variantId: row.variant_id,
       delta,
       type,
       note: delta > 0 ? 'Ingreso desde el panel' : 'Ajuste desde el panel',
-    })
+    }))
 
     setBusy(null)
 
@@ -306,12 +307,12 @@ export function StockBoard({
             setBusy(adjusting.variant_id)
             setError(null)
 
-            const result = await adjustStock({
+            const result = await intentar(() => adjustStock({
               variantId: adjusting.variant_id,
               delta,
               type,
               note,
-            })
+            }))
 
             setBusy(null)
             if (!result.ok) {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { intentar } from '@/lib/actions/intentar'
 import * as React from 'react'
 import { Check, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -109,7 +110,7 @@ export function ReglasDelMotivo({
     setPendiente(true)
     setError(null)
 
-    const r = await guardarReglas({ promotionId, reglas })
+    const r = await intentar(() => guardarReglas({ promotionId, reglas }))
 
     setPendiente(false)
     if (!r.ok) {

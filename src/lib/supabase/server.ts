@@ -1,5 +1,4 @@
 import 'server-only'
-import { cache } from 'react'
 
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -53,14 +52,16 @@ export async function getCurrentUser() {
  * Perfil actual (incluye el rol). El rol se lee SIEMPRE de la base, nunca de
  * un claim del JWT que el cliente pudiera haber manipulado.
  *
- * Memorizado POR PEDIDO con `cache()`. Son dos viajes a São Paulo -validar el
- * token y leer el perfil- y las funciones corren en Ohio, asi que cada uno se
- * siente. Dentro de un mismo pedido el perfil no puede cambiar, asi que
- * repetirlos no agrega seguridad: agrega espera.
+ * SIN MEMORIZAR, A PROPOSITO.
+ * Llegue a envolverlo en `cache()` de React para ahorrar uno de los dos viajes
+ * a São Paulo. `cache()` esta pensado para el render de los componentes de
+ * servidor, y esta funcion tambien corre dentro de las Server Actions, que es
+ * otro contexto. No pude comprobarlo en produccion, y lo que se arriesgaba era
+ * que `requireAdmin()` fallara en TODAS las acciones del panel.
  *
- * No es un cache entre pedidos: `cache()` vive lo que vive el pedido.
+ * Cien milisegundos contra dejar el panel sin funcionar es un mal negocio.
  */
-export const getCurrentProfile = cache(async function getCurrentProfile() {
+export async function getCurrentProfile() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -75,7 +76,7 @@ export const getCurrentProfile = cache(async function getCurrentProfile() {
     .single()
 
   return data ?? null
-})
+}
 
 export async function isAdmin() {
   const profile = await getCurrentProfile()

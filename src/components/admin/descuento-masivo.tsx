@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { intentar } from '@/lib/actions/intentar'
 import * as React from 'react'
 import { Check, Percent, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -41,12 +42,12 @@ export function DescuentoMasivo({
     setPendiente(true)
     setError(null)
 
-    const result = await aplicarDescuentoMasivo({
+    const result = await intentar(() => aplicarDescuentoMasivo({
       porcentaje: limpiar ? undefined : Number(porcentaje),
       categoryId: categoria || null,
       pisarLasQueTienenPropio: pisar,
       volverAlDeLaTienda: limpiar,
-    })
+    }))
 
     setPendiente(false)
 
@@ -204,10 +205,10 @@ function RedondearA99({
     setError(null)
     setResultado(null)
 
-    const r = await redondearPreciosMasivo({
+    const r = await intentar(() => redondearPreciosMasivo({
       categoryId: categoria || null,
       incluirCombinaciones: combinaciones,
-    })
+    }))
 
     setPendiente(false)
 

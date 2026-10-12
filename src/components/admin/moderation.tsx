@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { intentar } from '@/lib/actions/intentar'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { Check, EyeOff, Send } from 'lucide-react'
@@ -40,12 +41,12 @@ export function QuestionCard({ question }: { question: WithProduct<Question> }) 
     setPending(true)
     setError(null)
 
-    const result = await answerQuestion({
+    const result = await intentar(() => answerQuestion({
       questionId: question.id,
       answer,
       publicarPregunta,
       publicarRespuesta,
-    })
+    }))
 
     setPending(false)
 
@@ -168,7 +169,7 @@ export function QuestionCard({ question }: { question: WithProduct<Question> }) 
             disabled={pending}
             onClick={async () => {
               setPending(true)
-              const result = await hideQuestion(question.id)
+              const result = await intentar(() => hideQuestion(question.id))
               setPending(false)
               if (!result.ok) setError(result.error)
               else router.refresh()
@@ -200,12 +201,12 @@ export function ReviewCard({ review }: { review: WithProduct<Review> }) {
     setPending(true)
     setError(null)
 
-    const result = await moderateReview({
+    const result = await intentar(() => moderateReview({
       reviewId: review.id,
       action,
       reason: action === 'hide' ? reason : undefined,
       reply: reply.trim() || undefined,
-    })
+    }))
 
     setPending(false)
 

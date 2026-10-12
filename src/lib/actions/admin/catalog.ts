@@ -43,7 +43,12 @@ const productSchema = z.object({
   categoryId: z.string().uuid().nullish(),
   shortDescription: z.string().trim().max(300).optional(),
   description: z.string().trim().max(8000).optional(),
-  basePrice: z.number().nonnegative('El precio no puede ser negativo.'),
+  // Mayor a cero, no "no negativo": un campo que quedo vacio llega como 0 y
+  // se guardaria como una pieza que vale nada, en silencio. Si alguna vez hay
+  // que regalar algo, se pone 1 peso y se ve.
+  basePrice: z
+    .number()
+    .positive('Escribí el precio de la pieza: no puede quedar en cero.'),
   // Opcional: una tienda puede funcionar sin saber su costo, y obligar a
   // cargarlo trabaria la carga de la primera pieza.
   baseCost: z.number().nonnegative('El costo no puede ser negativo.').nullish(),

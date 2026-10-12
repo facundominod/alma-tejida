@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { intentar } from '@/lib/actions/intentar'
 import * as React from 'react'
 import { Check, Eye } from 'lucide-react'
 import { Ovillo } from '@/components/ui/ovillo'
@@ -78,7 +79,7 @@ export function ProductForm({
       return raw === '' ? null : Number(raw)
     }
 
-    const result = await saveProduct({
+    const result = await intentar(() => saveProduct({
       id: product?.id,
       name: String(form.get('name') ?? ''),
       slugActual: product?.slug,
@@ -101,7 +102,7 @@ export function ProductForm({
       isFeatured: form.get('isFeatured') === 'on',
       featuredPosition: number('featuredPosition') ?? 0,
       status: String(form.get('status') ?? 'draft') as 'draft' | 'published' | 'archived',
-    })
+    }))
 
     setSaving(false)
 

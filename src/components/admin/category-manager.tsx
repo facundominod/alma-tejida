@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { intentar } from '@/lib/actions/intentar'
 import * as React from 'react'
 import { Eye, EyeOff, FolderTree, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { Ovillo } from '@/components/ui/ovillo'
@@ -30,7 +31,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
     setPending(category.id)
     setError(null)
 
-    const result = await saveCategory({
+    const result = await intentar(() => saveCategory({
       id: category.id,
       name: category.name,
       slug: category.slug,
@@ -38,7 +39,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
       parentId: category.parent_id,
       position: category.position,
       isVisible: !category.is_visible,
-    })
+    }))
 
     setPending(null)
     if (!result.ok) setError(result.error)
@@ -49,7 +50,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
     setPending(category.id)
     setError(null)
 
-    const result = await deleteCategory(category.id)
+    const result = await intentar(() => deleteCategory(category.id))
 
     setPending(null)
     if (!result.ok) setError(result.error)
@@ -148,7 +149,7 @@ function AltaRapida({
     setPendiente(true)
     setError(null)
 
-    const result = await saveCategory({ name: limpio, isVisible: true })
+    const result = await intentar(() => saveCategory({ name: limpio, isVisible: true }))
 
     setPendiente(false)
 
@@ -323,7 +324,7 @@ function CategoryForm({
     setError(null)
 
     const form = new FormData(event.currentTarget)
-    const result = await saveCategory({
+    const result = await intentar(() => saveCategory({
       id: category?.id,
       name: String(form.get('name') ?? ''),
       slug: String(form.get('slug') ?? '') || undefined,
@@ -332,7 +333,7 @@ function CategoryForm({
       parentId: String(form.get('parentId') ?? '') || null,
       position: Number(form.get('position') ?? 0),
       isVisible: form.get('isVisible') === 'on',
-    })
+    }))
 
     setPending(false)
     if (!result.ok) setError(result.error)

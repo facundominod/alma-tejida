@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { intentar } from '@/lib/actions/intentar'
 import * as React from 'react'
 import { Check, HardDrive, Plus, Trash2 } from 'lucide-react'
 import { Ovillo } from '@/components/ui/ovillo'
@@ -55,7 +56,7 @@ export function SettingsForm({
     const form = new FormData(event.currentTarget)
     const value = (key: string) => String(form.get(key) ?? '').trim()
 
-    const result = await updateStoreSettings({
+    const result = await intentar(() => updateStoreSettings({
       storeName: value('storeName'),
       tagline: value('tagline'),
       whatsappNumber: value('whatsappNumber'),
@@ -87,7 +88,7 @@ export function SettingsForm({
       defaultLowStockThreshold: Number(form.get('defaultLowStockThreshold') ?? 2),
       isOpen: form.get('isOpen') === 'on',
       closedMessage: value('closedMessage'),
-    })
+    }))
 
     setPending(false)
 

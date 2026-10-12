@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { intentar } from '@/lib/actions/intentar'
 import * as React from 'react'
 import { Check, FileText, X } from 'lucide-react'
 import { Ovillo } from '@/components/ui/ovillo'
@@ -53,7 +54,7 @@ export function OrderActions({
     setPending(next)
     setError(null)
 
-    const result = await setOrderStatus(orderId, next, reason)
+    const result = await intentar(() => setOrderStatus(orderId, next, reason))
 
     setPending(null)
     setConfirming(null)

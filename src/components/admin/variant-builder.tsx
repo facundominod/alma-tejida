@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { intentar } from '@/lib/actions/intentar'
 import * as React from 'react'
 import { Check, Plus, Sparkles, Trash2, X } from 'lucide-react'
 import { Ovillo } from '@/components/ui/ovillo'
@@ -236,7 +237,7 @@ export function VariantBuilder({
           })),
       }))
 
-    const result = await saveProductStructure({
+    const result = await intentar(() => saveProductStructure({
       productId,
       attributes: cleanAttributes,
       variants: variants.map((variant) => ({
@@ -248,7 +249,7 @@ export function VariantBuilder({
         price_override: parsearPrecio(variant.price_override),
         is_active: variant.is_active,
       })),
-    })
+    }))
 
     setSaving(false)
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { intentar } from '@/lib/actions/intentar'
 import * as React from 'react'
 import { Pencil, Plus, Tag, Trash2, X } from 'lucide-react'
 import { Ovillo } from '@/components/ui/ovillo'
@@ -165,7 +166,7 @@ export function PromotionManager({
                     aria-label={`Borrar ${promo.title}`}
                     onClick={async () => {
                       setPending(promo.id)
-                      const result = await deletePromotion(promo.id)
+                      const result = await intentar(() => deletePromotion(promo.id))
                       setPending(null)
                       if (!result.ok) setError(result.error)
                       else router.refresh()
@@ -221,7 +222,7 @@ function PromotionForm({
     setError(null)
 
     const form = new FormData(event.currentTarget)
-    const result = await savePromotion({
+    const result = await intentar(() => savePromotion({
       id: promotion?.id,
       title: String(form.get('title') ?? ''),
       description: String(form.get('description') ?? ''),
@@ -236,7 +237,7 @@ function PromotionForm({
       ctaHref: String(form.get('ctaHref') ?? ''),
       productIds: selectedProducts,
       categoryIds: selectedCategories,
-    })
+    }))
 
     setPending(false)
     if (!result.ok) setError(result.error)
